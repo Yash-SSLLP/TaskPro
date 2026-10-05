@@ -33,7 +33,7 @@ function stampSeen(user) {
 }
 
 // While a person must choose a new password, these are all they may call.
-const PASSWORD_GATE_ALLOW = ['/api/auth/me', '/api/auth/change-password', '/api/devices'];
+const PASSWORD_GATE_ALLOW = ['/api/auth/me', '/api/auth/change-password', '/api/auth/delete-account', '/api/devices'];
 
 async function protect(req, res, next) {
   const header = req.headers.authorization || '';

@@ -113,6 +113,18 @@ gradlew.bat assembleRelease
 
 The APK is written to `android\app\build\outputs\apk\release\` inside that folder.
 
+## Privacy policy, account deletion and Google Play
+
+- The privacy policy is at `/privacy` on the web app and under **More →
+  Privacy policy** in the mobile app. Both show the same text, which lives in
+  `web/src/platform/privacy.js` and is copied to
+  `mobile/src/platform/privacy.js`. Edit one, then copy it over the other.
+- People delete their own account under **More → Delete account** (mobile),
+  **Settings → Delete account** (web), or at `/delete-account`, which works
+  signed out too (Google Play asks for that link).
+- Publishing to Google Play and shipping updates:
+  [`docs/PLAY_STORE.md`](docs/PLAY_STORE.md).
+
 ## Where things are
 
 | | |

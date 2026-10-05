@@ -13,6 +13,7 @@ const { z, parse, password, trimmed } = require('../validate');
 const { requireIdentifier, identifierFilter, parseIdentifier } = require('../identity');
 const { badRequest, unauthorized, forbidden, conflict } = require('../errors');
 const { sendMail, mailEnabled } = require('../services/mailer');
+const { deleteAccount } = require('../services/accounts');
 
 const router = express.Router();
 
@@ -211,6 +212,21 @@ router.post('/reset-password', authLimiter, async (req, res) => {
   user.tokenVersion = (user.tokenVersion || 0) + 1;
   await user.save();
   res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------- delete account
+
+const deleteAccountSchema = z.object({
+  password: z.string({ required_error: 'Enter your password' }).min(1, 'Enter your password'),
+});
+
+router.post('/delete-account', authLimiter, protect, async (req, res) => {
+  const body = parse(deleteAccountSchema, req.body);
+  if (req.user.role === 'superadmin') throw forbidden('The Super Admin account cannot be deleted.');
+  const user = await User.findById(req.user._id).select('+passwordHash');
+  if (!(await user.checkPassword(body.password))) throw badRequest('Your password is not correct');
+  await deleteAccount(user);
+  res.json({ ok: true, message: 'Your account has been deleted.' });
 });
 
 module.exports = router;

@@ -150,6 +150,75 @@ module.exports = {
     }
   },
 
+  /**
+   * A person deleted their account. Tasks and schedules only they were on go
+   * for good, files and all, as do their own templates and categories. Work
+   * shared with others stays, with their name replaced by `deletedName`.
+   */
+  async onUserDeleted({ user, deletedName }) {
+    const { deleteFiles } = require('../platform/services/files');
+    const engine = require('./services/engine');
+    const me = user._id;
+    const onlyMe = (field) => ({ [field]: { $not: { $elemMatch: { $ne: me } } } });
+    const fileOf = (f) => String(f.file || f.storagePath);
+
+    // Schedules nobody else is on are deleted; the rest stop (they were theirs to run).
+    const soloSchedules = await RecurringTask.find({ createdBy: me, ...onlyMe('assignees'), ...onlyMe('loopUsers') }).select('_id voiceNote').lean();
+    const soloScheduleIds = soloSchedules.map((s) => s._id);
+    await RecurringTask.deleteMany({ _id: { $in: soloScheduleIds } });
+    await RecurringTask.updateMany({ createdBy: me }, { $set: { isActive: false, createdByName: deletedName } });
+    await RecurringTask.updateMany({ $or: [{ assignees: me }, { loopUsers: me }] }, { $pull: { assignees: me, loopUsers: me } });
+
+    // Tasks nobody else is on (and no piece of theirs went to someone else).
+    const soloFilter = {
+      createdBy: me,
+      assignees: { $not: { $elemMatch: { user: { $ne: me } } } },
+      ...onlyMe('loopUsers'),
+      ...onlyMe('openTo'),
+      ...onlyMe('originalAssignees'),
+    };
+    let solo = await Task.find(soloFilter).select('_id parentTask attachments voiceNote recurringTask').lean();
+    const shared = await Task.distinct('parentTask', { parentTask: { $in: solo.map((t) => t._id) }, _id: { $nin: solo.map((t) => t._id) } });
+    const keepParents = new Set(shared.map(String));
+    solo = solo.filter((t) => !keepParents.has(String(t._id)));
+    const soloIds = solo.map((t) => t._id);
+
+    if (soloIds.length) {
+      // A voice note recorded on a schedule that lives on stays with the schedule.
+      const liveVoice = new Set(
+        (await RecurringTask.find({ _id: { $in: solo.map((t) => t.recurringTask).filter(Boolean) } }).select('voiceNote').lean())
+          .map((s) => s.voiceNote?.storagePath)
+          .filter(Boolean)
+      );
+      const updates = await TaskUpdate.find({ task: { $in: soloIds } }).select('files voiceNote').lean();
+      const fileIds = [
+        ...solo.flatMap((t) => [
+          ...(t.attachments || []).map(fileOf),
+          ...(t.voiceNote?.storagePath && !liveVoice.has(t.voiceNote.storagePath) ? [fileOf(t.voiceNote)] : []),
+        ]),
+        ...updates.flatMap((u) => [...(u.files || []).map(fileOf), ...(u.voiceNote ? [fileOf(u.voiceNote)] : [])]),
+        ...soloSchedules.filter((s) => s.voiceNote).map((s) => fileOf(s.voiceNote)),
+      ];
+      await TaskUpdate.deleteMany({ task: { $in: soloIds } });
+      await Task.deleteMany({ _id: { $in: soloIds } });
+      await deleteFiles([...new Set(fileIds)]);
+      const parents = [...new Set(solo.map((t) => t.parentTask).filter(Boolean).map(String))];
+      for (const p of parents) await engine.recomputeParent(p).catch(() => {});
+    }
+
+    // What stays reads "Deleted user".
+    await Promise.all([
+      Task.updateMany({ createdBy: me }, { $set: { createdByName: deletedName } }),
+      Task.updateMany({ approver: me }, { $set: { approverName: deletedName } }),
+      Task.updateMany({ 'assignees.user': me }, { $set: { 'assignees.$[a].name': deletedName } }, { arrayFilters: [{ 'a.user': me }] }),
+      TaskUpdate.updateMany({ by: me }, { $set: { byName: deletedName } }),
+      TaskTemplate.deleteMany({ createdBy: me, team: null }),
+      TaskTemplate.updateMany({ createdBy: me }, { $set: { createdByName: deletedName } }),
+      TaskCategory.deleteMany({ scope: TaskCategory.scopeOf(null, me) }),
+      TaskCategory.updateMany({ createdBy: me }, { $set: { createdByName: deletedName } }),
+    ]);
+  },
+
   startJobs() {
     require('./jobs').startJobs();
   },

@@ -38,6 +38,8 @@ const userSchema = new mongoose.Schema(
     resetTokenExpires: { type: Date, select: false },
     lastLoginAt: Date,
     lastSeenAt: Date,
+    // Set when the person deleted their own account (services/accounts.js).
+    deletedAt: Date,
   },
   { timestamps: true, minimize: false }
 );

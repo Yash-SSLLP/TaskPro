@@ -64,9 +64,10 @@ This is the contract between the backend, the web app and the mobile app. **Base
 | PATCH | `/profile` | `{ name?, title?, email?, phone? }` | `{ user: Me }` |
 | POST | `/change-password` | `{ currentPassword?, newPassword }` | `{ token, user }` |
 | POST | `/forgot-password` | `{ identifier }` | `{ ok, emailEnabled, message }` |
+| POST | `/delete-account` | `{ password }` | `{ ok, message }`: deletes your own account for good (not the Super Admin). Your profile, logins, pin, contacts, team memberships (owned teams pass to an admin or member), devices, alerts, and tasks nobody else is on are removed; shared tasks stay, showing "Deleted user". |
 | POST | `/reset-password` | `{ token, newPassword }` | `{ ok }` |
 
-`403 PASSWORD_CHANGE_REQUIRED` is returned on anything but `/auth/me`, `/auth/change-password` and `/devices` while `mustChangePassword` is set, for example after a Super Admin reset.
+`403 PASSWORD_CHANGE_REQUIRED` is returned on anything but `/auth/me`, `/auth/change-password`, `/auth/delete-account` and `/devices` while `mustChangePassword` is set, for example after a Super Admin reset.
 
 ### Settings `/api/me`
 

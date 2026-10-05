@@ -10,7 +10,7 @@ import productConfig from '../../product/config';
 import { languageName, tr, useLang } from '../../i18n';
 import { getApiUrl } from '../api';
 import { useContacts, useTeams } from '../hooks';
-import { BookUser, Info, KeyRound, Languages, LayoutDashboard, LogOut, RefreshCw, Server, Settings, User, Users } from '../icons';
+import { BookUser, Info, KeyRound, Languages, LayoutDashboard, LogOut, RefreshCw, Server, Settings, ShieldCheck, Trash, User, Users } from '../icons';
 import { LanguageSheet } from '../language';
 import { pinOf, roleLabel } from '../pin';
 import { isSuperAdmin, useSession } from '../session';
@@ -77,10 +77,12 @@ export default function MoreScreen({ navigation }) {
       <Section title={tr('Account')}>
         <ListRow icon={User} title={tr('My profile')} onPress={() => navigation.navigate('Profile')} />
         <ListRow icon={KeyRound} title={tr('Change password')} onPress={() => navigation.navigate('ChangePassword')} />
+        {!admin ? <ListRow icon={Trash} title={tr('Delete account')} danger onPress={() => navigation.navigate('DeleteAccount')} /> : null}
       </Section>
 
       <Section title={tr('About')}>
         <ListRow icon={Info} title={productConfig.name} right={tr('Version {v}', { v: version })} />
+        <ListRow icon={ShieldCheck} title={tr('Privacy policy')} onPress={() => navigation.navigate('PrivacyPolicy')} />
         <ListRow icon={Server} title={tr('Server')} subtitle={getApiUrl().replace(/^https?:\/\//, '')} />
       </Section>
 

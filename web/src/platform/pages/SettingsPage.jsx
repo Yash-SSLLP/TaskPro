@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+import { LogOut, ShieldCheck, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../api';
 import { isSuperAdmin, useSession, useSettings } from '../session';
@@ -275,6 +275,18 @@ export function SettingsPage() {
       {!superAdmin && <PinCard person={user} compact />}
       <PasswordSection />
       <PreferencesSection />
+      <Section title="Privacy and your account" description="How we handle your information, and how to leave.">
+        <div className="flex flex-wrap gap-3">
+          <Button variant="secondary" icon={ShieldCheck} to="/privacy">
+            Privacy policy
+          </Button>
+          {!superAdmin && (
+            <Button variant="danger-soft" icon={Trash2} to="/delete-account">
+              Delete account
+            </Button>
+          )}
+        </div>
+      </Section>
       <div className="flex justify-center pt-2 lg:hidden">
         <Button variant="ghost" icon={LogOut} onClick={() => signOutEverywhere().then(() => navigate('/sign-in'))}>
           Sign out

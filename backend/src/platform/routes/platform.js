@@ -25,7 +25,7 @@ const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 router.get('/overview', async (req, res) => {
   const since = new Date(Date.now() - 7 * DAY);
-  const people = { role: 'user' };
+  const people = { role: 'user', deletedAt: null };
   const [users, activeWeek, newWeek, disabled, teams, tasks] = await Promise.all([
     User.countDocuments(people),
     User.countDocuments({ ...people, lastSeenAt: { $gte: since } }),
@@ -39,7 +39,7 @@ router.get('/overview', async (req, res) => {
 
 router.get('/users', async (req, res) => {
   const q = String(req.query.q || '').trim();
-  const filter = { role: 'user' };
+  const filter = { role: 'user', deletedAt: null };
   if (['active', 'disabled'].includes(req.query.status)) filter.status = req.query.status;
   if (q) {
     const rx = new RegExp(escapeRe(q), 'i');

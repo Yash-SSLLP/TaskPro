@@ -79,6 +79,8 @@ export default function SignUpScreen({ navigation }) {
         error={errors.password}
       />
       <Notice tone="danger">{error}</Notice>
+      <Text style={styles.consent}>{tr('By creating an account you agree to our privacy policy.')}</Text>
+      <TextButton title={tr('Read the privacy policy')} onPress={() => navigation.navigate('PrivacyPolicy')} style={styles.policy} />
       <Button title={tr('Create account')} size="lg" onPress={submit} />
       <TextButton title={tr('Already have an account? Sign in')} onPress={() => navigation.goBack()} style={styles.back} />
     </Screen>
@@ -88,4 +90,6 @@ export default function SignUpScreen({ navigation }) {
 const styles = StyleSheet.create({
   intro: { ...type.small, fontSize: 15, marginBottom: space(5), lineHeight: 21 },
   back: { marginTop: space(3) },
+  consent: { ...type.small, marginBottom: space(1) },
+  policy: { marginBottom: space(4) },
 });

@@ -33,6 +33,7 @@ export const authApi = {
   resetPassword: (resetToken, newPassword) => api.post('/api/auth/reset-password', { token: resetToken, newPassword }, { auth: false }),
   changePassword: (body) => api.post('/api/auth/change-password', body),
   updateProfile: (body) => api.patch('/api/auth/profile', body),
+  deleteAccount: (password) => api.post('/api/auth/delete-account', { password }),
 };
 
 // ---------------------------------------------------------------- my settings

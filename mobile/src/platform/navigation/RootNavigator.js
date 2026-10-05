@@ -16,9 +16,11 @@ import { useContacts, useTeams, useUnreadCount } from '../hooks';
 import AdminPersonScreen from '../screens/AdminPersonScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import ContactsScreen from '../screens/ContactsScreen';
+import DeleteAccountScreen from '../screens/DeleteAccountScreen';
 import ForcePasswordScreen from '../screens/ForcePasswordScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import OfflineScreen from '../screens/OfflineScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ResetPasswordScreen from '../screens/ResetPasswordScreen';
 import ServerSettingsScreen from '../screens/ServerSettingsScreen';
@@ -97,6 +99,7 @@ export default function RootNavigator() {
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
         <Stack.Screen name="ServerSettings" component={ServerSettingsScreen} />
+        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
       </>
     );
   } else if (mustChangePassword) {
@@ -113,6 +116,8 @@ export default function RootNavigator() {
         <Stack.Screen name="Contacts" component={ContactsScreen} />
         <Stack.Screen name="Teams" component={TeamsScreen} />
         <Stack.Screen name="TeamDetail" component={TeamDetailScreen} />
+        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+        <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
         <Stack.Screen name="AdminPerson" component={AdminPersonScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />

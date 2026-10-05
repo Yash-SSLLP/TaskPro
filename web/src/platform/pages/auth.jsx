@@ -50,6 +50,11 @@ function AuthLayout({ title, subtitle, children, footer }) {
           {subtitle && <p className="mt-1.5 text-[15px] text-ink-soft">{subtitle}</p>}
           <div className="mt-7">{children}</div>
           {footer && <div className="mt-8 text-center text-[15px] text-ink-soft">{footer}</div>}
+          <p className="mt-6 text-center text-sm text-ink-soft">
+            <Link to="/privacy" className="hover:text-ink hover:underline">
+              Privacy policy
+            </Link>
+          </p>
         </div>
       </main>
     </div>
@@ -234,6 +239,13 @@ export function SignUpPage() {
           onChange={set('identifier')}
         />
         <PasswordInput autoComplete="new-password" hint="At least 8 characters." value={form.password} onChange={set('password')} />
+        <p className="text-sm text-ink-soft">
+          By creating an account you agree to our{' '}
+          <Link to="/privacy" target="_blank" className="font-medium text-brand hover:underline">
+            Privacy policy
+          </Link>
+          .
+        </p>
         <Button
           type="submit"
           size="lg"
