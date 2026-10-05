@@ -1,0 +1,12 @@
+# Test accounts used to try Task Pro locally (development only, database taskpro_v2).
+# Disable or delete them from the Super Admin console when no longer needed.
+# Super Admin: SUPERADMIN_USERNAME / SUPERADMIN_PASSWORD in backend/.env
+person1_name=QA Asha
+person1_login=qa.asha@taskpro.test
+person1_password=Qa-0188a37fd7
+person2_name=QA Ravi
+person2_login=qa.ravi@taskpro.test
+person2_password=Qa-eaad926ece
+person3_name=QA Kiran (stranger)
+person3_login=qa.kiran@taskpro.test
+person3_password=Qa-61adcf794c

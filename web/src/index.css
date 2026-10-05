@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Brand colours as "r g b" so Tailwind can add opacity. Task Pro is indigo (Seq Book: emerald). */
+:root {
+  --brand: 79 70 229; /* #4f46e5 */
+  --brand-dark: 67 56 202; /* #4338ca */
+  --brand-soft: 238 242 255; /* #eef2ff */
+  --brand-accent: 99 102 241; /* #6366f1 */
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-page text-ink antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand/40 ring-offset-1;
+  }
+}
+
+@layer utilities {
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
