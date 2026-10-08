@@ -12,7 +12,7 @@ import { Logo } from '../Logo';
 import { PRIVACY } from '../privacy';
 import { Button, Card, Input, PasswordInput } from '../ui';
 
-function LegalShell({ children }) {
+export function LegalShell({ children }) {
   const signedIn = useSession((s) => !!s.token);
   return (
     <div className="min-h-screen bg-slate-50">

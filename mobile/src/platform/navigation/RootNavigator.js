@@ -14,6 +14,7 @@ import { productScreens, tabsFor } from '../../product/navigation';
 import { tr } from '../../i18n';
 import { useContacts, useTeams, useUnreadCount } from '../hooks';
 import AdminPersonScreen from '../screens/AdminPersonScreen';
+import AppUpdateScreen from '../screens/AppUpdateScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import ContactsScreen from '../screens/ContactsScreen';
 import DeleteAccountScreen from '../screens/DeleteAccountScreen';
@@ -31,6 +32,7 @@ import TeamsScreen from '../screens/TeamsScreen';
 import WelcomePinScreen from '../screens/WelcomePinScreen';
 import { useSession } from '../session';
 import { colors, font } from '../theme';
+import { useUpdate } from '../updates';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -38,8 +40,9 @@ const Tab = createBottomTabNavigator();
 function MainTabs() {
   const user = useSession((s) => s.user);
   const unread = useUnreadCount().data || 0;
-  // Requests and invitations waiting on me show on More.
-  const waiting = (useContacts().data?.incoming?.length || 0) + (useTeams().data?.invites?.length || 0);
+  // Requests and invitations waiting on me, and a newer app build, show on More.
+  const update = useUpdate((s) => s.available);
+  const waiting = (useContacts().data?.incoming?.length || 0) + (useTeams().data?.invites?.length || 0) + (update ? 1 : 0);
   const tabs = tabsFor(user);
   return (
     <Tab.Navigator
@@ -100,6 +103,7 @@ export default function RootNavigator() {
         <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
         <Stack.Screen name="ServerSettings" component={ServerSettingsScreen} />
         <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+        <Stack.Screen name="AppUpdate" component={AppUpdateScreen} />
       </>
     );
   } else if (mustChangePassword) {
@@ -121,6 +125,7 @@ export default function RootNavigator() {
         <Stack.Screen name="AdminPerson" component={AdminPersonScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+        <Stack.Screen name="AppUpdate" component={AppUpdateScreen} />
       </>
     );
   }

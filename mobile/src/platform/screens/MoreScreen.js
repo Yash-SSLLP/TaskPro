@@ -5,17 +5,17 @@
  */
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Constants from 'expo-constants';
 import productConfig from '../../product/config';
 import { languageName, tr, useLang } from '../../i18n';
 import { getApiUrl } from '../api';
 import { useContacts, useTeams } from '../hooks';
-import { BookUser, Info, KeyRound, Languages, LayoutDashboard, LogOut, RefreshCw, Server, Settings, ShieldCheck, Trash, User, Users } from '../icons';
+import { BookUser, Download, Info, KeyRound, Languages, LayoutDashboard, LogOut, RefreshCw, Server, Settings, ShieldCheck, Trash, User, Users } from '../icons';
 import { LanguageSheet } from '../language';
 import { pinOf, roleLabel } from '../pin';
 import { isSuperAdmin, useSession } from '../session';
 import { colors, font, radius, space, type } from '../theme';
 import { Avatar, Badge, Card, confirm, Header, ListRow, Screen, Section } from '../ui';
+import { canSelfUpdate, installedVersion, useUpdate } from '../updates';
 
 function Count({ n }) {
   if (!n) return null;
@@ -30,7 +30,7 @@ export default function MoreScreen({ navigation }) {
   const contacts = useContacts().data;
   const teams = useTeams().data;
   const [langOpen, setLangOpen] = useState(false);
-  const version = Constants.expoConfig?.version || '1.0.0';
+  const update = useUpdate((s) => s.available);
 
   const askSignOut = async () => {
     const ok = await confirm({ title: tr('Sign out of {name}?', { name: productConfig.name }), confirmLabel: tr('Sign out') });
@@ -81,7 +81,16 @@ export default function MoreScreen({ navigation }) {
       </Section>
 
       <Section title={tr('About')}>
-        <ListRow icon={Info} title={productConfig.name} right={tr('Version {v}', { v: version })} />
+        <ListRow icon={Info} title={productConfig.name} right={tr('Version {v}', { v: installedVersion })} />
+        {canSelfUpdate ? (
+          <ListRow
+            icon={Download}
+            title={tr('App updates')}
+            subtitle={update ? tr('Version {v} is ready to install', { v: update.versionName }) : tr('Check for a newer version')}
+            right={update ? <Badge label={tr('New')} tone="danger" style={styles.badge} /> : null}
+            onPress={() => navigation.navigate('AppUpdate')}
+          />
+        ) : null}
         <ListRow icon={ShieldCheck} title={tr('Privacy policy')} onPress={() => navigation.navigate('PrivacyPolicy')} />
         <ListRow icon={Server} title={tr('Server')} subtitle={getApiUrl().replace(/^https?:\/\//, '')} />
       </Section>

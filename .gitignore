@@ -18,3 +18,6 @@ mobile/dist/
 *.keystore
 google-services.json
 GoogleService-Info.plist
+
+# The published Android build, served at /app/ (see web/public/app/README.md)
+!web/public/app/*.apk

@@ -1,16 +1,27 @@
 /**
  * Things that happen outside any one screen: registering for push after
  * sign-in, opening the right screen when a notification or a
- * taskpro:// link is tapped, and refreshing data when an alert arrives.
+ * taskpro:// link is tapped, refreshing data when an alert arrives, and
+ * offering a newer app build.
  */
 import { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import * as Linking from 'expo-linking';
 import * as Notifications from 'expo-notifications';
 import { useQueryClient } from '@tanstack/react-query';
+import productConfig from '../product/config';
+import { tr } from '../i18n';
 import { useInApp } from './hooks';
-import { flushPendingLink, openLink } from './navigation/links';
+import { flushPendingLink, navigationRef, openLink } from './navigation/links';
 import { linkOf, registerForPush } from './push';
+import { useSession } from './session';
+import { confirm } from './ui';
+import { canSelfUpdate, checkInBackground, dismissPrompt, shouldPrompt } from './updates';
+
+// Builds already offered since the app started: one prompt per version per
+// run, however often the app comes back to the foreground.
+const offered = new Set();
+let launched = false;
 
 /** "taskpro://tasks/<id>" → "/tasks/<id>"; dev-server URLs carry no in-app path. */
 function pathFromUrl(url) {
@@ -67,6 +78,35 @@ export default function AppEvents({ navReady }) {
     const t = setTimeout(flushPendingLink, 60);
     return () => clearTimeout(t);
   }, [inApp, navReady]);
+
+  // App updates: look on launch and on every return to the foreground (the
+  // check itself runs at most every few hours) and offer a newer build, on
+  // the sign-in screen or in the app, until "Later" is chosen for it.
+  const signedOut = useSession((s) => s.status === 'signedOut');
+  const canOffer = navReady && (inApp || signedOut);
+  useEffect(() => {
+    if (!canSelfUpdate || !canOffer) return undefined;
+    const look = async () => {
+      const info = await checkInBackground({ launch: !launched });
+      launched = true;
+      if (!info || offered.has(info.versionCode) || !(await shouldPrompt(info))) return;
+      if (!(navigationRef.getRootState()?.routeNames || []).includes('AppUpdate')) return;
+      offered.add(info.versionCode);
+      const ok = await confirm({
+        title: tr('Update available'),
+        message: tr('{name} {v} is ready to install.', { name: productConfig.name, v: info.versionName }),
+        confirmLabel: tr('Update'),
+        cancelLabel: tr('Later'),
+      });
+      if (ok) navigationRef.navigate('AppUpdate');
+      else await dismissPrompt(info);
+    };
+    look();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') look();
+    });
+    return () => sub.remove();
+  }, [canOffer]);
 
   return null;
 }

@@ -5,7 +5,7 @@
  */
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, Copy, KeyRound, MessageCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Copy, KeyRound, MessageCircle, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { product } from '../../product/config';
 import { api } from '../api';
@@ -50,7 +50,11 @@ function AuthLayout({ title, subtitle, children, footer }) {
           {subtitle && <p className="mt-1.5 text-[15px] text-ink-soft">{subtitle}</p>}
           <div className="mt-7">{children}</div>
           {footer && <div className="mt-8 text-center text-[15px] text-ink-soft">{footer}</div>}
-          <p className="mt-6 text-center text-sm text-ink-soft">
+          <p className="mt-6 flex items-center justify-center gap-4 text-sm text-ink-soft">
+            <Link to="/get-app" className="inline-flex items-center gap-1.5 font-medium text-brand hover:underline">
+              <Smartphone className="h-4 w-4" aria-hidden />
+              Get the Android app
+            </Link>
             <Link to="/privacy" className="hover:text-ink hover:underline">
               Privacy policy
             </Link>

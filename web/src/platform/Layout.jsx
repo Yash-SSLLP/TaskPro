@@ -8,7 +8,7 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { Bell, Copy, LayoutDashboard, Layers, LogOut, Settings, UserPlus, Users } from 'lucide-react';
+import { Bell, Copy, LayoutDashboard, Layers, LogOut, Settings, Smartphone, UserPlus, Users } from 'lucide-react';
 import { product } from '../product/config';
 import { api } from './api';
 import { isSuperAdmin, useSession } from './session';
@@ -102,6 +102,13 @@ export function Layout() {
           ))}
         </nav>
         <div className="border-t border-line p-3">
+          <NavLink
+            to="/get-app"
+            className="mb-1 flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-slate-50 hover:text-ink"
+          >
+            <Smartphone className="h-[18px] w-[18px]" aria-hidden />
+            Get the Android app
+          </NavLink>
           <div className="flex items-center gap-3 rounded-xl px-2 py-2">
             <Avatar name={user?.name} size="sm" />
             <div className="min-w-0 flex-1">

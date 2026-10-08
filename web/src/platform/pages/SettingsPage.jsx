@@ -12,6 +12,7 @@ import { isSuperAdmin, useSession, useSettings } from '../session';
 import { signOutEverywhere } from '../signOut';
 import { Button, Card, Input, PageHeader, PasswordInput, PinCard, Select, Skeleton, Switch } from '../ui';
 import { ReminderEditor } from '../../product/components/Reminders';
+import { AndroidAppDetails } from './mobileApp';
 
 export function Section({ title, description, children }) {
   return (
@@ -275,6 +276,9 @@ export function SettingsPage() {
       {!superAdmin && <PinCard person={user} compact />}
       <PasswordSection />
       <PreferencesSection />
+      <Section title="Android app" description="Task Pro on your phone, with reminders and alerts.">
+        <AndroidAppDetails />
+      </Section>
       <Section title="Privacy and your account" description="How we handle your information, and how to leave.">
         <div className="flex flex-wrap gap-3">
           <Button variant="secondary" icon={ShieldCheck} to="/privacy">

@@ -21,6 +21,7 @@ import { PlatformPage } from './platform/pages/PlatformPage';
 import { ContactsPage } from './platform/pages/ContactsPage';
 import { TeamDetailPage, TeamsPage } from './platform/pages/TeamsPage';
 import { DeleteAccountPage, PrivacyPage } from './platform/pages/legal';
+import { GET_APP_PATH, GetAppPage } from './platform/pages/mobileApp';
 import { EmptyState, Button } from './platform/ui';
 
 function NotFound() {
@@ -67,6 +68,7 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/delete-account" element={<DeleteAccountPage />} />
+        <Route path={GET_APP_PATH} element={<GetAppPage />} />
         <Route path="*" element={<Navigate to="/sign-in" replace state={{ from: location.pathname }} />} />
       </Routes>
     );
@@ -75,6 +77,7 @@ export default function App() {
   // Public pages stay reachable whatever state the session is in.
   if (location.pathname === '/privacy') return <PrivacyPage />;
   if (location.pathname === '/delete-account') return <DeleteAccountPage />;
+  if (location.pathname === GET_APP_PATH) return <GetAppPage />;
 
   if (user.mustChangePassword) return <ForcePasswordPage />;
 
