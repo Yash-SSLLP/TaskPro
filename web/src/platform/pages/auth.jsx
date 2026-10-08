@@ -22,8 +22,8 @@ function AuthLayout({ title, subtitle, children, footer }) {
   return (
     <div className="flex min-h-screen">
       <aside className="relative hidden w-[44%] max-w-xl flex-col justify-between overflow-hidden bg-brand p-10 text-white lg:flex">
-        <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/10" aria-hidden />
-        <div className="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-white/5" aria-hidden />
+        <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-card/10" aria-hidden />
+        <div className="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-card/5" aria-hidden />
         <div className="relative flex items-center gap-3">
           <img src="/logo.svg" width={40} height={40} alt="" className="rounded-[22%] ring-2 ring-white/30" />
           <span className="text-xl font-bold">{product.name}</span>
@@ -152,7 +152,7 @@ function NewPinStep({ data, onContinue }) {
   return (
     <AuthLayout title={`Welcome, ${first}!`} subtitle="Your account is ready. This is your Task Pin.">
       <div className="space-y-5">
-        <div className="rounded-2xl border border-brand/20 bg-gradient-to-br from-brand-soft via-white to-white p-5 text-center shadow-card">
+        <div className="rounded-2xl border border-brand/20 bg-gradient-to-br from-brand-soft via-card to-card p-5 text-center shadow-card">
           <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-brand">
             <KeyRound className="h-4 w-4" aria-hidden /> Your Task Pin
           </p>
@@ -282,7 +282,7 @@ export function ForgotPasswordPage() {
       }
     >
       {message ? (
-        <div className="rounded-2xl border border-line bg-white p-5 text-[15px] text-ink shadow-card">{message}</div>
+        <div className="rounded-2xl border border-line bg-card p-5 text-[15px] text-ink shadow-card">{message}</div>
       ) : (
         <form onSubmit={run} className="space-y-4" noValidate>
           <FormError>{error}</FormError>

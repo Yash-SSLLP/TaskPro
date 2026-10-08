@@ -127,8 +127,8 @@ async function cleanupDownloads() {
 }
 
 /**
- * The background check, on launch and when the app comes back to the
- * foreground: at most every few hours, and silent on any failure (offline, an
+ * The background check: on every launch, and when the app comes back to the
+ * foreground at most every few hours. Silent on any failure (offline, an
  * older server): the button on the update screen shows real errors.
  * @returns {Promise<object|null>} the newer build, or null
  */
@@ -137,7 +137,7 @@ export async function checkInBackground({ launch = false } = {}) {
   try {
     if (launch) await cleanupDownloads();
     const last = Number(await AsyncStorage.getItem(CHECKED_KEY)) || 0;
-    if (Date.now() - last < CHECK_EVERY_MS) return useUpdate.getState().available;
+    if (!launch && Date.now() - last < CHECK_EVERY_MS) return useUpdate.getState().available;
     const info = await checkForUpdate();
     await AsyncStorage.setItem(CHECKED_KEY, String(Date.now()));
     return info.upToDate ? null : info;

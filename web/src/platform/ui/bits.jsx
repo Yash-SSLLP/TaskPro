@@ -7,7 +7,7 @@ import { initials } from '../format';
 
 export function Card({ className, children, as: Tag = 'div', ...rest }) {
   return (
-    <Tag className={clsx('rounded-2xl border border-line bg-white shadow-card', className)} {...rest}>
+    <Tag className={clsx('rounded-2xl border border-line bg-card shadow-card', className)} {...rest}>
       {children}
     </Tag>
   );
@@ -44,7 +44,7 @@ export function Chip({ active, onClick, children, className, tone = 'brand', ...
       aria-pressed={!!active}
       className={clsx(
         'inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm font-medium transition-colors',
-        active ? activeTone : 'border-line bg-white text-ink hover:bg-slate-50',
+        active ? activeTone : 'border-line bg-card text-ink hover:bg-slate-50',
         className
       )}
       {...rest}
@@ -136,7 +136,7 @@ export function Segmented({ value, onChange, options, className }) {
           onClick={() => onChange(o.value)}
           className={clsx(
             'h-9 rounded-lg px-3.5 text-sm font-semibold transition-colors',
-            value === o.value ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink'
+            value === o.value ? 'bg-card text-ink shadow-sm' : 'text-ink-soft hover:text-ink'
           )}
         >
           {o.label}

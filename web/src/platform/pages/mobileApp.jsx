@@ -127,7 +127,7 @@ export function GetAppPage() {
     <LegalShell>
       <h1 className="text-3xl font-bold tracking-tight text-ink">Get {product.name} for Android</h1>
       <p className="mt-2 text-[15px] text-ink-soft">Your tasks, reminders and alerts on your phone.</p>
-      <div className="mt-8 rounded-2xl border border-line bg-white p-5 shadow-card sm:p-6">
+      <div className="mt-8 rounded-2xl border border-line bg-card p-5 shadow-card sm:p-6">
         <AndroidAppDetails />
       </div>
     </LegalShell>

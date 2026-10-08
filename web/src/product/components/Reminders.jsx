@@ -19,12 +19,12 @@ import {
   repeatEveryMinutes, repeatingReminderText, time12,
 } from '../lifecycle';
 
-const field = 'h-9 rounded-lg border border-line bg-white px-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
+const field = 'h-9 rounded-lg border border-line bg-card px-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
 
 export function chipCls(on) {
   return clsx(
     'inline-flex h-8 items-center rounded-lg border px-3 text-xs font-semibold transition-colors',
-    on ? 'border-brand bg-brand text-white' : 'border-line bg-white text-ink-soft hover:border-slate-300 hover:text-ink'
+    on ? 'border-brand bg-brand text-white' : 'border-line bg-card text-ink-soft hover:border-slate-300 hover:text-ink'
   );
 }
 
@@ -32,7 +32,7 @@ export function chipCls(on) {
 export function Stepper({ value, min, max, onChange, format, label }) {
   const set = (n) => onChange(Math.min(max, Math.max(min, n)));
   return (
-    <span className="inline-flex items-center gap-0.5 rounded-xl border border-line bg-white p-0.5" role="group" aria-label={label}>
+    <span className="inline-flex items-center gap-0.5 rounded-xl border border-line bg-card p-0.5" role="group" aria-label={label}>
       <button type="button" onClick={() => set(value - 1)} disabled={value <= min} className="grid h-8 w-8 place-items-center rounded-lg text-ink-soft hover:bg-slate-100 disabled:opacity-30" aria-label="Less">
         <Minus className="h-3.5 w-3.5" />
       </button>
@@ -58,7 +58,7 @@ export function WeekdayPicker({ value = [], onChange }) {
             aria-label={WEEKDAY_NAMES[i]}
             aria-pressed={on}
             onClick={() => onChange(on ? value.filter((x) => x !== i) : [...value, i].sort((a, b) => a - b))}
-            className={clsx('h-8 min-w-0 rounded-lg border text-xs font-semibold sm:min-w-[36px]', on ? 'border-brand bg-brand text-white' : 'border-line bg-white text-ink-soft')}
+            className={clsx('h-8 min-w-0 rounded-lg border text-xs font-semibold sm:min-w-[36px]', on ? 'border-brand bg-brand text-white' : 'border-line bg-card text-ink-soft')}
           >
             {d}
           </button>
@@ -145,7 +145,7 @@ export function ReminderPattern({ value, onChange, allowOff = true, hints = {}, 
               role="tab"
               aria-selected={pattern === s.key}
               onClick={() => pick(s.key)}
-              className={clsx('h-8 rounded-lg text-xs font-semibold', pattern === s.key ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink')}
+              className={clsx('h-8 rounded-lg text-xs font-semibold', pattern === s.key ? 'bg-card text-ink shadow-sm' : 'text-ink-soft hover:text-ink')}
             >
               {s.label}
             </button>
@@ -203,7 +203,7 @@ export function ReminderPattern({ value, onChange, allowOff = true, hints = {}, 
             {[['DATE', 'On a date'], ['WEEKDAY', 'On a weekday']].map(([k, label]) => {
               const on = (value.monthlyMode === 'WEEKDAY' ? 'WEEKDAY' : 'DATE') === k;
               return (
-                <button key={k} type="button" aria-pressed={on} onClick={() => set({ monthlyMode: k })} className={clsx('h-8 rounded-lg px-3 text-xs font-semibold', on ? 'bg-white text-ink shadow-sm' : 'text-ink-soft')}>
+                <button key={k} type="button" aria-pressed={on} onClick={() => set({ monthlyMode: k })} className={clsx('h-8 rounded-lg px-3 text-xs font-semibold', on ? 'bg-card text-ink shadow-sm' : 'text-ink-soft')}>
                   {label}
                 </button>
               );
@@ -252,7 +252,7 @@ export function ReminderPattern({ value, onChange, allowOff = true, hints = {}, 
 /** A before/after rule as one editable line. */
 function OffsetRule({ rule, onChange, onRemove }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-white p-2">
+    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-card p-2">
       <select value={rule.channel || 'APP'} onChange={(e) => onChange({ ...rule, channel: e.target.value })} className={field} aria-label="How">
         {REMINDER_CHANNELS.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
       </select>
@@ -298,7 +298,7 @@ export function ReminderEditor({ value = [], onChange, emptyText = 'No reminders
       )}
 
       {everyAt >= 0 && (
-        <div className="space-y-2 rounded-xl border border-line bg-white p-3">
+        <div className="space-y-2 rounded-xl border border-line bg-card p-3">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Until it is done</span>
             <div className="flex items-center gap-2">
@@ -318,7 +318,7 @@ export function ReminderEditor({ value = [], onChange, emptyText = 'No reminders
         <button
           type="button"
           onClick={() => onChange?.([...list, { channel: 'APP', when: 'BEFORE', amount: 1, unit: 'HOURS' }])}
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-sm font-medium text-ink-soft hover:border-slate-300 hover:text-ink"
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-card px-3 text-sm font-medium text-ink-soft hover:border-slate-300 hover:text-ink"
         >
           <Plus className="h-4 w-4" /> Before / after the deadline
         </button>
@@ -326,7 +326,7 @@ export function ReminderEditor({ value = [], onChange, emptyText = 'No reminders
           <button
             type="button"
             onClick={() => onChange?.([...list, repeatingRule('HOURLY')])}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-white px-3 text-sm font-medium text-ink-soft hover:border-slate-300 hover:text-ink"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-card px-3 text-sm font-medium text-ink-soft hover:border-slate-300 hover:text-ink"
           >
             <Bell className="h-4 w-4" /> Repeat until done
           </button>

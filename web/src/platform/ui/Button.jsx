@@ -9,7 +9,7 @@ import { Loader2 } from 'lucide-react';
 
 const VARIANTS = {
   primary: 'bg-brand text-white hover:bg-brand-dark shadow-sm',
-  secondary: 'bg-white text-ink border border-line hover:bg-slate-50 shadow-sm',
+  secondary: 'bg-card text-ink border border-line hover:bg-slate-50 shadow-sm',
   soft: 'bg-brand-soft text-brand hover:bg-brand/15',
   ghost: 'text-ink-soft hover:bg-slate-100 hover:text-ink',
   danger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm',

@@ -102,7 +102,7 @@ export function TaskRow({ task, meId = '', onOpen, onAction, onSwipe, nudgedAt =
                   </span>
                 )}
                 <DueChip task={task} />
-                {task.category && <span className="rounded-md bg-white/70 px-1.5 text-ink-soft">{task.category}</span>}
+                {task.category && <span className="rounded-md bg-card/70 px-1.5 text-ink-soft">{task.category}</span>}
                 {team && (
                   <span className="inline-flex items-center gap-1 text-ink-soft">
                     <Users className="h-3 w-3 text-ink-faint" /> {team}
@@ -148,7 +148,7 @@ export function TaskRow({ task, meId = '', onOpen, onAction, onSwipe, nudgedAt =
             </div>
           </div>
         </div>
-        {task.stateNote && task.status === 'CANCELLED' && <p className="mt-2 border-t border-black/5 pt-2 text-xs text-ink-soft">{task.stateNote}</p>}
+        {task.stateNote && task.status === 'CANCELLED' && <p className="mt-2 border-t border-line pt-2 text-xs text-ink-soft">{task.stateNote}</p>}
       </div>
     </SwipeRow>
   );

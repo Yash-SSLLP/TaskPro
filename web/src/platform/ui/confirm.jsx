@@ -99,7 +99,7 @@ export function ConfirmProvider({ children }) {
                   accept();
                 }
               }}
-              className="block w-full resize-y rounded-xl border border-line bg-white px-3.5 py-2.5 text-[15px] text-ink shadow-sm placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+              className="block w-full resize-y rounded-xl border border-line bg-card px-3.5 py-2.5 text-[15px] text-ink shadow-sm placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
             />
             {error && <p className="text-sm text-red-600">{error}</p>}
           </div>

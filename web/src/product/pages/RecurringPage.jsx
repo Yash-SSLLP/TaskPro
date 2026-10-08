@@ -111,7 +111,7 @@ export function RecurringPage() {
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-white px-3 shadow-sm sm:max-w-sm">
+        <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-card px-3 shadow-sm sm:max-w-sm">
           <Search className="h-4 w-4 text-ink-faint" />
           <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Search schedules" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none" aria-label="Search schedules" />
         </label>

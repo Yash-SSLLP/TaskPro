@@ -69,7 +69,7 @@ export function NudgeBell({ task, override = null, onNudged, labelled = false, d
     <button type="button" onClick={ring} disabled={busy || disabled} title={title} aria-label={title} className={clsx('relative grid h-9 w-9 shrink-0 place-items-center rounded-xl border transition disabled:opacity-60', tone)}>
       <Bell className={clsx('h-4 w-4', busy && 'animate-pulse')} />
       {waiting && (
-        <span className="tnum pointer-events-none absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-md border border-line bg-white px-1 text-[9.5px] font-bold leading-4 text-ink-soft">
+        <span className="tnum pointer-events-none absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-md border border-line bg-card px-1 text-[9.5px] font-bold leading-4 text-ink-soft">
           {state.waitMin}m
         </span>
       )}

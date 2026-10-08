@@ -41,15 +41,15 @@ import { AssignTaskModal } from './AssignTaskModal';
 import { SaveTemplateModal } from './TaskTemplates';
 import { teamNameOf } from './TaskRow';
 
-const CARD = 'rounded-2xl border border-line bg-white shadow-card';
+const CARD = 'rounded-2xl border border-line bg-card shadow-card';
 const SECTION = 'flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft';
 const BTN = 'inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border px-3.5 text-sm font-semibold transition';
 const TONES = {
   go: 'border-transparent bg-emerald-600 text-white hover:bg-emerald-700',
   send: 'border-transparent bg-brand text-white hover:bg-brand-dark',
-  ghost: 'border-line bg-white text-ink hover:border-slate-300 hover:text-brand',
+  ghost: 'border-line bg-card text-ink hover:border-slate-300 hover:text-brand',
   warn: 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100',
-  danger: 'border-line bg-white text-ink-soft hover:border-red-300 hover:text-red-600',
+  danger: 'border-line bg-card text-ink-soft hover:border-red-300 hover:text-red-600',
 };
 
 /** Rows whose note the ENGINE writes, not a person. */
@@ -129,7 +129,7 @@ function MenuChip({ label, className, style, dot, items = [], onPick, title }) {
         <ChevronDown className="h-3 w-3 opacity-70" />
       </button>
       {open && (
-        <div className="absolute left-0 top-full z-30 mt-1 min-w-[11rem] rounded-xl border border-line bg-white py-1 shadow-pop" role="listbox">
+        <div className="absolute left-0 top-full z-30 mt-1 min-w-[11rem] rounded-xl border border-line bg-card py-1 shadow-pop" role="listbox">
           {items.map((it) => (
             <button
               key={it.key}
@@ -198,7 +198,7 @@ function ProgressPanel({ task, can, accent, onSaved }) {
       />
       <div className="mt-2 flex flex-wrap gap-1.5">
         {PROGRESS_STEPS.map((step) => (
-          <button key={step} type="button" onClick={() => commit(step)} className={clsx('h-8 rounded-lg border px-3 text-xs font-semibold', value === step ? 'border-brand bg-brand text-white' : 'border-line bg-white text-ink-soft hover:border-slate-300')}>
+          <button key={step} type="button" onClick={() => commit(step)} className={clsx('h-8 rounded-lg border px-3 text-xs font-semibold', value === step ? 'border-brand bg-brand text-white' : 'border-line bg-card text-ink-soft hover:border-slate-300')}>
             {step}%
           </button>
         ))}
@@ -624,7 +624,7 @@ export function TaskDetailBody({ taskId, initialEdit = false, onChanged, onOpenT
                 {task.code || 'Task'}
               </span>
               {parentId && (
-                <button type="button" onClick={() => onOpenTask?.(parentId)} className="inline-flex items-center gap-1 rounded-lg bg-white/70 px-2 py-0.5 font-medium text-ink-soft hover:text-brand" title="Open the task this is a piece of">
+                <button type="button" onClick={() => onOpenTask?.(parentId)} className="inline-flex items-center gap-1 rounded-lg bg-card/70 px-2 py-0.5 font-medium text-ink-soft hover:text-brand" title="Open the task this is a piece of">
                   <GitBranch className="h-3 w-3" /> part of {task.parentCode || task.parentTitle || 'a bigger task'}
                 </button>
               )}
@@ -654,12 +654,12 @@ export function TaskDetailBody({ taskId, initialEdit = false, onChanged, onOpenT
                     setTitling(false);
                   }
                 }}
-                className="mt-1.5 w-full rounded-xl border border-white bg-white/90 px-3 py-1.5 text-xl font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30 sm:text-2xl"
+                className="mt-1.5 w-full rounded-xl border border-card bg-card/90 px-3 py-1.5 text-xl font-bold text-ink focus:outline-none focus:ring-2 focus:ring-brand/30 sm:text-2xl"
                 aria-label="Task title"
               />
             ) : (
               <h1
-                className={clsx('mt-1.5 break-words text-xl font-bold leading-snug text-ink sm:text-2xl', can.canEdit && '-mx-1 cursor-text rounded-xl px-1 hover:bg-white/60')}
+                className={clsx('mt-1.5 break-words text-xl font-bold leading-snug text-ink sm:text-2xl', can.canEdit && '-mx-1 cursor-text rounded-xl px-1 hover:bg-card/60')}
                 onClick={() => can.canEdit && setTitling(true)}
                 title={can.canEdit ? 'Click to rename' : undefined}
               >
@@ -1023,7 +1023,7 @@ export function TaskDetailBody({ taskId, initialEdit = false, onChanged, onOpenT
           {can.canComment && (
             <div className="shrink-0 border-t border-line bg-slate-50/70 px-3 py-2.5">
               {answer && (
-                <div className="mb-2 flex items-start gap-2 rounded-xl border border-line bg-white px-2.5 py-2">
+                <div className="mb-2 flex items-start gap-2 rounded-xl border border-line bg-card px-2.5 py-2">
                   <Send className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand" />
                   <span className="min-w-0 flex-1">
                     <span className="block text-xs font-semibold text-ink">{answer.title}</span>
@@ -1047,7 +1047,7 @@ export function TaskDetailBody({ taskId, initialEdit = false, onChanged, onOpenT
                 rows={answer ? 3 : 2}
                 maxLength={5000}
                 placeholder={answer ? 'What happened?' : 'Write a remark…'}
-                className="block w-full resize-y rounded-xl border border-line bg-white px-3 py-2 text-sm placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                className="block w-full resize-y rounded-xl border border-line bg-card px-3 py-2 text-sm placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
               />
               {voice && (
                 <div className="mt-2">
@@ -1057,7 +1057,7 @@ export function TaskDetailBody({ taskId, initialEdit = false, onChanged, onOpenT
               {files.length > 0 && (
                 <ul className="mt-2 space-y-1">
                   {files.map((f, i) => (
-                    <li key={`${f.name}-${i}`} className="flex items-center gap-2 rounded-lg bg-white px-2 py-1.5 text-xs">
+                    <li key={`${f.name}-${i}`} className="flex items-center gap-2 rounded-lg bg-card px-2 py-1.5 text-xs">
                       <Paperclip className="h-3 w-3 shrink-0 text-ink-faint" />
                       <span className="min-w-0 flex-1 truncate text-ink-soft">{f.name}</span>
                       <button type="button" onClick={() => setFiles(files.filter((_, j) => j !== i))} className="shrink-0 text-ink-faint hover:text-red-600" aria-label={`Remove ${f.name}`}>
@@ -1069,10 +1069,10 @@ export function TaskDetailBody({ taskId, initialEdit = false, onChanged, onOpenT
               )}
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 {!voice && <VoiceRecorder value={voice} onChange={setVoice} compact />}
-                <button type="button" onClick={() => imageRef.current?.click()} title="Attach an image" aria-label="Attach an image" className="grid h-10 w-10 place-items-center rounded-xl border border-line bg-white text-ink-soft hover:border-slate-300 hover:text-brand">
+                <button type="button" onClick={() => imageRef.current?.click()} title="Attach an image" aria-label="Attach an image" className="grid h-10 w-10 place-items-center rounded-xl border border-line bg-card text-ink-soft hover:border-slate-300 hover:text-brand">
                   <ImageIcon className="h-4 w-4" />
                 </button>
-                <button type="button" onClick={() => fileRef.current?.click()} title="Attach a file" aria-label="Attach a file" className="grid h-10 w-10 place-items-center rounded-xl border border-line bg-white text-ink-soft hover:border-slate-300 hover:text-brand">
+                <button type="button" onClick={() => fileRef.current?.click()} title="Attach a file" aria-label="Attach a file" className="grid h-10 w-10 place-items-center rounded-xl border border-line bg-card text-ink-soft hover:border-slate-300 hover:text-brand">
                   <Paperclip className="h-4 w-4" />
                 </button>
                 <input

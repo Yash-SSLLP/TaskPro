@@ -10,7 +10,6 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import productConfig from '../../product/config';
 import { tr } from '../../i18n';
-import { getApiUrl } from '../api';
 import { Download, RefreshCw } from '../icons';
 import { colors, font, radius, space, type } from '../theme';
 import { Button, Card, Divider, Header, Notice, Screen, toast } from '../ui';
@@ -104,7 +103,6 @@ export default function AppUpdateScreen() {
         loading={checking}
         disabled={downloading}
       />
-      <Text style={[type.caption, styles.source]}>{tr('Updates come from {host}', { host: getApiUrl().replace(/^https?:\/\//, '') })}</Text>
     </Screen>
   );
 }
@@ -119,5 +117,4 @@ const styles = StyleSheet.create({
   fill: { height: 8, borderRadius: radius.chip, backgroundColor: colors.primary },
   button: { marginTop: space(4) },
   hint: { marginTop: space(3), lineHeight: 18 },
-  source: { textAlign: 'center', marginTop: space(4) },
 });

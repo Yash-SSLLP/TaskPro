@@ -678,7 +678,7 @@ export default function TaskDetailScreen() {
           ) : null}
           {extraMoves.map(({ to }) => {
             const w = moveWording(task.status, to);
-            const style = w.tone === 'danger' ? { variant: 'danger' } : w.tone === 'go' ? { color: colors.success } : w.tone === 'primary' ? {} : { variant: 'secondary' };
+            const style = w.tone === 'danger' ? { variant: 'danger' } : w.tone === 'go' ? { color: colors.successFill } : w.tone === 'primary' ? {} : { variant: 'secondary' };
             return <Button key={to} title={w.label} icon={w.Icon} {...style} onPress={() => setSheet({ kind: 'update', action: 'status', to })} />;
           })}
           <Text style={styles.cardHint}>{tr('Every move carries a note or a voice note — that is what the history is made of.')}</Text>

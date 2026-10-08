@@ -115,11 +115,11 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.text,
+    backgroundColor: colors.inverse,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: colors.white,
+    borderColor: colors.card,
   },
   choice: { paddingHorizontal: space(1) },
 });

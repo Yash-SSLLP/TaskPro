@@ -78,7 +78,7 @@ export function TaskBoard({ params, onOpen, onAction }) {
               <header className="flex items-center gap-2 px-3 py-2.5">
                 <span className={clsx('h-2 w-2 rounded-full', STATUS_DOT[col.key])} />
                 <h3 className="text-sm font-semibold text-ink">{meta?.label || col.boardLabel || col.label}</h3>
-                <span className="tnum ml-auto rounded-full bg-white px-2 text-xs font-semibold text-ink-soft">{col.count ?? col.tasks?.length ?? ''}</span>
+                <span className="tnum ml-auto rounded-full bg-card px-2 text-xs font-semibold text-ink-soft">{col.count ?? col.tasks?.length ?? ''}</span>
               </header>
               <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-2 pb-2">
                 {!col.tasks && [0, 1, 2].map((i) => <Skeleton key={i} className="h-20 rounded-xl" />)}

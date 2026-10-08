@@ -7,6 +7,7 @@
  * row). What lives here is colour, wording and date phrasing.
  */
 import { dayKey, formatDate, formatTime } from '../platform/format';
+import { isDark } from '../platform/theme';
 
 // ===== States =====
 
@@ -96,6 +97,15 @@ export const PRIORITY_COLORS = {
 export const DONE_COLOR = { ink: '#027A48', bg: '#ECFDF3', border: '#6CE9A6', solid: '#12B76A' };
 export const CANCELLED_COLOR = { ink: '#667085', bg: '#F9FAFB', border: '#EAECF0', solid: '#98A2B3' };
 
+/** The same keys for the dark theme. The server only sends light tints, so dark always uses these. */
+const DARK_COLORS = {
+  Urgent: { ink: '#FDA29B', bg: '#3B1714', border: '#7A271A', solid: '#F04438' },
+  Medium: { ink: '#FEC84B', bg: '#3A2A0C', border: '#7A4A06', solid: '#F79009' },
+  Low: { ink: '#D0D5DD', bg: '#1F2937', border: '#344054', solid: '#98A2B3' },
+  DONE: { ink: '#6CE9A6', bg: '#0B2E1F', border: '#05603A', solid: '#12B76A' },
+  CANCELLED: { ink: '#98A2B3', bg: '#1A2230', border: '#2B3546', solid: '#667085' },
+};
+
 let servedPalette = null;
 /** Called once `/meta` lands, so every chip uses the server's palette. */
 export function setServedPalette(meta) {
@@ -109,6 +119,7 @@ export function setServedPalette(meta) {
 
 export function priorityColor(priority) {
   const key = normalisePriority(priority) || DEFAULT_PRIORITY;
+  if (isDark()) return { key, ...(DARK_COLORS[key] || DARK_COLORS[DEFAULT_PRIORITY]) };
   const palette = servedPalette?.priority?.[key] || PRIORITY_COLORS[key] || PRIORITY_COLORS[DEFAULT_PRIORITY];
   return { key, ...palette };
 }
@@ -123,6 +134,10 @@ function fallbackKey(task) {
 
 /** `{ key, ink, bg, border, solid }` for one task. */
 export function accentFor(task) {
+  if (isDark()) {
+    const key = task?.accent?.key || fallbackKey(task);
+    return { key, ...(DARK_COLORS[key] || priorityColor(task?.priority)) };
+  }
   if (served(task?.accent)) return { key: task.accent.key || fallbackKey(task), ...task.accent };
   const key = fallbackKey(task);
   if (key === 'DONE') return { key, ...(servedPalette?.done || DONE_COLOR) };

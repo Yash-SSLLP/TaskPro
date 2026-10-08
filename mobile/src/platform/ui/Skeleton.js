@@ -59,7 +59,7 @@ export function SkeletonCards({ count = 3, height = 76 }) {
 }
 
 const styles = StyleSheet.create({
-  block: { backgroundColor: '#e2e8f0' },
+  block: { backgroundColor: colors.border },
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.card,

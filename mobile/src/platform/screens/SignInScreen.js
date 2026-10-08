@@ -1,21 +1,17 @@
 /**
  * Sign in: logo, one line about the product, login + password, and the ways
- * out: forgot password, create an account, server settings, and the app's
- * language (top right).
+ * out: forgot password, create an account, and the app's language (top
+ * right). The server address is not shown: a long press on the logo opens
+ * Server settings, for whoever needs to point the app somewhere else.
  */
-import React, { useCallback, useRef, useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import React, { useRef, useState } from 'react';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import productConfig from '../../product/config';
 import { tr } from '../../i18n';
-import { getApiUrl } from '../api';
-import { Server } from '../icons';
 import { LanguageButton, LanguageSheet } from '../language';
 import { useSession } from '../session';
 import { colors, font, space, type } from '../theme';
 import { Button, Notice, Screen, TextButton, TextField } from '../ui';
-
-const hostOf = (url) => url.replace(/^https?:\/\//, '');
 
 export default function SignInScreen({ navigation }) {
   const signIn = useSession((s) => s.signIn);
@@ -27,8 +23,6 @@ export default function SignInScreen({ navigation }) {
   const [error, setError] = useState(null);
   const [langOpen, setLangOpen] = useState(false);
   const passwordRef = useRef(null);
-  const [host, setHost] = useState(hostOf(getApiUrl()));
-  useFocusEffect(useCallback(() => setHost(hostOf(getApiUrl())), []));
 
   const submit = async () => {
     const next = {};
@@ -49,7 +43,9 @@ export default function SignInScreen({ navigation }) {
     <Screen scroll keyboard contentStyle={styles.content}>
       <LanguageButton onPress={() => setLangOpen(true)} />
       <View style={styles.brand}>
-        <Image source={productConfig.logo} style={styles.logo} accessibilityIgnoresInvertColors />
+        <Pressable onLongPress={() => navigation.navigate('ServerSettings')} delayLongPress={1500} accessible={false}>
+          <Image source={productConfig.logo} style={styles.logo} accessibilityIgnoresInvertColors />
+        </Pressable>
         <Text style={styles.name}>{productConfig.name}</Text>
         <Text style={styles.tagline}>{tr(productConfig.tagline)}</Text>
       </View>
@@ -94,13 +90,6 @@ export default function SignInScreen({ navigation }) {
         <Button title={tr('Create your account')} variant="secondary" onPress={() => navigation.navigate('SignUp')} />
       </View>
 
-      <TextButton
-        title={tr('Server settings · {host}', { host })}
-        icon={Server}
-        color={colors.textSecondary}
-        onPress={() => navigation.navigate('ServerSettings')}
-        style={styles.server}
-      />
       <LanguageSheet visible={langOpen} onClose={() => setLangOpen(false)} />
     </Screen>
   );
@@ -115,5 +104,4 @@ const styles = StyleSheet.create({
   forgot: { marginTop: space(2) },
   newHere: { marginTop: space(8), gap: space(2) },
   newHereText: { ...type.small, textAlign: 'center' },
-  server: { marginTop: 'auto', paddingTop: space(8) },
 });

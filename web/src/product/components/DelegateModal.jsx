@@ -33,7 +33,7 @@ export function pieceItems(rows = [], tz) {
   }));
 }
 
-const inputCls = 'block h-11 w-full rounded-xl border border-line bg-white px-3 text-[15px] focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
+const inputCls = 'block h-11 w-full rounded-xl border border-line bg-card px-3 text-[15px] focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
 
 /** The piece rows — shared with the assign form's "split it straight away". */
 export function PieceEditor({ rows, onRows, people = [], defaultOpenTo = [], maxPieces = 50 }) {
@@ -55,7 +55,7 @@ export function PieceEditor({ rows, onRows, people = [], defaultOpenTo = [], max
 
   return (
     <div className="space-y-3">
-      <div className="rounded-xl border border-line bg-white p-3">
+      <div className="rounded-xl border border-line bg-card p-3">
         <label className="flex items-center gap-2 text-sm font-medium text-ink">
           <input
             type="checkbox"
@@ -81,7 +81,7 @@ export function PieceEditor({ rows, onRows, people = [], defaultOpenTo = [], max
       {rows.map((row, i) => {
         const colour = priorityColor(row.priority || 'Medium');
         return (
-          <div key={row.key} className="rounded-xl border border-line bg-white p-3">
+          <div key={row.key} className="rounded-xl border border-line bg-card p-3">
             <div className="flex items-start gap-2">
               <span className="tnum mt-2.5 inline-flex h-6 min-w-[24px] items-center justify-center rounded-lg border text-[11px] font-semibold" style={tintStyle(colour)}>
                 {i + 1}

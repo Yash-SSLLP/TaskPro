@@ -2,12 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Brand colours as "r g b" so Tailwind can add opacity. Task Pro is indigo (Seq Book: emerald). */
+/* Colours as "r g b" so Tailwind can add opacity. Task Pro is indigo (Seq Book: emerald).
+   html.dark (set by src/platform/theme.js) swaps them; the slate and hue scales
+   are swapped by the plugin in tailwind.config.js. */
 :root {
   --brand: 79 70 229; /* #4f46e5 */
   --brand-dark: 67 56 202; /* #4338ca */
   --brand-soft: 238 242 255; /* #eef2ff */
   --brand-accent: 99 102 241; /* #6366f1 */
+  --ink: 15 23 42; /* #0f172a */
+  --ink-soft: 100 116 139; /* #64748b */
+  --ink-faint: 148 163 184; /* #94a3b8 */
+  --line: 226 232 240; /* #e2e8f0 */
+  --page: 248 250 252; /* #f8fafc */
+  --card: 255 255 255;
+  /* How much of a colour tints a selected tile. */
+  --tint: 7%;
+  color-scheme: light;
+}
+
+html.dark {
+  --brand: 99 102 241; /* #6366f1: a step lighter, to read on the dark surface */
+  --brand-dark: 79 70 229;
+  --brand-soft: 30 27 75; /* #1e1b4b */
+  --brand-accent: 129 140 248;
+  --ink: 226 232 240; /* #e2e8f0 */
+  --ink-soft: 148 163 184; /* #94a3b8 */
+  --ink-faint: 100 116 139; /* #64748b */
+  --line: 38 50 72; /* #263248 */
+  --page: 11 17 32; /* #0b1120 */
+  --card: 20 28 47; /* #141c2f */
+  --tint: 16%;
+  color-scheme: dark;
 }
 
 @layer base {

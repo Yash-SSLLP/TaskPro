@@ -128,7 +128,7 @@ export function TaskStatusMenu({ task, onAction, onOpen, className }) {
       >
         <span className={clsx('h-2 w-2 shrink-0 rounded-full', STATUS_DOT[badge.key] || STATUS_DOT.PENDING)} aria-hidden />
         <span className="whitespace-nowrap">{badge.label}</span>
-        {actions.length > 0 && <span className="tnum rounded-full bg-white/70 px-1.5 text-[10px] font-bold">{actions.length}</span>}
+        {actions.length > 0 && <span className="tnum rounded-full bg-card/70 px-1.5 text-[10px] font-bold">{actions.length}</span>}
         <ChevronDown className={clsx('h-3.5 w-3.5 shrink-0 opacity-70 transition-transform', open && 'rotate-180')} aria-hidden />
       </button>
 
@@ -140,7 +140,7 @@ export function TaskStatusMenu({ task, onAction, onOpen, className }) {
             aria-label={`Status of ${task?.title || 'this task'}`}
             onClick={(e) => e.stopPropagation()}
             style={pos ? { top: pos.top, left: pos.left, width: pos.width } : { top: -9999, left: -9999, width: MENU_WIDTH }}
-            className="fixed z-[80] overflow-hidden rounded-2xl border border-line bg-white p-1.5 shadow-pop"
+            className="fixed z-[80] overflow-hidden rounded-2xl border border-line bg-card p-1.5 shadow-pop"
           >
             <p className="px-3 pb-1.5 pt-2 text-[10px] font-semibold uppercase tracking-wider text-ink-faint">{actions.length ? 'Change status' : 'Status'}</p>
             {actions.length === 0 && <p className="px-3 pb-2 text-xs text-ink-soft">Nothing for you to change on this one right now.</p>}

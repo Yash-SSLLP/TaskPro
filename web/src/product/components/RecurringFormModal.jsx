@@ -22,7 +22,7 @@ import { PeoplePicker } from './PeoplePicker';
 import { ReminderEditor, Stepper, WeekdayPicker, chipCls } from './Reminders';
 import { VoiceRecorder } from './VoiceNote';
 
-const inputCls = 'block h-11 w-full rounded-xl border border-line bg-white px-3 text-[15px] text-ink shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
+const inputCls = 'block h-11 w-full rounded-xl border border-line bg-card px-3 text-[15px] text-ink shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
 const labelCls = 'mb-1.5 flex items-center gap-1.5 text-sm font-medium text-ink';
 
 /** A stored day (midnight in some zone, or "YYYY-MM-DD") → "YYYY-MM-DD" in mine. */
@@ -261,7 +261,7 @@ export function RecurringFormModal({ open, onClose, onSaved, meta, scheduleId = 
           <p className="text-xs font-bold uppercase tracking-wider text-ink-faint">Repeats</p>
           <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 min-[380px]:grid-cols-4" role="tablist">
             {RECUR_FREQUENCIES.map((f) => (
-              <button key={f} type="button" role="tab" aria-selected={form.frequency === f} onClick={() => set({ frequency: f, leadDays: null })} className={clsx('h-9 rounded-lg text-sm font-semibold', form.frequency === f ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink')}>
+              <button key={f} type="button" role="tab" aria-selected={form.frequency === f} onClick={() => set({ frequency: f, leadDays: null })} className={clsx('h-9 rounded-lg text-sm font-semibold', form.frequency === f ? 'bg-card text-ink shadow-sm' : 'text-ink-soft hover:text-ink')}>
                 {FREQUENCY_LABELS[f]}
               </button>
             ))}
@@ -282,7 +282,7 @@ export function RecurringFormModal({ open, onClose, onSaved, meta, scheduleId = 
             <div className="space-y-2">
               <div className="inline-flex rounded-xl bg-slate-100 p-1">
                 {[['DATE', 'On a date'], ['WEEKDAY', 'On a weekday']].map(([k, label]) => (
-                  <button key={k} type="button" aria-pressed={form.monthlyMode === k} onClick={() => set({ monthlyMode: k })} className={clsx('h-8 rounded-lg px-3 text-xs font-semibold', form.monthlyMode === k ? 'bg-white text-ink shadow-sm' : 'text-ink-soft')}>
+                  <button key={k} type="button" aria-pressed={form.monthlyMode === k} onClick={() => set({ monthlyMode: k })} className={clsx('h-8 rounded-lg px-3 text-xs font-semibold', form.monthlyMode === k ? 'bg-card text-ink shadow-sm' : 'text-ink-soft')}>
                     {label}
                   </button>
                 ))}

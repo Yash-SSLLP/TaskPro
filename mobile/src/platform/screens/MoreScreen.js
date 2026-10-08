@@ -1,19 +1,19 @@
 /**
  * More: me (name and Task Pin), the places that are not tabs (Contacts,
  * Teams, Dashboard; Recurring for the Super Admin), my settings, language,
- * account, about and sign out.
+ * appearance, account, about and sign out.
  */
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import productConfig from '../../product/config';
 import { languageName, tr, useLang } from '../../i18n';
-import { getApiUrl } from '../api';
 import { useContacts, useTeams } from '../hooks';
-import { BookUser, Download, Info, KeyRound, Languages, LayoutDashboard, LogOut, RefreshCw, Server, Settings, ShieldCheck, Trash, User, Users } from '../icons';
+import { themeLabel, ThemeSheet } from '../appearance';
+import { BookUser, Download, Info, KeyRound, Languages, LayoutDashboard, LogOut, RefreshCw, Settings, ShieldCheck, SunMoon, Trash, User, Users } from '../icons';
 import { LanguageSheet } from '../language';
 import { pinOf, roleLabel } from '../pin';
 import { isSuperAdmin, useSession } from '../session';
-import { colors, font, radius, space, type } from '../theme';
+import { colors, font, radius, space, theme, type } from '../theme';
 import { Avatar, Badge, Card, confirm, Header, ListRow, Screen, Section } from '../ui';
 import { canSelfUpdate, installedVersion, useUpdate } from '../updates';
 
@@ -30,6 +30,7 @@ export default function MoreScreen({ navigation }) {
   const contacts = useContacts().data;
   const teams = useTeams().data;
   const [langOpen, setLangOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const update = useUpdate((s) => s.available);
 
   const askSignOut = async () => {
@@ -72,6 +73,7 @@ export default function MoreScreen({ navigation }) {
       <Section title={tr('Settings')}>
         <ListRow icon={Settings} title={tr('My settings')} subtitle={tr('Time zone, reviews, reminders, daily summary')} onPress={() => navigation.navigate('Settings')} />
         <ListRow icon={Languages} title={tr('Language')} right={languageName(lang)} onPress={() => setLangOpen(true)} />
+        <ListRow icon={SunMoon} title={tr('Appearance')} right={themeLabel(theme.mode)} onPress={() => setThemeOpen(true)} />
       </Section>
 
       <Section title={tr('Account')}>
@@ -92,13 +94,13 @@ export default function MoreScreen({ navigation }) {
           />
         ) : null}
         <ListRow icon={ShieldCheck} title={tr('Privacy policy')} onPress={() => navigation.navigate('PrivacyPolicy')} />
-        <ListRow icon={Server} title={tr('Server')} subtitle={getApiUrl().replace(/^https?:\/\//, '')} />
       </Section>
 
       <Section>
         <ListRow icon={LogOut} title={tr('Sign out')} danger onPress={askSignOut} chevron={false} />
       </Section>
       <LanguageSheet visible={langOpen} onClose={() => setLangOpen(false)} />
+      <ThemeSheet visible={themeOpen} onClose={() => setThemeOpen(false)} />
     </Screen>
   );
 }

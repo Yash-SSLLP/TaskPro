@@ -50,7 +50,7 @@ function palette(variant, color) {
     case 'secondary':
       return { bg: colors.card, fg: color || colors.text, border: colors.borderStrong };
     case 'danger':
-      return { bg: colors.danger, fg: colors.white, border: colors.danger };
+      return { bg: colors.dangerFill, fg: colors.white, border: colors.dangerFill };
     case 'ghost':
       return { bg: 'transparent', fg: color || colors.primary, border: 'transparent' };
     case 'soft':

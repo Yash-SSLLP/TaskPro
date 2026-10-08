@@ -3,10 +3,10 @@
     "name": "Task Pro",
     "slug": "taskpro",
     "scheme": "taskpro",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "in.salestracker.taskpro",
@@ -17,7 +17,7 @@
     },
     "android": {
       "package": "in.salestracker.taskpro",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#4f46e5"
@@ -51,7 +51,11 @@
           "image": "./assets/logo.png",
           "imageWidth": 160,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "image": "./assets/logo.png",
+            "backgroundColor": "#0b1120"
+          }
         }
       ],
       [
@@ -86,7 +90,8 @@
           }
         }
       ],
-      "./plugins/withBuildTuning"
+      "./plugins/withBuildTuning",
+      "expo-asset"
     ],
     "extra": {
       "apiUrl": "https://taskpro-self.vercel.app"

@@ -43,7 +43,7 @@ export function ToastHost() {
 
   if (!shown) return null;
   const Icon = shown.tone === 'error' ? CircleAlert : shown.tone === 'success' ? CircleCheck : null;
-  const bg = shown.tone === 'error' ? colors.danger : colors.text;
+  const bg = shown.tone === 'error' ? colors.dangerFill : colors.inverse;
   return (
     <View style={[styles.wrap, { bottom: insets.bottom + 88 }]}>
       <Animated.View

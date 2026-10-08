@@ -78,7 +78,7 @@ function Pill({ on, onClick, children, style }) {
       onClick={onClick}
       aria-pressed={on}
       style={style}
-      className={clsx('inline-flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition', style ? '' : on ? 'border-brand bg-brand text-white' : 'border-line bg-white text-ink-soft hover:border-slate-300')}
+      className={clsx('inline-flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition', style ? '' : on ? 'border-brand bg-brand text-white' : 'border-line bg-card text-ink-soft hover:border-slate-300')}
     >
       {children}
     </button>
@@ -223,7 +223,7 @@ export function TaskFilters({ open, onClose, meta, categories = [], scope = 'min
 
         <Section icon={ArrowUpDown} title="Sort by">
           <div className="flex items-center gap-2">
-            <select value={draft.sort} onChange={(e) => set({ sort: e.target.value, dir: naturalDir(sorts, e.target.value) })} aria-label="Sort by" className="h-10 flex-1 rounded-xl border border-line bg-white px-3 text-sm">
+            <select value={draft.sort} onChange={(e) => set({ sort: e.target.value, dir: naturalDir(sorts, e.target.value) })} aria-label="Sort by" className="h-10 flex-1 rounded-xl border border-line bg-card px-3 text-sm">
               {sorts.map((s) => (
                 <option key={s.key} value={s.key}>
                   {s.label}

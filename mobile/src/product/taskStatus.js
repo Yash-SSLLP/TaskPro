@@ -9,7 +9,7 @@
  * language switch redraws them.
  */
 import { tr } from '../i18n';
-import { colors } from '../platform/theme';
+import { colors, theme } from '../platform/theme';
 
 export const STATUS = {
   PENDING: 'PENDING',
@@ -53,7 +53,7 @@ export function acceptanceLabel(a) {
 export const DECLINED_COLORS = { bg: colors.dangerSoft, fg: colors.danger };
 export const AWAITING_COLORS = { bg: colors.warningSoft, fg: colors.warning };
 /** In review: violet, the one hue no status or priority already owns. */
-export const REVIEW_COLORS = { bg: '#ede9fe', fg: '#6d28d9' };
+export const REVIEW_COLORS = theme.dark ? { bg: '#2e1f5e', fg: '#c4b5fd' } : { bg: '#ede9fe', fg: '#6d28d9' };
 
 /** The colours a status chip is drawn in. Red is reserved for overdue. */
 export function statusColors(status, overdue = false) {
@@ -102,14 +102,24 @@ export function priorityLabel(p) {
   return tr('Medium');
 }
 
-/** A copy of the server's palette, used when a row carries none. */
-export const PRIORITY_COLORS = {
-  Urgent: { ink: '#B42318', bg: '#FEF3F2', border: '#FDA29B', solid: '#D92D20' },
-  Medium: { ink: '#B54708', bg: '#FFFAEB', border: '#FEC84B', solid: '#F79009' },
-  Low: { ink: '#475467', bg: '#F2F4F7', border: '#D0D5DD', solid: '#98A2B3' },
-};
-export const DONE_COLOR = { ink: '#027A48', bg: '#ECFDF3', border: '#6CE9A6', solid: '#12B76A' };
-export const CANCELLED_COLOR = { ink: '#667085', bg: '#F9FAFB', border: '#EAECF0', solid: '#98A2B3' };
+/** A copy of the server's palette, used when a row carries none (and in dark mode, whose tints the server does not send). */
+export const PRIORITY_COLORS = theme.dark
+  ? {
+      Urgent: { ink: '#FDA29B', bg: '#3B1714', border: '#7A271A', solid: '#F04438' },
+      Medium: { ink: '#FEC84B', bg: '#3A2A0C', border: '#7A4A06', solid: '#F79009' },
+      Low: { ink: '#D0D5DD', bg: '#1F2937', border: '#344054', solid: '#98A2B3' },
+    }
+  : {
+      Urgent: { ink: '#B42318', bg: '#FEF3F2', border: '#FDA29B', solid: '#D92D20' },
+      Medium: { ink: '#B54708', bg: '#FFFAEB', border: '#FEC84B', solid: '#F79009' },
+      Low: { ink: '#475467', bg: '#F2F4F7', border: '#D0D5DD', solid: '#98A2B3' },
+    };
+export const DONE_COLOR = theme.dark
+  ? { ink: '#6CE9A6', bg: '#0B2E1F', border: '#05603A', solid: '#12B76A' }
+  : { ink: '#027A48', bg: '#ECFDF3', border: '#6CE9A6', solid: '#12B76A' };
+export const CANCELLED_COLOR = theme.dark
+  ? { ink: '#98A2B3', bg: '#1A2230', border: '#2B3546', solid: '#667085' }
+  : { ink: '#667085', bg: '#F9FAFB', border: '#EAECF0', solid: '#98A2B3' };
 
 const served = (accent) => Boolean(accent && accent.solid && accent.bg && accent.border && accent.ink);
 
@@ -126,7 +136,8 @@ export function priorityColor(priority) {
 
 /** THE colour rule for every card: completed → green · cancelled → grey and faded · otherwise the priority. */
 export function accentFor(task) {
-  const raw = served(task?.accent)
+  // The server's tints are made for a light surface; dark mode uses its own.
+  const raw = served(task?.accent) && !theme.dark
     ? { key: task.accent.key || fallbackKey(task), ...task.accent }
     : (() => {
         const key = fallbackKey(task);
@@ -264,9 +275,9 @@ export function swipeActionsFor(task) {
   const can = task?.can || {};
   const status = task?.status;
   const tone = {
-    success: { fill: colors.success, ink: '#fff' },
-    danger: { fill: colors.danger, ink: '#fff' },
-    warning: { fill: '#B54708', ink: '#fff' },
+    success: { fill: colors.successFill, ink: '#fff' },
+    danger: { fill: colors.dangerFill, ink: '#fff' },
+    warning: { fill: colors.warningFill, ink: '#fff' },
   };
   if (can.canApprove) {
     return {

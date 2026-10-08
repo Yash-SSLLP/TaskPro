@@ -160,7 +160,7 @@ function TeamCard({ team }) {
   return (
     <Link
       to={`/teams/${team.id}`}
-      className="group flex flex-col rounded-2xl border border-line bg-white p-5 shadow-card transition-colors hover:border-brand/40"
+      className="group flex flex-col rounded-2xl border border-line bg-card p-5 shadow-card transition-colors hover:border-brand/40"
     >
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
@@ -291,7 +291,7 @@ function RowMenu({ items, label }) {
         <MoreVertical className="h-5 w-5" aria-hidden />
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 top-10 z-20 w-56 overflow-hidden rounded-xl border border-line bg-white py-1 shadow-pop">
+        <div role="menu" className="absolute right-0 top-10 z-20 w-56 overflow-hidden rounded-xl border border-line bg-card py-1 shadow-pop">
           {items.map(({ label: text, icon: Icon, onClick, danger }) => (
             <button
               key={text}

@@ -8,13 +8,14 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { tr } from '../../i18n';
-import { colors, font } from '../../platform/theme';
+import { colors, font, theme } from '../../platform/theme';
 import { toast } from '../../platform/ui';
 import { nudgeTask } from '../api';
 import { Bell, BellRing } from '../icons';
 import { REVIEW_COLORS, clockOf, nudgeState } from '../taskStatus';
 
-const GOLD = '#A9863A';
+const GOLD = theme.dark ? '#D6B25A' : '#A9863A';
+const GOLD_SOFT = theme.dark ? '#2B2411' : '#fdf6e3';
 
 export default function NudgeBell({ task, override = null, onNudged, size = 36, label = false }) {
   const [busy, setBusy] = useState(false);
@@ -31,7 +32,7 @@ export default function NudgeBell({ task, override = null, onNudged, size = 36, 
 
   const review = state.to === 'approver';
   const tint = review ? REVIEW_COLORS.fg : GOLD;
-  const soft = review ? REVIEW_COLORS.bg : '#fdf6e3';
+  const soft = review ? REVIEW_COLORS.bg : GOLD_SOFT;
   const waiting = state.waitMin > 0;
 
   const ring = async () => {

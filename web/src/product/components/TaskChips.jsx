@@ -154,7 +154,7 @@ export function EmptyTasks({ scope, onAssign, filtered = false, completedHint = 
   };
   const [title, body] = filtered ? ['Nothing matches', 'Try a wider due date, another figure, or clear the filters.'] : lines[scope] || lines.all;
   return (
-    <div className="rounded-2xl border border-dashed border-line bg-white px-6 py-12 text-center">
+    <div className="rounded-2xl border border-dashed border-line bg-card px-6 py-12 text-center">
       <p className="text-[15px] font-semibold text-ink">{title}</p>
       <p className="mx-auto mt-1 max-w-sm text-sm text-ink-soft">{body}</p>
       {onAssign && (

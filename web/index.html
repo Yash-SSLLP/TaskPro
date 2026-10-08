@@ -12,6 +12,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <title>Task Pro</title>
+    <script>
+      // Light / dark before the first paint (src/platform/theme.js keeps it up to date).
+      try {
+        var m = localStorage.getItem('taskpro.theme');
+        if (m === 'dark' || (m !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

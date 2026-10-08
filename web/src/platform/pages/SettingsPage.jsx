@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, ShieldCheck, Trash2 } from 'lucide-react';
+import { LogOut, Monitor, Moon, ShieldCheck, Sun, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../api';
 import { isSuperAdmin, useSession, useSettings } from '../session';
@@ -13,6 +13,7 @@ import { signOutEverywhere } from '../signOut';
 import { Button, Card, Input, PageHeader, PasswordInput, PinCard, Select, Skeleton, Switch } from '../ui';
 import { ReminderEditor } from '../../product/components/Reminders';
 import { AndroidAppDetails } from './mobileApp';
+import { setThemeMode, useTheme } from '../theme';
 
 export function Section({ title, description, children }) {
   return (
@@ -265,6 +266,39 @@ function PreferencesSection() {
   );
 }
 
+const THEME_OPTIONS = [
+  { value: 'system', label: 'System', icon: Monitor },
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
+];
+
+/** Light / dark, kept on this device. */
+function AppearanceSection() {
+  const mode = useTheme((s) => s.mode);
+  return (
+    <Section title="Appearance" description="How Task Pro looks on this device. System follows your computer or phone.">
+      <div className="inline-flex rounded-xl bg-slate-100 p-1" role="radiogroup" aria-label="Appearance">
+        {THEME_OPTIONS.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={mode === o.value}
+            onClick={() => setThemeMode(o.value)}
+            className={
+              'inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition-colors ' +
+              (mode === o.value ? 'bg-card text-ink shadow-sm' : 'text-ink-soft hover:text-ink')
+            }
+          >
+            <o.icon className="h-4 w-4" aria-hidden />
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
 export function SettingsPage() {
   const user = useSession((s) => s.user);
   const navigate = useNavigate();
@@ -276,6 +310,7 @@ export function SettingsPage() {
       {!superAdmin && <PinCard person={user} compact />}
       <PasswordSection />
       <PreferencesSection />
+      <AppearanceSection />
       <Section title="Android app" description="Task Pro on your phone, with reminders and alerts.">
         <AndroidAppDetails />
       </Section>

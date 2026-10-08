@@ -185,7 +185,7 @@ export function PeoplePicker({
         className={clsx(
           'flex min-h-11 w-full flex-wrap items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-sm shadow-sm',
           open ? 'border-brand ring-2 ring-brand/30' : 'border-line',
-          disabled ? 'bg-slate-50 opacity-60' : 'cursor-text bg-white'
+          disabled ? 'bg-slate-50 opacity-60' : 'cursor-text bg-card'
         )}
       >
         {chosen.map((p) => (
@@ -231,7 +231,7 @@ export function PeoplePicker({
         createPortal(
           <div
             ref={panelRef}
-            className="fixed z-[70] flex flex-col overflow-hidden rounded-xl border border-line bg-white shadow-pop"
+            className="fixed z-[70] flex flex-col overflow-hidden rounded-xl border border-line bg-card shadow-pop"
             style={{ left: pos.left, width: pos.width, maxHeight: pos.maxHeight, ...(pos.top !== undefined ? { top: pos.top } : { bottom: pos.bottom }) }}
             onMouseDown={(e) => e.preventDefault()}
           >

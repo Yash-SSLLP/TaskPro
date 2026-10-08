@@ -85,7 +85,7 @@ export function PinLookup({ label = 'Add by Task Pin', hint, action, autoFocus, 
             spellCheck={false}
             autoFocus={autoFocus}
             inputMode="text"
-            className="tnum block h-11 w-full rounded-xl border border-line bg-white pl-10 pr-10 font-mono text-[16px] uppercase tracking-[0.15em] text-ink shadow-sm placeholder:font-sans placeholder:normal-case placeholder:tracking-normal placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+            className="tnum block h-11 w-full rounded-xl border border-line bg-card pl-10 pr-10 font-mono text-[16px] uppercase tracking-[0.15em] text-ink shadow-sm placeholder:font-sans placeholder:normal-case placeholder:tracking-normal placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
           />
           {lookup.isFetching && <Loader2 className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-ink-faint" aria-hidden />}
         </div>

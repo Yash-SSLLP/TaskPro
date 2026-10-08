@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   meta: { color: colors.textSecondary, fontSize: 13, flexShrink: 1 },
   metaFaint: { color: colors.textFaint },
   barWrap: { gap: 4 },
-  track: { height: 6, borderRadius: 3, backgroundColor: 'rgba(15,23,42,0.08)', overflow: 'hidden' },
+  track: { height: 6, borderRadius: 3, backgroundColor: colors.track, overflow: 'hidden' },
   fill: { height: 6, borderRadius: 3 },
   barRow: { flexDirection: 'row', justifyContent: 'space-between', gap: space(2) },
   barText: { color: colors.textSecondary, fontSize: 11, fontWeight: font.semibold },

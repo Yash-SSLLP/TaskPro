@@ -70,7 +70,7 @@ function MainTabs() {
               tabBarAccessibilityLabel: count > 0 ? tr('{label}, {n} new', { label, n: count }) : label,
               tabBarIcon: ({ color }) => <t.icon color={color} size={22} strokeWidth={2} />,
               tabBarBadge: count > 0 ? (count > 99 ? '99+' : count) : undefined,
-              tabBarBadgeStyle: { backgroundColor: colors.danger, color: colors.white, fontSize: 11 },
+              tabBarBadgeStyle: { backgroundColor: colors.dangerFill, color: colors.white, fontSize: 11 },
             }}
           />
         );

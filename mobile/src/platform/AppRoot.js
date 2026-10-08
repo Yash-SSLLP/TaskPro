@@ -9,7 +9,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useLang } from '../i18n';
@@ -19,14 +19,15 @@ import RootNavigator from './navigation/RootNavigator';
 import { setupNotifications } from './push';
 import { queryClient } from './queryClient';
 import { useSession } from './session';
-import { navigationColors } from './theme';
+import { navigationColors, theme } from './theme';
 import { DialogHost, ToastHost } from './ui';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 SplashScreen.setOptions({ fade: true, duration: 250 });
 setupNotifications();
 
-const navigationTheme = { ...DefaultTheme, colors: { ...DefaultTheme.colors, ...navigationColors } };
+const baseTheme = theme.dark ? DarkTheme : DefaultTheme;
+const navigationTheme = { ...baseTheme, colors: { ...baseTheme.colors, ...navigationColors } };
 
 export default function AppRoot() {
   const status = useSession((s) => s.status);
@@ -62,7 +63,7 @@ export default function AppRoot() {
         <AppEvents navReady={navReady} />
         <ToastHost />
         <DialogHost />
-        <StatusBar style="dark" />
+        <StatusBar style={theme.dark ? 'light' : 'dark'} />
       </QueryClientProvider>
     </SafeAreaProvider>
   );

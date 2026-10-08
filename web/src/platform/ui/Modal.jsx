@@ -92,7 +92,7 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
   const width = { sm: 'sm:max-w-sm', md: 'sm:max-w-lg', lg: 'sm:max-w-2xl', xl: 'sm:max-w-5xl' }[size];
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="presentation">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px]" onClick={onClose} aria-hidden />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" onClick={onClose} aria-hidden />
       <div
         ref={panelRef}
         role="dialog"
@@ -100,7 +100,7 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
         aria-label={typeof title === 'string' ? title : undefined}
         tabIndex={-1}
         className={clsx(
-          'relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-pop outline-none sm:rounded-2xl',
+          'relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl bg-card shadow-pop outline-none sm:rounded-2xl',
           width
         )}
       >
@@ -120,14 +120,14 @@ export function Drawer({ open, onClose, title, subtitle, children, footer, wide 
   if (!open) return null;
   return createPortal(
     <div className="fixed inset-0 z-50 flex justify-end" role="presentation">
-      <div className="absolute inset-0 bg-slate-900/30" onClick={onClose} aria-hidden />
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} aria-hidden />
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : undefined}
         tabIndex={-1}
-        className={clsx('relative flex h-full w-full flex-col bg-white shadow-pop outline-none', wide ? 'max-w-2xl' : 'max-w-md')}
+        className={clsx('relative flex h-full w-full flex-col bg-card shadow-pop outline-none', wide ? 'max-w-2xl' : 'max-w-md')}
       >
         <Header title={title} subtitle={subtitle} onClose={onClose} />
         <div className="flex-1 overflow-y-auto px-5 pb-6 pt-2">{children}</div>

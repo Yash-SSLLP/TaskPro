@@ -11,7 +11,7 @@ export function PinCard({ person, title = 'My Task Pin', text = 'Share it so peo
   const pin = pinOf(person);
   if (!pin) return null;
   return (
-    <div className={clsx('overflow-hidden rounded-2xl border border-brand/20 bg-gradient-to-br from-brand-soft via-white to-white shadow-card', className)}>
+    <div className={clsx('overflow-hidden rounded-2xl border border-brand/20 bg-gradient-to-br from-brand-soft via-card to-card shadow-card', className)}>
       <div className={clsx('flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between', compact ? 'p-4' : 'p-5 sm:p-6')}>
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-sm font-semibold text-brand">

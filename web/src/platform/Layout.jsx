@@ -8,7 +8,7 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { Bell, Copy, LayoutDashboard, Layers, LogOut, Settings, Smartphone, UserPlus, Users } from 'lucide-react';
+import { Bell, Copy, LayoutDashboard, Layers, LogOut, Moon, Settings, Smartphone, Sun, UserPlus, Users } from 'lucide-react';
 import { product } from '../product/config';
 import { api } from './api';
 import { isSuperAdmin, useSession } from './session';
@@ -16,6 +16,7 @@ import { copyText, pinOf } from './pin';
 import { Logo } from './Logo';
 import { Avatar } from './ui';
 import { signOutEverywhere } from './signOut';
+import { setThemeMode, useTheme } from './theme';
 
 export function useUnreadCount() {
   const { data } = useQuery({
@@ -73,11 +74,12 @@ export function Layout() {
   const pin = pinOf(user);
   const badgeOf = (item) => (item.badge === 'unread' ? unread : item.badge === 'contacts' ? pending.contacts : item.badge === 'teams' ? pending.teams : 0);
   const active = (item, isActive) => (item.match ? pathname.startsWith(item.match) : isActive);
+  const dark = useTheme((s) => s.scheme === 'dark');
 
   return (
     <div className="min-h-screen lg:pl-64">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-line bg-white lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-line bg-card lg:flex">
         <div className="px-5 pb-5 pt-5">
           <Logo />
           {admin && <p className="mt-3 inline-flex rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-semibold text-brand">Super Admin</p>}
@@ -129,6 +131,15 @@ export function Layout() {
             </div>
             <button
               type="button"
+              onClick={() => setThemeMode(dark ? 'light' : 'dark')}
+              className="rounded-lg p-2 text-ink-faint hover:bg-slate-100 hover:text-ink"
+              aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={dark ? 'Light mode' : 'Dark mode'}
+            >
+              {dark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+            </button>
+            <button
+              type="button"
               onClick={() => signOutEverywhere().then(() => navigate('/sign-in'))}
               className="rounded-lg p-2 text-ink-faint hover:bg-slate-100 hover:text-ink"
               aria-label="Sign out"
@@ -141,7 +152,7 @@ export function Layout() {
       </aside>
 
       {/* Phone top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-line bg-white/90 px-4 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-line bg-card/90 px-4 backdrop-blur lg:hidden">
         <div className="flex min-w-0 items-center gap-2.5">
           <img src="/logo.svg" width={28} height={28} alt="" className="rounded-[22%]" />
           <span className="truncate text-[15px] font-semibold text-ink">{product.name}</span>
@@ -173,7 +184,7 @@ export function Layout() {
           </>
           <NavLink to="/alerts" className="relative rounded-lg p-2 text-ink-soft" aria-label={`Alerts${unread ? `, ${unread} unread` : ''}`}>
             <Bell className="h-5 w-5" />
-            {unread > 0 && <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-red-600" />}
+            {unread > 0 && <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-card bg-red-600" />}
           </NavLink>
         </div>
       </header>
@@ -183,7 +194,7 @@ export function Layout() {
       </main>
 
       {/* Phone bottom tabs */}
-      <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white lg:hidden" aria-label="Main">
+      <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card lg:hidden" aria-label="Main">
         <div className="mx-auto flex max-w-md">
           {items
             .filter((item) => !item.mobileHidden && item.badge !== 'unread')

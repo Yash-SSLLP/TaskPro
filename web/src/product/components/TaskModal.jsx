@@ -18,7 +18,7 @@ export function TaskModal({ taskId, open, onClose, onChanged, initialEdit = fals
   return (
     <Modal open onClose={onClose} size="xl" title="Task" focusFirst={false} bodyClassName="bg-page px-3 pb-4 pt-3 sm:px-4">
       <div className="-mt-1 mb-2 flex justify-end">
-        <Link to={`/tasks/${current}`} onClick={onClose} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-ink-soft hover:bg-white hover:text-brand">
+        <Link to={`/tasks/${current}`} onClick={onClose} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-ink-soft hover:bg-card hover:text-brand">
           <ExternalLink className="h-3.5 w-3.5" /> Open in full
         </Link>
       </div>

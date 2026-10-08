@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import { Eye, EyeOff } from 'lucide-react';
 
 const inputBase =
-  'block w-full rounded-xl border bg-white px-3.5 text-[15px] text-ink placeholder:text-ink-faint shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand/30 disabled:bg-slate-50 disabled:text-ink-soft';
+  'block w-full rounded-xl border bg-card px-3.5 text-[15px] text-ink placeholder:text-ink-faint shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand/30 disabled:bg-slate-50 disabled:text-ink-soft';
 
 function Shell({ id, label, hint, error, children, className, optional }) {
   return (
@@ -135,7 +135,7 @@ export function Switch({ checked, onChange, label, description, disabled }) {
           checked ? 'bg-brand' : 'bg-slate-300'
         )}
       >
-        <span className={clsx('inline-block h-5 w-5 rounded-full bg-white shadow transition-transform', checked ? 'translate-x-[22px]' : 'translate-x-0.5')} />
+        <span className={clsx('inline-block h-5 w-5 rounded-full bg-card shadow transition-transform', checked ? 'translate-x-[22px]' : 'translate-x-0.5')} />
       </button>
     </div>
   );

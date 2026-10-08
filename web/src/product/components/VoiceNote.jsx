@@ -181,7 +181,7 @@ export function VoiceRecorder({ value, onChange, disabled = false, compact = fal
         title="Record a voice note"
         aria-label="Record a voice note"
         className={clsx(
-          'inline-flex items-center justify-center gap-2 border border-line bg-white text-ink-soft transition-colors hover:border-slate-300 hover:text-brand disabled:opacity-40',
+          'inline-flex items-center justify-center gap-2 border border-line bg-card text-ink-soft transition-colors hover:border-slate-300 hover:text-brand disabled:opacity-40',
           compact ? 'h-10 w-10 rounded-xl' : 'h-10 rounded-xl px-3 text-sm font-medium'
         )}
       >

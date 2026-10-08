@@ -32,7 +32,7 @@ import { VoiceRecorder } from './VoiceNote';
 import { PieceEditor, emptyPiece, filledPieces, pieceItems } from './DelegateModal';
 import { TemplatesDrawer } from './TaskTemplates';
 
-const inputCls = 'block h-11 w-full rounded-xl border border-line bg-white px-3.5 text-[15px] text-ink shadow-sm placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
+const inputCls = 'block h-11 w-full rounded-xl border border-line bg-card px-3.5 text-[15px] text-ink shadow-sm placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
 const labelCls = 'mb-1.5 flex items-center gap-1.5 text-sm font-medium text-ink';
 
 /** Six this evening in my zone (tomorrow, if that has passed). */
@@ -383,7 +383,7 @@ export function AssignTaskModal({ open, onClose, onCreated, meta, prefill = null
 
   if (!open) return null;
 
-  const iconBtn = (on) => clsx('inline-flex h-10 min-w-[40px] items-center justify-center gap-1 rounded-xl border px-2.5 text-sm transition', on ? 'border-brand bg-brand-soft text-brand' : 'border-line bg-white text-ink-soft hover:border-slate-300 hover:text-brand');
+  const iconBtn = (on) => clsx('inline-flex h-10 min-w-[40px] items-center justify-center gap-1 rounded-xl border px-2.5 text-sm transition', on ? 'border-brand bg-brand-soft text-brand' : 'border-line bg-card text-ink-soft hover:border-slate-300 hover:text-brand');
 
   return (
     <>
@@ -431,7 +431,7 @@ export function AssignTaskModal({ open, onClose, onCreated, meta, prefill = null
             placeholder="Details — what needs doing, and anything they should know…"
             rows={3}
             maxLength={5000}
-            className="block w-full resize-y rounded-xl border border-line bg-white px-3.5 py-2.5 text-[15px] shadow-sm placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+            className="block w-full resize-y rounded-xl border border-line bg-card px-3.5 py-2.5 text-[15px] shadow-sm placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
           />
 
           <PeoplePicker
@@ -664,7 +664,7 @@ export function AssignTaskModal({ open, onClose, onCreated, meta, prefill = null
                     }
                   }}
                   placeholder="Paste a sheet, drive folder or ticket link…"
-                  className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-white px-3 text-sm"
+                  className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-card px-3 text-sm"
                 />
                 <Button size="sm" variant="secondary" icon={Plus} onClick={addLink}>
                   Add

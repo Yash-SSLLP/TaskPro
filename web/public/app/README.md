@@ -20,7 +20,7 @@ npm run apk  ->  npm run publish -- --publish  ->  commit + push  ->  Vercel dep
 
 ## Who reads it
 
-- **The Android app**: on launch and when it returns to the foreground (at
+- **The Android app**: on every launch, when it returns to the foreground (at
   most every 6 hours), and from **More → App updates**, it reads
   `/app/release.json` from its server address. When `versionCode` is
   **higher** than the installed build it offers the update, downloads the APK

@@ -113,7 +113,7 @@ export function DashboardPage() {
               setView(key);
               setTeam('');
             }}
-            className={clsx('inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold transition', view === key ? 'border-brand bg-brand-soft text-brand' : 'border-line bg-white text-ink-soft hover:border-slate-300')}
+            className={clsx('inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold transition', view === key ? 'border-brand bg-brand-soft text-brand' : 'border-line bg-card text-ink-soft hover:border-slate-300')}
           >
             <Icon className="h-4 w-4" /> {label}
           </button>
@@ -123,7 +123,7 @@ export function DashboardPage() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-1.5">
           {RANGES.map(([key, label]) => (
-            <button key={key} type="button" onClick={() => setRange(key)} className={clsx('h-8 rounded-lg border px-3 text-xs font-semibold', range === key ? 'border-brand bg-brand text-white' : 'border-line bg-white text-ink-soft hover:border-slate-300')}>
+            <button key={key} type="button" onClick={() => setRange(key)} className={clsx('h-8 rounded-lg border px-3 text-xs font-semibold', range === key ? 'border-brand bg-brand text-white' : 'border-line bg-card text-ink-soft hover:border-slate-300')}>
               {label}
             </button>
           ))}
@@ -138,14 +138,14 @@ export function DashboardPage() {
         {view === 'trend' && (
           <div className="inline-flex rounded-xl bg-slate-100 p-1">
             {[['day', 'By day'], ['month', 'By month']].map(([k, l]) => (
-              <button key={k} type="button" onClick={() => setGrain(k)} className={clsx('h-7 rounded-lg px-3 text-xs font-semibold', grain === k ? 'bg-white text-ink shadow-sm' : 'text-ink-soft')}>
+              <button key={k} type="button" onClick={() => setGrain(k)} className={clsx('h-7 rounded-lg px-3 text-xs font-semibold', grain === k ? 'bg-card text-ink shadow-sm' : 'text-ink-soft')}>
                 {l}
               </button>
             ))}
           </div>
         )}
         {teamChoices.length > 0 && (
-          <select value={team} onChange={(e) => setTeam(e.target.value)} className="ml-auto h-9 rounded-lg border border-line bg-white px-2 text-sm" aria-label="Team">
+          <select value={team} onChange={(e) => setTeam(e.target.value)} className="ml-auto h-9 rounded-lg border border-line bg-card px-2 text-sm" aria-label="Team">
             <option value="">{view === 'people' && !admin ? 'All my teams' : 'Any team'}</option>
             {teamChoices.map((t) => (
               <option key={t.id} value={t.id}>
@@ -240,7 +240,7 @@ export function DashboardPage() {
               <tbody className="divide-y divide-line">
                 {rows.map((r) => (
                   <tr key={r.key} className="hover:bg-slate-50">
-                    <td className="sticky left-0 z-10 bg-white px-3 py-2.5">
+                    <td className="sticky left-0 z-10 bg-card px-3 py-2.5">
                       <div className="flex items-center gap-2">
                         <span className={clsx('tnum inline-flex min-w-[42px] shrink-0 justify-center rounded-lg px-1.5 py-0.5 text-[11px] font-bold', scoreTone(r.completionPct))} title={`${r.completionPct}% of what was given is finished`}>
                           {r.completionPct}%

@@ -50,18 +50,18 @@ function Pager({ page, pages, total, onPage }) {
         {total} task{total === 1 ? '' : 's'} · page {page} of {pages}
       </span>
       <div className="flex items-center gap-1">
-        <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} className="grid h-9 w-9 place-items-center rounded-xl border border-line bg-white disabled:opacity-40" aria-label="Previous page">
+        <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} className="grid h-9 w-9 place-items-center rounded-xl border border-line bg-card disabled:opacity-40" aria-label="Previous page">
           <ChevronLeft className="h-4 w-4" />
         </button>
         {nums.map((n, i) => (
           <span key={n} className="flex items-center">
             {i > 0 && n - nums[i - 1] > 1 && <span className="px-1 text-ink-faint">…</span>}
-            <button type="button" onClick={() => onPage(n)} aria-current={n === page ? 'page' : undefined} className={clsx('tnum h-9 min-w-[36px] rounded-xl border px-2 text-sm font-semibold', n === page ? 'border-brand bg-brand text-white' : 'border-line bg-white text-ink hover:border-slate-300')}>
+            <button type="button" onClick={() => onPage(n)} aria-current={n === page ? 'page' : undefined} className={clsx('tnum h-9 min-w-[36px] rounded-xl border px-2 text-sm font-semibold', n === page ? 'border-brand bg-brand text-white' : 'border-line bg-card text-ink hover:border-slate-300')}>
               {n}
             </button>
           </span>
         ))}
-        <button type="button" disabled={page >= pages} onClick={() => onPage(page + 1)} className="grid h-9 w-9 place-items-center rounded-xl border border-line bg-white disabled:opacity-40" aria-label="Next page">
+        <button type="button" disabled={page >= pages} onClick={() => onPage(page + 1)} className="grid h-9 w-9 place-items-center rounded-xl border border-line bg-card disabled:opacity-40" aria-label="Next page">
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
@@ -249,7 +249,7 @@ export function TasksPage() {
         {piles.length > 1 && <TaskPileCards piles={piles} active={pile} onPick={pickPile} scopes={scopes} />}
 
         {pile === 'team' && (
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-white p-2 shadow-card">
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-card p-2 shadow-card">
             <span className="px-2 text-sm font-medium text-ink-soft">Team</span>
             <Segmented
               className="max-w-full overflow-x-auto"
@@ -266,7 +266,7 @@ export function TasksPage() {
         )}
 
         <div className="flex flex-wrap items-center gap-2">
-          <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-white px-3 shadow-sm focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/30 sm:max-w-md">
+          <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-card px-3 shadow-sm focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/30 sm:max-w-md">
             <Search className="h-4 w-4 shrink-0 text-ink-faint" />
             <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Search a task, code or person…" aria-label="Search tasks" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-ink-faint" />
             {text && (
@@ -278,7 +278,7 @@ export function TasksPage() {
           <button
             type="button"
             onClick={() => setFiltersOpen(true)}
-            className={clsx('inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border px-3.5 text-sm font-semibold shadow-sm', filterCount ? 'border-brand bg-brand-soft text-brand' : 'border-line bg-white text-ink hover:border-slate-300')}
+            className={clsx('inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border px-3.5 text-sm font-semibold shadow-sm', filterCount ? 'border-brand bg-brand-soft text-brand' : 'border-line bg-card text-ink hover:border-slate-300')}
           >
             <Filter className="h-4 w-4" /> Filter
             {filterCount > 0 && <span className="tnum grid h-5 min-w-[20px] place-items-center rounded-full bg-brand px-1.5 text-[11px] font-bold text-white">{filterCount}</span>}
@@ -296,7 +296,7 @@ export function TasksPage() {
         {chips.length > 0 && (
           <div className="-mt-1 flex flex-wrap items-center gap-1.5">
             {chips.map((c) => (
-              <span key={c.key} className="inline-flex h-7 items-center gap-1 rounded-lg border border-line bg-white pl-2.5 pr-1 text-xs font-medium text-ink-soft">
+              <span key={c.key} className="inline-flex h-7 items-center gap-1 rounded-lg border border-line bg-card pl-2.5 pr-1 text-xs font-medium text-ink-soft">
                 {c.label}
                 <button type="button" onClick={() => setFilters((f) => ({ ...f, ...c.clear }))} className="grid h-5 w-5 place-items-center rounded-md text-ink-faint hover:bg-slate-100 hover:text-ink" aria-label={`Remove ${c.label}`}>
                   <X className="h-3 w-3" />

@@ -30,7 +30,7 @@ export function TaskPileCards({ piles, active, onPick, scopes }) {
             onClick={() => onPick?.(pile.key)}
             aria-pressed={on}
             className={clsx(
-              'group relative flex min-w-0 flex-col gap-2.5 rounded-2xl border bg-white p-3.5 text-left shadow-card transition hover:-translate-y-0.5 hover:shadow-pop sm:p-4',
+              'group relative flex min-w-0 flex-col gap-2.5 rounded-2xl border bg-card p-3.5 text-left shadow-card transition hover:-translate-y-0.5 hover:shadow-pop sm:p-4',
               on ? 'border-brand ring-2 ring-brand/20' : 'border-line',
               odd && 'col-span-2 xl:col-span-1'
             )}
@@ -86,8 +86,8 @@ export function TaskStatBar({ counters = {}, active = '', onPick, loading = fals
             aria-pressed={on}
             onClick={() => onPick?.(key === 'total' || active === key ? '' : key)}
             title={key === 'total' ? 'Every open task in this pile' : `Show ${label.toLowerCase()} only`}
-            style={on ? { backgroundColor: `color-mix(in srgb, ${colour} 7%, white)` } : undefined}
-            className="relative flex min-w-0 flex-col gap-2 bg-white px-3 pb-3 pt-3 text-left transition hover:bg-slate-50"
+            style={on ? { backgroundColor: `color-mix(in srgb, ${colour} var(--tint), rgb(var(--card)))` } : undefined}
+            className="relative flex min-w-0 flex-col gap-2 bg-card px-3 pb-3 pt-3 text-left transition hover:bg-slate-50"
           >
             <span className="flex items-center justify-between gap-2">
               <span className={clsx('tnum text-2xl font-bold leading-none', !on && (value || loading ? 'text-ink' : 'text-slate-300'))} style={on ? { color: colour } : undefined}>

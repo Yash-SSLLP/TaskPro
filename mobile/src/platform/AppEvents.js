@@ -1,8 +1,8 @@
 /**
  * Things that happen outside any one screen: registering for push after
  * sign-in, opening the right screen when a notification or a
- * taskpro:// link is tapped, refreshing data when an alert arrives, and
- * offering a newer app build.
+ * taskpro:// link is tapped, refreshing data when an alert arrives,
+ * offering a newer app build, and following the phone's light/dark switch.
  */
 import { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
@@ -16,6 +16,7 @@ import { flushPendingLink, navigationRef, openLink } from './navigation/links';
 import { linkOf, registerForPush } from './push';
 import { useSession } from './session';
 import { confirm } from './ui';
+import { useFollowSystemTheme } from './appearance';
 import { canSelfUpdate, checkInBackground, dismissPrompt, shouldPrompt } from './updates';
 
 // Builds already offered since the app started: one prompt per version per
@@ -37,6 +38,7 @@ function pathFromUrl(url) {
 export default function AppEvents({ navReady }) {
   const inApp = useInApp();
   const qc = useQueryClient();
+  useFollowSystemTheme();
 
   // Push token: once per sign-in.
   useEffect(() => {

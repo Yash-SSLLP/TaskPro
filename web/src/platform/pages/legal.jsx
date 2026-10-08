@@ -16,7 +16,7 @@ export function LegalShell({ children }) {
   const signedIn = useSession((s) => !!s.token);
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-line bg-white">
+      <header className="border-b border-line bg-card">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3.5 sm:px-6">
           <Link to="/" aria-label="Home">
             <Logo size={32} />

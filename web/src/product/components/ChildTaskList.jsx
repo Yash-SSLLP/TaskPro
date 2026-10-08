@@ -30,7 +30,7 @@ export function ChildTaskList({ children = [], onChanged, onOpen }) {
   };
 
   return (
-    <section className="rounded-2xl border border-line bg-white p-4 shadow-card sm:p-5">
+    <section className="rounded-2xl border border-line bg-card p-4 shadow-card sm:p-5">
       <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
         <GitBranch className="h-3.5 w-3.5" /> Pieces <span className="font-normal normal-case text-ink-faint">{done} of {children.length} done</span>
       </h2>
