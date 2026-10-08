@@ -87,7 +87,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "http://10.0.2.2:5120"
+      "apiUrl": "https://taskpro-self.vercel.app"
     }
   }
 }

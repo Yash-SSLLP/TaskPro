@@ -62,4 +62,33 @@ function createApp() {
   return app;
 }
 
-module.exports = { createApp };
+/**
+ * Vercel picks this file up as the Express entry and calls its default export
+ * for every request, without running server.js. Connect the database (once per
+ * instance) before handing the request to the app. Required lazily so the
+ * tests can still build the app with no database.
+ */
+let ready = null;
+let serverlessApp = null;
+
+async function handler(req, res) {
+  if (!ready) {
+    const { connectDB } = require('./platform/db');
+    const { ensureSuperAdmin } = require('./platform/seed');
+    ready = connectDB().then(() => ensureSuperAdmin());
+  }
+  try {
+    await ready;
+  } catch (err) {
+    ready = null; // try again on the next request
+    console.error('Failed to start:', err);
+    res.statusCode = 503;
+    res.setHeader('Content-Type', 'application/json');
+    return res.end(JSON.stringify({ error: 'Service is starting, please try again.' }));
+  }
+  serverlessApp ??= createApp();
+  return serverlessApp(req, res);
+}
+
+module.exports = handler;
+module.exports.createApp = createApp;
