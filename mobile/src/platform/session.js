@@ -139,7 +139,8 @@ export const useSession = create((set, get) => ({
 
   /**
    * @param {{ notice?: string, remote?: boolean }} opts remote: also tell the
-   *   server to stop pushes (skip when the session is already dead)
+   *   server to stop pushes and end this device's session (skip when the
+   *   session is already dead)
    */
   signOut: async ({ notice = null, remote = true } = {}) => {
     if (signingOut) return;
@@ -147,6 +148,9 @@ export const useSession = create((set, get) => ({
     try {
       if (remote) await unregisterPush();
       else forgetPushToken();
+      // Sent with the current token before it is dropped; never waited on, so
+      // signing out never hangs on the network.
+      if (remote) authApi.logout().catch(() => {});
       setToken(null);
       await persistToken(null);
       set({ status: 'signedOut', user: null, settings: DEFAULT_SETTINGS, justSignedUp: false, notice, bootError: null });

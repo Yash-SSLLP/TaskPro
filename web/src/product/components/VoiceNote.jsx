@@ -162,10 +162,10 @@ export function VoiceRecorder({ value, onChange, disabled = false, compact = fal
           ))}
         </div>
         <span className="shrink-0 font-mono text-xs text-red-700">{fmtDuration(elapsed)}</span>
-        <button type="button" onClick={stop} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg bg-red-600 px-3 text-xs font-semibold text-white hover:bg-red-700">
-          <Square className="h-3 w-3" /> Stop
+        <button type="button" onClick={stop} className="inline-flex min-h-[32px] shrink-0 items-center gap-1 rounded-lg bg-red-600 px-3 text-xs font-medium text-white hover:bg-red-700">
+          <Square className="h-[11px] w-[11px]" /> Stop
         </button>
-        <button type="button" onClick={cancel} className="h-8 shrink-0 rounded-lg px-2 text-xs font-medium text-red-700 hover:bg-red-100">
+        <button type="button" onClick={cancel} className="min-h-[32px] shrink-0 rounded-lg px-2 text-xs text-red-700 hover:bg-red-100">
           Cancel
         </button>
       </div>
@@ -182,10 +182,11 @@ export function VoiceRecorder({ value, onChange, disabled = false, compact = fal
         aria-label="Record a voice note"
         className={clsx(
           'inline-flex items-center justify-center gap-2 border border-line bg-card text-ink-soft transition-colors hover:border-slate-300 hover:text-brand disabled:opacity-40',
-          compact ? 'h-10 w-10 rounded-xl' : 'h-10 rounded-xl px-3 text-sm font-medium'
+          // The same 36px square as the attachment buttons beside it.
+          compact ? 'h-9 w-9 shrink-0 rounded-lg' : 'min-h-[36px] rounded-xl px-3 text-sm'
         )}
       >
-        <Mic className="h-[18px] w-[18px]" />
+        <Mic className="h-4 w-4" />
         {!compact && <span>Record a voice note</span>}
       </button>
       {error && (
@@ -257,12 +258,12 @@ export function VoicePlayer({ src, path, durationMs, onRemove, className }) {
   const shown = durationMs ? `${fmtDuration(progress ? progress * durationMs : 0)} / ${fmtDuration(durationMs)}` : null;
 
   return (
-    <div className={clsx('flex w-full max-w-sm items-center gap-2 rounded-xl border border-line bg-slate-50 px-3 py-2', className)}>
+    <div className={clsx('flex w-full max-w-sm items-center gap-2 rounded-xl border border-line bg-well px-3 py-2', className)}>
       <button
         type="button"
         onClick={toggle}
         disabled={loading}
-        className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand text-white disabled:opacity-50"
+        className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand text-on-brand disabled:opacity-50"
         aria-label={playing ? 'Pause' : 'Play the voice note'}
       >
         {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="ml-0.5 h-3.5 w-3.5" />}
@@ -275,7 +276,7 @@ export function VoicePlayer({ src, path, durationMs, onRemove, className }) {
       </div>
       {onRemove && (
         <button type="button" onClick={onRemove} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-faint hover:bg-slate-200 hover:text-red-600" aria-label="Remove the voice note">
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
       )}
       {url && (

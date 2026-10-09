@@ -15,11 +15,18 @@ const { z, parse, idParam } = require('../validate');
 const { normalizePin } = require('../pin');
 const { badRequest, notFound, conflict } = require('../errors');
 const { notify } = require('../services/notify');
+const activity = require('../services/activity');
 
 const router = express.Router();
 router.use(protect, requirePerson);
 
 const person = (u) => publicUser(u, { full: false });
+
+/** The other person on a link, as an activity target (one small read). */
+async function otherTarget(link, me) {
+  const other = await User.findById(otherOf(link, me)).select('name').lean();
+  return other ? activity.personTarget(other) : undefined;
+}
 
 /** The active person with this pin, or a friendly 404. Never the Super Admin. */
 async function findByPin(raw) {
@@ -71,6 +78,7 @@ router.post('/', async (req, res) => {
     existing.status = 'accepted';
     existing.acceptedAt = new Date();
     await existing.save();
+    await activity.record({ req, action: 'contact.accepted', target: activity.personTarget(other), meta: { askedBack: true } });
     notify([other._id], {
       title: `${req.user.name} accepted your contact request`,
       body: 'You can now give each other tasks.',
@@ -90,6 +98,7 @@ router.post('/', async (req, res) => {
     if (err?.code === 11000) throw conflict("You've already sent a request. They need to accept it.");
     throw err;
   }
+  await activity.record({ req, action: 'contact.requested', target: activity.personTarget(other) });
   notify([other._id], {
     title: `${req.user.name} wants to add you as a contact`,
     body: `Task Pin ${publicUser(req.user).pinDisplay}. Accept to give each other tasks.`,
@@ -115,6 +124,7 @@ router.post('/:id/accept', async (req, res) => {
   link.acceptedAt = new Date();
   await link.save();
   const other = await User.findById(otherOf(link, req.user._id));
+  await activity.record({ req, action: 'contact.accepted', target: activity.personTarget(other) });
   notify([other._id], {
     title: `${req.user.name} accepted your contact request`,
     body: 'You can now give each other tasks.',
@@ -127,12 +137,19 @@ router.post('/:id/accept', async (req, res) => {
 router.post('/:id/decline', async (req, res) => {
   const link = await incomingRequest(req);
   await Contact.deleteOne({ _id: link._id });
+  await activity.record({ req, action: 'contact.declined', target: await otherTarget(link, req.user._id) });
   res.json({ ok: true });
 });
 
 router.delete('/:id', async (req, res) => {
-  const result = await Contact.deleteOne({ _id: idParam(req.params.id), ...involving(req.user._id) });
-  if (!result.deletedCount) throw notFound('Contact not found');
+  const link = await Contact.findOneAndDelete({ _id: idParam(req.params.id), ...involving(req.user._id) }).lean();
+  if (!link) throw notFound('Contact not found');
+  const cancelled = link.status === 'pending' && String(link.requestedBy) === String(req.user._id);
+  await activity.record({
+    req,
+    action: link.status === 'accepted' ? 'contact.removed' : cancelled ? 'contact.cancelled' : 'contact.declined',
+    target: await otherTarget(link, req.user._id),
+  });
   res.json({ ok: true });
 });
 

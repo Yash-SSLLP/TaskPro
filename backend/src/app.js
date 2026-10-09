@@ -2,6 +2,14 @@
  * The Express app (no network, no database): server.js and the tests both
  * build on this.
  */
+
+// Live updates (platform/live): every model compiled from here on reports its
+// writes, so other people's screens refresh. Mongoose applies a global plugin
+// only to models made AFTER it, so this comes before anything that loads one.
+const live = require('./platform/live');
+
+live.register();
+
 const path = require('node:path');
 const fs = require('node:fs');
 const express = require('express');
@@ -33,6 +41,8 @@ function createApp() {
   );
   app.use(compression());
   app.use(express.json({ limit: '1mb' }));
+  // What each request changes is recorded before its answer goes out.
+  app.use(live.middleware);
 
   app.get('/api/health', (req, res) => {
     res.json({ ok: true, service: product.key, time: new Date().toISOString() });
@@ -47,6 +57,7 @@ function createApp() {
   app.use('/api/devices', require('./platform/routes/devices'));
   app.use('/api/files', require('./platform/routes/files'));
   app.use('/api/platform', require('./platform/routes/platform'));
+  app.use('/api/live', require('./platform/routes/live'));
   product.mountRoutes(app);
 
   app.use('/api', notFoundHandler);

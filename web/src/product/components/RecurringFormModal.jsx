@@ -7,23 +7,23 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { CalendarDays, Eye, Flag, Link2, Plus, Repeat, Tag, UserCheck, Users, X } from 'lucide-react';
+import { CalendarDays, Eye, Link2, Plus, Repeat, Tag, UserCheck, Users, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { dayKey } from '../../platform/format';
 import { useSettings } from '../../platform/session';
-import { Button, Modal, Switch } from '../../platform/ui';
+import { Button, Modal } from '../../platform/ui';
 import * as T from '../api';
 import { useCategories } from '../hooks';
 import {
-  DEFAULT_LEAD_DAYS, FREQUENCY_LABELS, MAX_LEAD_DAYS, MONTH_NAMES, NTH_WEEKS, RECUR_FREQUENCIES, TASK_PRIORITY, WEEKDAY_NAMES, idOf, ordinal,
-  patternLabel, priorityColor, tintStyle,
+  DEFAULT_LEAD_DAYS, FREQUENCY_LABELS, MAX_LEAD_DAYS, MONTH_NAMES, NTH_WEEKS, RECUR_FREQUENCIES, WEEKDAY_NAMES, idOf, ordinal, patternLabel,
 } from '../lifecycle';
+import { PriorityPills, ReviewCheck, iconBtn, inputCls, labelCls, textareaCls } from './AssignTaskModal';
 import { PeoplePicker } from './PeoplePicker';
-import { ReminderEditor, Stepper, WeekdayPicker, chipCls } from './Reminders';
+import { ReminderEditor, Stepper, WeekdayPicker, chipCls, segOption, segTrack } from './Reminders';
 import { VoiceRecorder } from './VoiceNote';
 
-const inputCls = 'block h-11 w-full rounded-xl border border-line bg-card px-3 text-[15px] text-ink shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
-const labelCls = 'mb-1.5 flex items-center gap-1.5 text-sm font-medium text-ink';
+/** The inline choices inside a sentence ("The first Monday of every month"). */
+const smallSelect = 'h-9 rounded-lg border border-line bg-card px-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
 
 /** A stored day (midnight in some zone, or "YYYY-MM-DD") → "YYYY-MM-DD" in mine. */
 const ymd = (d, tz) => (!d ? '' : /^\d{4}-\d{2}-\d{2}$/.test(String(d)) ? String(d) : dayKey(d, tz));
@@ -141,6 +141,13 @@ export function RecurringFormModal({ open, onClose, onSaved, meta, scheduleId = 
 
   if (!open) return null;
 
+  const addLink = () => {
+    const url = linkDraft.trim();
+    if (!url) return;
+    set({ links: [...form.links, { url: /^https?:\/\//i.test(url) ? url : `https://${url}`, label: '' }] });
+    setLinkDraft('');
+  };
+
   const submit = async () => {
     if (!form.title.trim()) return toast.error('Give the task a title.');
     if (form.frequency === 'WEEKLY' && !form.weekdays.length) return toast.error('Pick at least one day of the week.');
@@ -182,16 +189,19 @@ export function RecurringFormModal({ open, onClose, onSaved, meta, scheduleId = 
       open
       onClose={onClose}
       size="lg"
-      title={scheduleId ? 'Edit recurring task' : 'New recurring task'}
-      subtitle="Set it up once — each time it comes round, it lands in their Tasks on its own."
+      title={
+        <span className="flex items-center gap-2">
+          <Repeat className="h-4 w-4 text-ink-faint" /> {scheduleId ? 'Edit recurring task' : 'New recurring task'}
+        </span>
+      }
       footer={
         <>
-          <span className="mr-auto hidden text-xs text-ink-soft sm:inline">{patternLabel(pattern)}</span>
+          <span className="mr-auto hidden text-xs text-ink-faint sm:inline">{patternLabel(pattern)}</span>
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
           <Button icon={Repeat} loading={saving} onClick={submit}>
-            {scheduleId ? 'Save' : 'Set it up'}
+            {scheduleId ? 'Save recurring task' : 'Set it up'}
           </Button>
         </>
       }
@@ -203,9 +213,9 @@ export function RecurringFormModal({ open, onClose, onSaved, meta, scheduleId = 
           </label>
           <input id="rec-title" autoFocus value={form.title} onChange={(e) => set({ title: e.target.value })} placeholder="e.g. Count and lock the cash" maxLength={300} className={inputCls} />
         </div>
-        <textarea value={form.description} onChange={(e) => set({ description: e.target.value })} rows={2} maxLength={5000} placeholder="Details…" className="block w-full resize-y rounded-xl border border-line px-3.5 py-2.5 text-[15px] shadow-sm placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30" />
+        <textarea value={form.description} onChange={(e) => set({ description: e.target.value })} rows={2} maxLength={5000} placeholder="A short description…" className={textareaCls} />
 
-        <PeoplePicker label="Assign to" icon={Users} people={people} value={form.assignees} onChange={(ids) => set({ assignees: ids })} allowSelf selfId={myId} teamId={form.team} teamName={team?.name} placeholder="Myself — or choose people" hint={form.assignees.length ? null : 'Nobody chosen: each one goes on your own list.'} />
+        <PeoplePicker label="Assign to" icon={Users} people={people} value={form.assignees} onChange={(ids) => set({ assignees: ids })} allowSelf selfId={myId} teamId={form.team} teamName={team?.name} placeholder="Myself — or choose people" />
         {meta?.canAssignOnBehalf && !scheduleId && (
           <PeoplePicker label="On behalf of" icon={UserCheck} people={people.filter((p) => idOf(p) !== myId)} value={form.onBehalfOf} onChange={(id) => set({ onBehalfOf: (Array.isArray(id) ? id[0] : id) || '' })} max={1} placeholder="Yourself" />
         )}
@@ -213,10 +223,10 @@ export function RecurringFormModal({ open, onClose, onSaved, meta, scheduleId = 
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className={labelCls}>
-              <Users className="h-4 w-4 text-ink-faint" /> Team <span className="font-normal text-ink-faint">(optional)</span>
+            <label className={labelCls} htmlFor="rec-team">
+              <Users className="h-3 w-3" /> Team <span className="font-normal text-ink-faint">(optional)</span>
             </label>
-            <select value={form.team} onChange={(e) => set({ team: e.target.value })} className={inputCls}>
+            <select id="rec-team" value={form.team} onChange={(e) => set({ team: e.target.value })} className={inputCls}>
               <option value="">No team</option>
               {teams.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -226,10 +236,10 @@ export function RecurringFormModal({ open, onClose, onSaved, meta, scheduleId = 
             </select>
           </div>
           <div>
-            <label className={labelCls}>
-              <Tag className="h-4 w-4 text-ink-faint" /> Category <span className="font-normal text-ink-faint">(optional)</span>
+            <label className={labelCls} htmlFor="rec-category">
+              <Tag className="h-3 w-3" /> Category <span className="font-normal text-ink-faint">(optional)</span>
             </label>
-            <select value={form.category} onChange={(e) => set({ category: e.target.value })} className={inputCls}>
+            <select id="rec-category" value={form.category} onChange={(e) => set({ category: e.target.value })} className={inputCls}>
               <option value="">None</option>
               {categories.map((c) => (
                 <option key={c._id || c.name} value={c.name}>
@@ -241,27 +251,16 @@ export function RecurringFormModal({ open, onClose, onSaved, meta, scheduleId = 
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1.5 text-sm font-medium text-ink">
-            <Flag className="h-4 w-4 text-ink-faint" /> Priority
-          </span>
-          {TASK_PRIORITY.map((p) => {
-            const colour = priorityColor(p);
-            const on = form.priority === p;
-            return (
-              <button key={p} type="button" onClick={() => set({ priority: p })} aria-pressed={on} className="inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-semibold" style={on ? { backgroundColor: colour.solid, borderColor: colour.solid, color: '#fff' } : tintStyle(colour)}>
-                {p}
-              </button>
-            );
-          })}
-        </div>
+        <PriorityPills value={form.priority} onChange={(priority) => set({ priority })} />
+
+        {!selfOnly && !routine && <ReviewCheck checked={form.requiresApproval !== false} onChange={(v) => set({ requiresApproval: v })} />}
 
         {/* ── Repeats ── */}
         <div className="space-y-3 rounded-2xl border border-line p-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-ink-faint">Repeats</p>
-          <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 min-[380px]:grid-cols-4" role="tablist">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-ink-faint">Repeats</p>
+          <div className={clsx(segTrack, 'grid grid-cols-2 min-[380px]:grid-cols-4')} role="tablist">
             {RECUR_FREQUENCIES.map((f) => (
-              <button key={f} type="button" role="tab" aria-selected={form.frequency === f} onClick={() => set({ frequency: f, leadDays: null })} className={clsx('h-9 rounded-lg text-sm font-semibold', form.frequency === f ? 'bg-card text-ink shadow-sm' : 'text-ink-soft hover:text-ink')}>
+              <button key={f} type="button" role="tab" aria-selected={form.frequency === f} onClick={() => set({ frequency: f, leadDays: null })} className={segOption(form.frequency === f)}>
                 {FREQUENCY_LABELS[f]}
               </button>
             ))}
@@ -280,9 +279,9 @@ export function RecurringFormModal({ open, onClose, onSaved, meta, scheduleId = 
           {form.frequency === 'WEEKLY' && <WeekdayPicker value={form.weekdays} onChange={(weekdays) => set({ weekdays })} />}
           {form.frequency === 'MONTHLY' && (
             <div className="space-y-2">
-              <div className="inline-flex rounded-xl bg-slate-100 p-1">
+              <div className={clsx(segTrack, 'inline-grid grid-cols-2')}>
                 {[['DATE', 'On a date'], ['WEEKDAY', 'On a weekday']].map(([k, label]) => (
-                  <button key={k} type="button" aria-pressed={form.monthlyMode === k} onClick={() => set({ monthlyMode: k })} className={clsx('h-8 rounded-lg px-3 text-xs font-semibold', form.monthlyMode === k ? 'bg-card text-ink shadow-sm' : 'text-ink-soft')}>
+                  <button key={k} type="button" aria-pressed={form.monthlyMode === k} onClick={() => set({ monthlyMode: k })} className={segOption(form.monthlyMode === k)}>
                     {label}
                   </button>
                 ))}
@@ -290,19 +289,19 @@ export function RecurringFormModal({ open, onClose, onSaved, meta, scheduleId = 
               {form.monthlyMode === 'DATE' ? (
                 <div className="flex flex-wrap items-center gap-2 text-sm text-ink-soft">
                   Day of the month <Stepper value={form.monthDay} min={1} max={31} onChange={(n) => set({ monthDay: n })} format={ordinal} />
-                  {form.monthDay > 28 && <span className="text-xs text-ink-faint">In a shorter month it falls on the last day.</span>}
+                  {form.monthDay > 28 && <span className="text-[11px] text-ink-faint">In a shorter month it falls on the last day.</span>}
                 </div>
               ) : (
                 <div className="flex flex-wrap items-center gap-2 text-sm text-ink-soft">
                   The
-                  <select value={form.nthWeek} onChange={(e) => set({ nthWeek: Number(e.target.value) })} className="h-9 rounded-lg border border-line px-2 text-sm" aria-label="Which one">
+                  <select value={form.nthWeek} onChange={(e) => set({ nthWeek: Number(e.target.value) })} className={smallSelect} aria-label="Which one">
                     {NTH_WEEKS.map((n) => (
                       <option key={n.key} value={n.key}>
                         {n.label.toLowerCase()}
                       </option>
                     ))}
                   </select>
-                  <select value={form.weekday} onChange={(e) => set({ weekday: Number(e.target.value) })} className="h-9 rounded-lg border border-line px-2 text-sm" aria-label="Day of the week">
+                  <select value={form.weekday} onChange={(e) => set({ weekday: Number(e.target.value) })} className={smallSelect} aria-label="Day of the week">
                     {[1, 2, 3, 4, 5, 6, 0].map((d) => (
                       <option key={d} value={d}>
                         {WEEKDAY_NAMES[d]}
@@ -317,7 +316,7 @@ export function RecurringFormModal({ open, onClose, onSaved, meta, scheduleId = 
           {form.frequency === 'YEARLY' && (
             <div className="flex flex-wrap items-center gap-2 text-sm text-ink-soft">
               On <Stepper value={form.monthDay} min={1} max={31} onChange={(n) => set({ monthDay: n })} format={(n) => String(n)} />
-              <select value={form.month} onChange={(e) => set({ month: Number(e.target.value) })} className="h-9 rounded-lg border border-line px-2 text-sm" aria-label="Month">
+              <select value={form.month} onChange={(e) => set({ month: Number(e.target.value) })} className={smallSelect} aria-label="Month">
                 {MONTH_NAMES.map((m, i) => (
                   <option key={m} value={i + 1}>
                     {m}
@@ -328,88 +327,75 @@ export function RecurringFormModal({ open, onClose, onSaved, meta, scheduleId = 
           )}
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <label className="text-sm font-medium text-ink">
+            <label className="block text-xs font-medium text-ink-soft">
               Due at
-              <input type="time" value={form.time} onChange={(e) => set({ time: e.target.value || '18:00' })} className={clsx(inputCls, 'mt-1.5')} />
+              <input type="time" value={form.time} onChange={(e) => set({ time: e.target.value || '18:00' })} className={clsx(inputCls, 'mt-1')} />
             </label>
-            <label className="text-sm font-medium text-ink">
+            <label className="block text-xs font-medium text-ink-soft">
               Starts on
-              <input type="date" value={form.startDate} onChange={(e) => set({ startDate: e.target.value })} className={clsx(inputCls, 'mt-1.5')} />
+              <input type="date" value={form.startDate} onChange={(e) => set({ startDate: e.target.value })} className={clsx(inputCls, 'mt-1')} />
             </label>
-            <label className="text-sm font-medium text-ink">
+            <label className="block text-xs font-medium text-ink-soft">
               Ends on <span className="font-normal text-ink-faint">(optional)</span>
-              <input type="date" value={form.until} min={form.startDate} onChange={(e) => set({ until: e.target.value })} className={clsx(inputCls, 'mt-1.5')} />
+              <input type="date" value={form.until} min={form.startDate} onChange={(e) => set({ until: e.target.value })} className={clsx(inputCls, 'mt-1')} />
             </label>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-sm text-ink-soft">
-            <CalendarDays className="h-4 w-4 text-ink-faint" /> Appears in their Tasks
+          <div className="flex flex-wrap items-center gap-2 text-xs text-ink-soft">
+            <CalendarDays className="h-3.5 w-3.5 text-ink-faint" /> Appears in their Tasks
             <Stepper label="Lead days" value={lead} min={0} max={maxLead} onChange={(n) => set({ leadDays: n })} format={(n) => (n === 0 ? 'on the day' : `${n} day${n === 1 ? '' : 's'} early`)} />
           </div>
 
-          <div className="flex items-start gap-3 rounded-xl bg-brand-soft/70 px-3 py-2.5">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand text-white">
-              <Repeat className="h-4 w-4" />
+          <div className="flex items-start gap-2.5 rounded-xl bg-brand-soft px-3 py-2.5">
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand text-on-brand">
+              <Repeat className="h-3.5 w-3.5" />
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-ink">{patternLabel(pattern)}</p>
+              <p className="text-sm font-medium text-ink">{patternLabel(pattern)}</p>
               <p className="text-xs text-ink-soft">
                 {lead ? `Appears ${lead} day${lead === 1 ? '' : 's'} before it is due.` : 'Appears on the day it is due.'}
-                {routine ? ' A daily task is only marked done — nothing to accept, no review.' : ''}
+                {routine ? ' Daily tasks are only marked done.' : ''}
               </p>
             </div>
           </div>
         </div>
 
-        {!selfOnly && !routine && (
-          <Switch checked={form.requiresApproval !== false} onChange={(v) => set({ requiresApproval: v })} label="I'll check it before it's done" description="Each occurrence waits for your approval once handed in." />
-        )}
-
-        <div className="space-y-2 rounded-2xl border border-line p-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-ink-faint">Reminders</p>
-          <ReminderEditor value={form.reminders} onChange={(reminders) => set({ reminders })} emptyText="No reminders of your own — your defaults from Settings apply to each occurrence." />
+        {/* ── Reminders ── */}
+        <div className="space-y-3 rounded-2xl border border-line p-4">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-ink-faint">Reminders</p>
+          <ReminderEditor value={form.reminders} onChange={(reminders) => set({ reminders })} emptyText="None of its own — your defaults from Settings apply to each one." />
         </div>
 
+        {/* ── Links and a recording ── */}
         <div className="space-y-2">
           <div className="flex gap-2">
             <input
               value={linkDraft}
               onChange={(e) => setLinkDraft(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && linkDraft.trim()) {
+                if (e.key === 'Enter') {
                   e.preventDefault();
-                  const url = linkDraft.trim();
-                  set({ links: [...form.links, { url: /^https?:\/\//i.test(url) ? url : `https://${url}`, label: '' }] });
-                  setLinkDraft('');
+                  addLink();
                 }
               }}
               placeholder="Add a link (press Enter)"
-              className="h-10 min-w-0 flex-1 rounded-xl border border-line px-3 text-sm"
+              className={clsx(inputCls, 'h-9 min-w-0 flex-1')}
             />
-            <Button
-              size="sm"
-              variant="secondary"
-              icon={Plus}
-              onClick={() => {
-                const url = linkDraft.trim();
-                if (!url) return;
-                set({ links: [...form.links, { url: /^https?:\/\//i.test(url) ? url : `https://${url}`, label: '' }] });
-                setLinkDraft('');
-              }}
-            >
-              Link
-            </Button>
+            <button type="button" onClick={addLink} className={iconBtn(false)} aria-label="Add this link" title="Add this link">
+              <Plus className="h-4 w-4" />
+            </button>
+            {!voice && <VoiceRecorder value={voice} onChange={setVoice} compact />}
           </div>
           {form.links.map((l, i) => (
-            <div key={`${l.url}-${i}`} className="flex items-center gap-2 text-sm">
-              <Link2 className="h-3.5 w-3.5 text-ink-faint" />
+            <div key={`${l.url}-${i}`} className="flex items-center gap-2 text-xs">
+              <Link2 className="h-3 w-3 shrink-0 text-ink-faint" />
               <span className="min-w-0 flex-1 truncate text-ink-soft">{l.url}</span>
               <button type="button" onClick={() => set({ links: form.links.filter((_, j) => j !== i) })} className="text-ink-faint hover:text-red-600" aria-label="Remove link">
-                <X className="h-4 w-4" />
+                <X className="h-3 w-3" />
               </button>
             </div>
           ))}
-          <VoiceRecorder value={voice} onChange={setVoice} />
+          {voice && <VoiceRecorder value={voice} onChange={setVoice} />}
         </div>
       </div>
     </Modal>

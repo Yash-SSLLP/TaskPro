@@ -3,52 +3,65 @@
  * (GET /api/tasks/templates → { mine, team: [{ team, templates }] }). Using one
  * opens the assign form already filled in (GET /:id/prefill); a team template
  * can be copied into my own. Saving one from a task is SaveTemplateModal.
+ *
+ * The cards are the HRMS's: a hairline box, the name, a quiet line of facts,
+ * and a small "Use it" / Copy / remove row.
  */
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { Bookmark, Copy, Repeat, Trash2, Users, Zap } from 'lucide-react';
+import { Bookmark, Copy, Loader2, Repeat, Trash2, User, Users, Zap } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Drawer, EmptyState, ErrorState, Input, Modal, Select, Skeleton, useConfirm } from '../../platform/ui';
+import { Button, Drawer, ErrorState, Input, Modal, Select, Skeleton, useConfirm } from '../../platform/ui';
 import * as T from '../api';
 import { FREQUENCY_LABELS } from '../lifecycle';
 import { PriorityChip } from './TaskChips';
 
 function TemplateCard({ tpl, onUse, onCopy, onRemove, busy }) {
   return (
-    <div className="flex flex-col rounded-xl border border-line bg-card px-3.5 py-3 shadow-sm">
+    <div className="flex flex-col rounded-xl border border-line bg-card px-3 py-2.5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[15px] font-semibold text-ink">{tpl.name}</p>
-          {tpl.title && tpl.title !== tpl.name && <p className="truncate text-sm text-ink-soft">{tpl.title}</p>}
+          <p className="truncate text-sm font-medium text-ink">{tpl.name}</p>
+          {tpl.title && tpl.title !== tpl.name && <p className="truncate text-xs text-ink-soft">{tpl.title}</p>}
         </div>
-        <PriorityChip priority={tpl.priority} />
+        <PriorityChip priority={tpl.priority} className="shrink-0" />
       </div>
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-faint">
+      {/* flex-1: the action row sits on the card's foot, level with its neighbour's. */}
+      <div className="mt-1.5 flex flex-1 flex-wrap content-start items-center gap-x-3 gap-y-1 text-[11px] text-ink-faint">
         {tpl.category && <span>{tpl.category}</span>}
         {tpl.repeat?.frequency && tpl.repeat.frequency !== 'ONCE' && (
           <span className="inline-flex items-center gap-1">
-            <Repeat className="h-3 w-3" /> {FREQUENCY_LABELS[tpl.repeat.frequency]}
+            <Repeat className="h-2.5 w-2.5" /> {FREQUENCY_LABELS[tpl.repeat.frequency]}
           </span>
         )}
         {Number.isFinite(tpl.dueInDays) && <span>{tpl.dueInDays}-day job</span>}
         {tpl.useCount > 0 && <span>used {tpl.useCount}×</span>}
       </div>
-      <div className="mt-2.5 flex items-center gap-1.5 border-t border-line pt-2.5">
-        <Button size="sm" icon={Zap} onClick={onUse} loading={busy}>
-          Use it
-        </Button>
+      <div className="mt-2.5 flex items-center gap-1.5 border-t border-line pt-2">
+        <button type="button" onClick={onUse} disabled={busy} className="inline-flex min-h-[30px] items-center gap-1 rounded-lg bg-brand px-3 text-xs font-medium text-on-brand transition hover:bg-brand-dark disabled:opacity-60">
+          {busy ? <Loader2 className="h-[11px] w-[11px] animate-spin" /> : <Zap className="h-[11px] w-[11px]" />} Use it
+        </button>
         {onCopy && (
-          <Button size="sm" variant="secondary" icon={Copy} onClick={onCopy}>
-            Copy to mine
-          </Button>
+          <button type="button" onClick={onCopy} title="Save a copy of my own" className="inline-flex min-h-[30px] items-center gap-1 rounded-lg border border-line px-2.5 text-xs text-ink-soft transition hover:border-slate-300 hover:text-brand">
+            <Copy className="h-[11px] w-[11px]" /> Copy
+          </button>
         )}
         {onRemove && (
-          <button type="button" onClick={onRemove} className="ml-auto grid h-9 w-9 place-items-center rounded-lg text-ink-faint hover:bg-red-50 hover:text-red-600" aria-label="Remove template">
-            <Trash2 className="h-4 w-4" />
+          <button type="button" onClick={onRemove} title="Remove" aria-label="Remove template" className="ml-auto grid min-h-[30px] min-w-[30px] place-items-center rounded-lg border border-line text-ink-faint transition hover:border-red-300 hover:text-red-600">
+            <Trash2 className="h-[11px] w-[11px]" />
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+function Empty({ title, body }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-line px-6 py-12 text-center">
+      <p className="text-sm font-medium text-slate-700">{title}</p>
+      {body && <p className="mt-1 text-xs text-ink-soft">{body}</p>}
     </div>
   );
 }
@@ -99,21 +112,28 @@ export function TemplatesDrawer({ open, onClose, onUse }) {
   const teamCount = teams.reduce((n, g) => n + (g.templates?.length || 0), 0);
 
   return (
-    <Drawer open={open} onClose={onClose} wide title="Templates" subtitle="Tasks worth setting again — use one to fill in the form.">
-      <div className="mb-4 inline-flex rounded-xl bg-slate-100 p-1">
+    <Drawer open={open} onClose={onClose} wide title="Templates">
+      <div className="mb-4 flex flex-wrap gap-1.5 pt-2" role="tablist">
         {[
-          ['mine', `Mine (${mine.length})`],
-          ['team', `Shared with my teams (${teamCount})`],
-        ].map(([k, label]) => (
-          <button key={k} type="button" onClick={() => setTab(k)} className={clsx('h-9 rounded-lg px-3 text-sm font-semibold', tab === k ? 'bg-card text-ink shadow-sm' : 'text-ink-soft')}>
-            {label}
+          ['mine', `Mine (${mine.length})`, User],
+          ['team', `Shared with my teams (${teamCount})`, Users],
+        ].map(([k, label, Icon]) => (
+          <button
+            key={k}
+            type="button"
+            role="tab"
+            aria-selected={tab === k}
+            onClick={() => setTab(k)}
+            className={clsx('inline-flex min-h-[34px] items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition', tab === k ? 'border-brand bg-well text-brand' : 'border-line text-ink-soft hover:border-slate-300')}
+          >
+            <Icon className="h-[13px] w-[13px]" /> {label}
           </button>
         ))}
       </div>
-      {q.isLoading && <div className="space-y-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-24" />)}</div>}
+      {q.isLoading && <div className="space-y-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>}
       {q.error && <ErrorState error={q.error} onRetry={q.refetch} />}
       {q.data && tab === 'mine' && (mine.length === 0 ? (
-        <EmptyState icon={Bookmark} title="No templates yet" text='Open any task and choose "Save as template" — it will be here, ready to use again.' />
+        <Empty title="No templates yet" body='Open a task and choose "Save as template".' />
       ) : (
         <div className="grid gap-2 sm:grid-cols-2">
           {mine.map((t) => (
@@ -122,13 +142,13 @@ export function TemplatesDrawer({ open, onClose, onUse }) {
         </div>
       ))}
       {q.data && tab === 'team' && (teamCount === 0 ? (
-        <EmptyState icon={Users} title="Nothing shared yet" text="Team owners and admins can share a template with their team when they save it." />
+        <Empty title="Nothing shared yet" />
       ) : (
         <div className="space-y-5">
           {teams.filter((g) => g.templates?.length).map((g) => (
             <div key={g.team?.id}>
-              <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                <Users className="h-3.5 w-3.5" /> {g.team?.name}
+              <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-soft">
+                <Users className="h-3 w-3" /> {g.team?.name}
               </h3>
               <div className="grid gap-2 sm:grid-cols-2">
                 {g.templates.map((t) => (

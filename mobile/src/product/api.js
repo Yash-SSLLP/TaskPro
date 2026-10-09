@@ -179,6 +179,28 @@ export const deleteRecurring = (id) => api.del(`${T}/recurring/${id}`);
 /** Raise whatever is due now. @returns {Promise<{ raised, tasks }>} */
 export const runRecurring = (id) => api.post(`${T}/recurring/${id}/run`);
 
+// ---------------------------------------------------------------- calendar
+
+/**
+ * The month board and its reminders (backend/src/product/routes/calendar.js
+ * and reminders.js). Every month is cached under ['calendar', 'YYYY-MM'], so
+ * a saved or deleted reminder refreshes them all through calendarKeys.all.
+ */
+export const calendarKeys = {
+  all: ['calendar'],
+  month: (ym) => ['calendar', ym],
+};
+
+/** @returns {Promise<{ year, month, events: Array<{ date, day, type, label, meta }>, aim }>} */
+export const calendarMonth = (ym) => api.get('/api/calendar', { query: { month: ym } });
+
+/** body: { title, date: 'YYYY-MM-DD', time?, notes?, priority?, scope?, recipients?, team? } → { reminder, notified } */
+export const createReminder = (body) => api.post('/api/reminders', body);
+/** The same fields, any of them; one left out keeps its value. → { reminder } */
+export const updateReminder = (id, body) => api.put(`/api/reminders/${id}`, body);
+/** Gone for everyone it was set for. → { id, deleted } */
+export const deleteReminder = (id) => api.del(`/api/reminders/${id}`);
+
 // ---------------------------------------------------------------- files
 
 /**
@@ -211,6 +233,12 @@ export function updateVoiceSource(taskId, update) {
 export function useTaskMeta() {
   const enabled = useInApp();
   return useQuery({ queryKey: taskKeys.meta, queryFn: taskMeta, enabled, staleTime: 5 * 60 * 1000 });
+}
+
+/** GET /calendar for one month ('YYYY-MM'): my tasks by day, my reminders, and whom a reminder may go to. */
+export function useCalendarMonth(ym) {
+  const enabled = useInApp();
+  return useQuery({ queryKey: calendarKeys.month(ym), queryFn: () => calendarMonth(ym), enabled });
 }
 
 /** After any change to a task: lists, counters, the task itself, alerts. */

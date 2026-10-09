@@ -6,6 +6,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { contactsApi, notificationsApi, platformKeys, teamsApi } from './endpoints';
+import { liveHealthy } from './live';
 import { isSuperAdmin, useSession } from './session';
 
 /** Pull-to-refresh that shows the spinner only while the person is pulling. */
@@ -41,14 +42,18 @@ export function useInApp() {
   return useSession((s) => s.status === 'signedIn' && !!s.user && !s.user.mustChangePassword && !s.justSignedUp);
 }
 
-/** Unread alerts, polled every minute while the app is in the foreground. */
+/**
+ * Unread alerts. The live poller (live.js) writes the count with every change
+ * to the person's alerts, so this polls (every minute, in the foreground)
+ * only while that poller is not answering (an older server, no network).
+ */
 export function useUnreadCount() {
   const enabled = useInApp();
   return useQuery({
     queryKey: platformKeys.unread,
     queryFn: notificationsApi.unreadCount,
     enabled,
-    refetchInterval: 60 * 1000,
+    refetchInterval: () => (liveHealthy() ? false : 60 * 1000),
     refetchIntervalInBackground: false,
     staleTime: 15 * 1000,
   });

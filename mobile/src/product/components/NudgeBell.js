@@ -4,11 +4,12 @@
  * `nudgeTo`). Once per task per cooldown: a bell that is waiting shows how
  * long for ("25m") and counts down on its own. `override` is the moment THIS
  * phone last rang it, so the countdown starts before the list is refetched.
+ * A waiting bell sits on the muted grey, its words in the HRMS 13/800.
  */
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { tr } from '../../i18n';
-import { colors, font, theme } from '../../platform/theme';
+import { colors, theme } from '../../platform/theme';
 import { toast } from '../../platform/ui';
 import { nudgeTask } from '../api';
 import { Bell, BellRing } from '../icons';
@@ -101,8 +102,9 @@ export default function NudgeBell({ task, override = null, onNudged, size = 36, 
 
 const styles = StyleSheet.create({
   round: { alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-  pill: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1 },
-  pillText: { fontSize: 13, fontWeight: font.bold },
+  // The status pill's size (36), so the two sit level on the task page.
+  pill: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1 },
+  pillText: { fontSize: 13, fontWeight: '800' },
   pressed: { opacity: 0.75 },
   wait: {
     position: 'absolute',
@@ -117,5 +119,5 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     alignItems: 'center',
   },
-  waitText: { fontSize: 9.5, fontWeight: font.bold, color: colors.textSecondary, fontVariant: ['tabular-nums'] },
+  waitText: { fontSize: 9.5, fontWeight: '800', color: colors.textSecondary, fontVariant: ['tabular-nums'] },
 });

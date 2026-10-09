@@ -5,7 +5,7 @@
  *
  * Platform objects carry `id` (see backend/API.md §2).
  */
-import { api, upload } from './api';
+import { api, sendForm, upload } from './api';
 
 export const platformKeys = {
   notifications: ['notifications'],
@@ -20,6 +20,12 @@ export const platformKeys = {
   users: (q, status) => ['platform', 'users', q || '', status || ''],
   user: (id) => ['platform', 'user', id],
   adminTeams: (q) => ['platform', 'teams', q || ''],
+  sessions: (window) => ['platform', 'sessions', window || 'online'],
+  appVersions: ['platform', 'app-versions'],
+  activity: (filters) => ['platform', 'activity', 'list', filters || {}],
+  activityStats: ['platform', 'activity', 'stats'],
+  activityEntry: (id) => ['platform', 'activity', 'one', id],
+  release: ['app-release'],
 };
 
 // ---------------------------------------------------------------- auth
@@ -34,6 +40,8 @@ export const authApi = {
   changePassword: (body) => api.post('/api/auth/change-password', body),
   updateProfile: (body) => api.patch('/api/auth/profile', body),
   deleteAccount: (password) => api.post('/api/auth/delete-account', { password }),
+  /** End this device's session on the server (sign-out; best effort). */
+  logout: () => api.post('/api/auth/logout', {}, { timeout: 8000 }),
 };
 
 // ---------------------------------------------------------------- my settings
@@ -42,6 +50,22 @@ export const settingsApi = {
   get: () => api.get('/api/me/settings').then((r) => r.settings),
   /** Any subset of Settings. */
   update: (body) => api.patch('/api/me/settings', body).then((r) => r.settings),
+};
+
+// ---------------------------------------------------------------- my profile photo
+
+export const photoApi = {
+  /**
+   * A square JPEG ({ uri }) as my profile photo, reporting progress (0..1).
+   * @returns {Promise<object>} the updated me (with `photoUrl`)
+   */
+  set: (file, onProgress) => {
+    const form = new FormData();
+    form.append('photo', { uri: file.uri, name: file.name || 'photo.jpg', type: file.type || 'image/jpeg' });
+    return sendForm('PUT', '/api/me/photo', form, { onProgress }).then((r) => r.user);
+  },
+  /** Back to initials. @returns {Promise<object>} the updated me */
+  remove: () => api.del('/api/me/photo').then((r) => r.user),
 };
 
 // ---------------------------------------------------------------- contacts (by Task Pin)
@@ -111,12 +135,30 @@ export const filesApi = {
 // ---------------------------------------------------------------- the Super Admin console
 
 export const platformApi = {
+  /** @returns {Promise<{ users, activeWeek, newWeek, disabled, teams, tasks, online, onlineDevices, signedIn, app }>} */
   overview: () => api.get('/api/platform/overview'),
   users: (q, status) => api.get('/api/platform/users', { query: { q, status } }).then((r) => r.users || []),
-  /** @returns {Promise<{ user, teams, contacts, stats }>} */
+  /** @returns {Promise<{ user, teams, contacts, stats, online, sessions, app, notifications, recent, lastLoginAt }>} */
   user: (id) => api.get(`/api/platform/users/${id}`),
   setStatus: (id, status) => api.patch(`/api/platform/users/${id}`, { status }).then((r) => r.user),
   resetPassword: (id, password) => api.post(`/api/platform/users/${id}/password`, { password }),
+  /** body: { name, email?, phone?, username?, title?, password? } → { user, temporaryPassword } */
+  createUser: (body) => api.post('/api/platform/users', body),
+  // The confirmation rides in the body and the query (some servers drop DELETE bodies).
+  deleteUser: (id) => api.del(`/api/platform/users/${id}`, { body: { confirm: 'DELETE' }, query: { confirm: 'DELETE' } }),
+  signOutEverywhere: (id) => api.post(`/api/platform/users/${id}/sign-out`),
+  /** body: { dailyDigest?, dailyDigestAt?, defaultReminders? } → { settings, notifications } */
+  updateSettings: (id, body) => api.patch(`/api/platform/users/${id}/settings`, body),
+  /** window: online | today | 7d → { window, counts, people, sessions } */
+  sessions: (window) => api.get('/api/platform/sessions', { query: { window } }),
+  revokeSession: (sid) => api.post(`/api/platform/sessions/${encodeURIComponent(sid)}/revoke`),
+  /** @returns {Promise<{ accounts, summary }>} */
+  appVersions: () => api.get('/api/platform/app-versions'),
+  /** query: { q?, group?, user?, from?, to?, before?, limit? } → { items, next } */
+  activity: (query) => api.get('/api/platform/activity', { query }),
+  activityStats: () => api.get('/api/platform/activity/stats'),
+  /** @returns {Promise<{ entry, related, actor, subject }>} */
+  activityEntry: (id) => api.get(`/api/platform/activity/${id}`),
   teams: (q) => api.get('/api/platform/teams', { query: { q } }).then((r) => r.teams || []),
   team: (id) => api.get(`/api/platform/teams/${id}`).then((r) => r.team),
   deleteTeam: (id) => api.del(`/api/platform/teams/${id}`),

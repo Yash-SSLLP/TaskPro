@@ -1,8 +1,12 @@
 /**
  * The icon for each task move, by key, so the status sheet, the swipe panes
  * and the detail buttons all draw the same picture for the same move.
+ *
+ * 'menu' (a swipe that opens the status menu) is the HRMS app's up-and-down
+ * swap; 'edit' (a swipe to the assign form) its pencil.
  */
 import React from 'react';
+import ArrowUpDown from 'lucide-react-native/icons/arrow-up-down';
 import {
   ArrowLeftRight,
   CheckCheck,
@@ -10,6 +14,7 @@ import {
   Clock,
   GitBranch,
   Hand,
+  Pencil,
   Send,
   ThumbsDown,
   ThumbsUp,
@@ -19,6 +24,7 @@ import {
 const ICONS = {
   claim: Hand,
   approve: CheckCheck,
+  done: CheckCheck,
   accept: ThumbsUp,
   sendBack: Undo,
   decline: ThumbsDown,
@@ -27,6 +33,8 @@ const ICONS = {
   submit: Send,
   complete: Check,
   extension: Clock,
+  menu: ArrowUpDown,
+  edit: Pencil,
 };
 
 export const actionIcon = (name) => ICONS[name] || Check;

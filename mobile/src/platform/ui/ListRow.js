@@ -20,7 +20,8 @@ export function ListRow({
   disabled = false,
   style,
   titleStyle,
-  subtitleLines = 1,
+  // Two lines: a subtitle wraps rather than being cut short (longer languages too).
+  subtitleLines = 2,
   accessibilityLabel,
 }) {
   const showChevron = chevron ?? !!onPress;

@@ -13,10 +13,12 @@ import { Compass } from 'lucide-react';
 import { product } from './product/config';
 import { api } from './platform/api';
 import { isSuperAdmin, useSession } from './platform/session';
+import { useLiveSync } from './platform/live';
 import { Layout } from './platform/Layout';
 import { ForcePasswordPage, ForgotPasswordPage, ResetPasswordPage, SignInPage, SignUpPage } from './platform/pages/auth';
 import { AlertsPage } from './platform/pages/AlertsPage';
 import { SettingsPage } from './platform/pages/SettingsPage';
+import { ProfilePage } from './platform/pages/ProfilePage';
 import { PlatformPage } from './platform/pages/PlatformPage';
 import { ContactsPage } from './platform/pages/ContactsPage';
 import { TeamDetailPage, TeamsPage } from './platform/pages/TeamsPage';
@@ -54,6 +56,8 @@ export default function App() {
   const { token, user } = useSession();
   const location = useLocation();
   useSessionRefresh(token);
+  // Other people's changes refresh what is on screen (signed in, past the password gate).
+  useLiveSync(token && user && !user.mustChangePassword ? user.id : null);
 
   useEffect(() => {
     document.title = product.name;
@@ -92,6 +96,7 @@ export default function App() {
         ))}
         <Route path="/alerts" element={<AlertsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/teams/:id" element={<TeamDetailPage />} />
         {admin ? (
           <>

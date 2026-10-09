@@ -45,6 +45,10 @@ function errorHandler(err, req, res, next) {
   if (err?.code === 11000) {
     return res.status(409).json({ error: 'That already exists' });
   }
+  // Two saves of the same record at once: the second lost the race.
+  if (err?.name === 'VersionError' || err?.name === 'DocumentNotFoundError') {
+    return res.status(409).json({ error: 'Somebody else changed this a moment ago. Open it again to see the latest.', code: 'CHANGED_ELSEWHERE' });
+  }
   if (err instanceof multer.MulterError) {
     const tooBig = err.code === 'LIMIT_FILE_SIZE';
     return res.status(tooBig ? 413 : 400).json({ error: tooBig ? 'File is too large' : err.message });

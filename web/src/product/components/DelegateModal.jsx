@@ -33,7 +33,8 @@ export function pieceItems(rows = [], tz) {
   }));
 }
 
-const inputCls = 'block h-11 w-full rounded-xl border border-line bg-card px-3 text-[15px] focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
+const inputCls = 'block h-10 w-full rounded-xl border border-line bg-card px-3 text-sm text-ink placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
+const labelCls = 'mb-1 flex items-center gap-1.5 text-xs font-medium text-ink-soft';
 
 /** The piece rows — shared with the assign form's "split it straight away". */
 export function PieceEditor({ rows, onRows, people = [], defaultOpenTo = [], maxPieces = 50 }) {
@@ -56,7 +57,7 @@ export function PieceEditor({ rows, onRows, people = [], defaultOpenTo = [], max
   return (
     <div className="space-y-3">
       <div className="rounded-xl border border-line bg-card p-3">
-        <label className="flex items-center gap-2 text-sm font-medium text-ink">
+        <label className="flex items-center gap-2 text-xs font-medium text-slate-700">
           <input
             type="checkbox"
             checked={oneOwner}
@@ -67,9 +68,9 @@ export function PieceEditor({ rows, onRows, people = [], defaultOpenTo = [], max
                 if (first) applyOwner(first);
               }
             }}
-            className="h-4 w-4 rounded border-line accent-brand"
+            className="h-3.5 w-3.5 rounded border-line accent-brand"
           />
-          <Users className="h-4 w-4 text-ink-faint" /> Same person, every piece
+          <Users className="h-3 w-3 text-ink-faint" /> Same person, every piece
         </label>
         {oneOwner && (
           <div className="mt-2">
@@ -83,7 +84,7 @@ export function PieceEditor({ rows, onRows, people = [], defaultOpenTo = [], max
         return (
           <div key={row.key} className="rounded-xl border border-line bg-card p-3">
             <div className="flex items-start gap-2">
-              <span className="tnum mt-2.5 inline-flex h-6 min-w-[24px] items-center justify-center rounded-lg border text-[11px] font-semibold" style={tintStyle(colour)}>
+              <span className="tnum mt-[9px] inline-flex min-h-[22px] min-w-[22px] items-center justify-center rounded-lg border text-[11px] font-semibold" style={tintStyle(colour)}>
                 {i + 1}
               </span>
               <input value={row.title} onChange={(e) => set(i, { title: e.target.value })} placeholder="What is this piece?" maxLength={300} className={clsx(inputCls, 'min-w-0 flex-1')} />
@@ -91,17 +92,18 @@ export function PieceEditor({ rows, onRows, people = [], defaultOpenTo = [], max
                 type="button"
                 onClick={() => drop(i)}
                 disabled={rows.length <= 1}
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-line text-ink-faint hover:border-red-300 hover:text-red-600 disabled:opacity-30"
+                title={rows.length <= 1 ? 'A split needs at least one piece' : 'Remove this piece'}
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line text-ink-faint transition hover:border-red-300 hover:text-red-600 disabled:opacity-30"
                 aria-label={`Remove piece ${i + 1}`}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
             <div className="mt-2 grid gap-2 sm:grid-cols-3">
               <div className="sm:col-span-1">
                 {oneOwner ? (
-                  <div className="flex h-11 items-center gap-1.5 rounded-xl border border-dashed border-line px-3 text-sm text-ink-soft">
-                    <User className="h-4 w-4" />
+                  <div className="flex h-10 items-center gap-1.5 rounded-xl border border-dashed border-line px-3 text-xs text-ink-soft sm:mt-5">
+                    <User className="h-3 w-3" />
                     {people.find((p) => idOf(p) === String(owner))?.name || 'Nobody chosen yet'}
                   </div>
                 ) : (
@@ -109,15 +111,14 @@ export function PieceEditor({ rows, onRows, people = [], defaultOpenTo = [], max
                 )}
               </div>
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-ink">
-                  <CalendarDays className="h-4 w-4 text-ink-faint" /> Deadline
+                <label className={labelCls}>
+                  <CalendarDays className="h-3 w-3" /> Deadline
                 </label>
-                <input type="datetime-local" value={row.dueDate} onChange={(e) => set(i, { dueDate: e.target.value })} className={inputCls} aria-label={`Deadline for piece ${i + 1}`} />
-                <p className="mt-1 text-xs text-ink-faint">the task&apos;s, if left blank</p>
+                <input type="datetime-local" value={row.dueDate} onChange={(e) => set(i, { dueDate: e.target.value })} className={inputCls} title="Left blank, the piece has the task's deadline" aria-label={`Deadline for piece ${i + 1}`} />
               </div>
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-ink">
-                  <Flag className="h-4 w-4 text-ink-faint" /> Priority
+                <label className={labelCls}>
+                  <Flag className="h-3 w-3" /> Priority
                 </label>
                 <select value={row.priority} onChange={(e) => set(i, { priority: e.target.value })} className={inputCls} aria-label={`Priority for piece ${i + 1}`}>
                   <option value="">Same as the task</option>
@@ -129,20 +130,25 @@ export function PieceEditor({ rows, onRows, people = [], defaultOpenTo = [], max
                 </select>
               </div>
             </div>
+            {/* Only once the row is a piece at all: two dashed panels before a word is typed is noise. */}
             {isLivePiece(row) && !row.assignee && !oneOwner && (
-              <div className="mt-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3">
-                <PeoplePicker label="Open to" icon={Users} people={people} value={row.openTo} onChange={(ids) => set(i, { openTo: ids })} placeholder="Your team-mates" />
-                <p className="mt-1.5 text-xs text-ink-soft">
-                  Nobody is named, so it is offered to these people and <strong>the first one to pick it up gets it</strong>.
-                  {(row.openTo || []).length === 0 && ' Left empty, it goes to your team-mates.'}
-                </p>
+              <div className="mt-2 rounded-xl border border-dashed border-slate-300 bg-well p-3">
+                <PeoplePicker
+                  label="Open to"
+                  icon={Users}
+                  people={people}
+                  value={row.openTo}
+                  onChange={(ids) => set(i, { openTo: ids })}
+                  placeholder="Your team-mates"
+                  hint={(row.openTo || []).length ? 'The first to pick it up gets it.' : 'Left empty, it goes to your team-mates — the first to pick it up gets it.'}
+                />
               </div>
             )}
           </div>
         );
       })}
-      <button type="button" onClick={add} className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 text-sm font-semibold text-ink-soft hover:border-slate-400 hover:text-ink">
-        <Plus className="h-4 w-4" /> Add a piece
+      <button type="button" onClick={add} className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 text-sm font-medium text-ink-soft transition hover:border-slate-400 hover:text-ink">
+        <Plus className="h-3.5 w-3.5" /> Add a piece
       </button>
     </div>
   );
@@ -236,32 +242,44 @@ export function DelegateModal({ task, meta, open, onClose, onDone, can = null })
         {mayGiveWhole && maySplit && (
           <div className="grid gap-2 sm:grid-cols-2">
             {[
-              ['whole', UserPlus, 'Give the whole task to one person', 'They pick it up as it stands and it stays one task.'],
-              ['split', GitBranch, 'Split it into pieces', 'Several people, a piece each — each one a task.'],
-            ].map(([key, Icon, title, blurb]) => (
-              <button key={key} type="button" onClick={() => setMode(key)} aria-pressed={mode === key} className={clsx('rounded-xl border-2 p-3 text-left transition', mode === key ? 'border-brand bg-brand-soft/50' : 'border-line hover:border-slate-300')}>
-                <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-                  <Icon className="h-4 w-4" /> {title}
+              ['whole', UserPlus, 'Give the whole task to one person'],
+              ['split', GitBranch, 'Split it into pieces'],
+            ].map(([key, Icon, title]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setMode(key)}
+                aria-pressed={mode === key}
+                // Border width and weight on the base class: choosing one cannot resize the pair.
+                className={clsx('min-h-[40px] rounded-xl border-2 p-3 text-left text-sm font-medium transition', mode === key ? 'border-brand bg-well' : 'border-line hover:border-slate-300')}
+              >
+                <span className={clsx('flex items-center gap-1.5', mode === key ? 'text-brand' : 'text-ink')}>
+                  <Icon className="h-3.5 w-3.5 shrink-0" /> {title}
                 </span>
-                <span className="mt-1 block text-xs text-ink-soft">{blurb}</span>
               </button>
             ))}
           </div>
         )}
-        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
-          <strong>You will be the one to approve this.</strong>{' '}
-          {splitting ? 'Every piece comes back to you when it is handed in.' : 'When they submit it, it lands with you rather than with whoever set it.'}
+        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+          <strong className="font-semibold">You will approve this.</strong>
         </p>
         {!splitting ? (
           <div className="space-y-3">
-            <PeoplePicker label="Hand it to" icon={User} people={assignable} value={to} onChange={setTo} max={1} placeholder="Choose somebody…" hint="Your contacts and team-mates." />
+            <PeoplePicker label="Hand it to" icon={User} people={assignable} value={to} onChange={setTo} max={1} placeholder="Choose somebody…" />
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-ink" htmlFor="delegate-note">
+              <label className="mb-1 block text-xs font-medium text-ink-soft" htmlFor="delegate-note">
                 Why are you passing it on? <span className="font-normal text-ink-faint">(optional)</span>
               </label>
-              <textarea id="delegate-note" value={note} onChange={(e) => setNote(e.target.value)} rows={3} maxLength={1000} placeholder="Anything they need to know to pick it up…" className="block w-full resize-y rounded-xl border border-line px-3.5 py-2.5 text-[15px] placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30" />
+              <textarea
+                id="delegate-note"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={3}
+                maxLength={1000}
+                placeholder="Anything they need to know to pick it up…"
+                className="block w-full resize-y rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+              />
             </div>
-            <p className="text-xs text-ink-soft">They start fresh — it is theirs to accept or decline — and you keep hearing about every move on it.</p>
           </div>
         ) : (
           <PieceEditor rows={rows} onRows={setRows} people={meta?.people || []} defaultOpenTo={team} maxPieces={meta?.maxPieces || 50} />

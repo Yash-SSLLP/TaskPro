@@ -1,8 +1,9 @@
 /**
  * Things that happen outside any one screen: registering for push after
  * sign-in, opening the right screen when a notification or a
- * taskpro:// link is tapped, refreshing data when an alert arrives,
- * offering a newer app build, and following the phone's light/dark switch.
+ * taskpro:// link is tapped, refreshing data when an alert arrives or
+ * somebody else changes something (live.js), offering a newer app build,
+ * and following the phone's light/dark switch.
  */
 import { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
@@ -12,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import productConfig from '../product/config';
 import { tr } from '../i18n';
 import { useInApp } from './hooks';
+import { useLiveSync } from './live';
 import { flushPendingLink, navigationRef, openLink } from './navigation/links';
 import { linkOf, registerForPush } from './push';
 import { useSession } from './session';
@@ -38,7 +40,10 @@ function pathFromUrl(url) {
 export default function AppEvents({ navReady }) {
   const inApp = useInApp();
   const qc = useQueryClient();
+  const userId = useSession((s) => s.user?.id);
   useFollowSystemTheme();
+  // Other people's changes refresh what is on screen, while the app is open.
+  useLiveSync(inApp ? userId : null);
 
   // Push token: once per sign-in.
   useEffect(() => {

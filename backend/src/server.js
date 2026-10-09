@@ -3,8 +3,10 @@
  * start background jobs, listen.
  */
 const config = require('./config');
-const product = require('./product');
+// app.js first: it registers the live-update plugin before any model is
+// compiled (product/index.js loads models), or nothing would bump.
 const { createApp } = require('./app');
+const product = require('./product');
 const { connectDB } = require('./platform/db');
 const { ensureSuperAdmin } = require('./platform/seed');
 const { cleanupOrphans } = require('./platform/services/files');

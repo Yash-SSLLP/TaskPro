@@ -28,7 +28,8 @@ const config = {
   port: Number(env('PORT', 5120)),
 
   // Empty in development = start a throwaway in-memory MongoDB (see server.js).
-  mongoUri: env('MONGO_URI'),
+  // `npm run dev:memory` (--memory-db) does that even when MONGO_URI is set.
+  mongoUri: process.argv.includes('--memory-db') ? '' : env('MONGO_URI'),
   // DNS servers to fall back to when the system resolver can't look up a
   // mongodb+srv:// address (see platform/db.js).
   dnsServers: env('DNS_SERVERS', '8.8.8.8,1.1.1.1')

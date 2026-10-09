@@ -49,25 +49,25 @@ export function TaskRow({ task, meId = '', onOpen, onAction, onSwipe, nudgedAt =
 
   return (
     <SwipeRow actions={swipe} onAction={(key) => onSwipe?.(key, task)}>
-      <div onClick={openRow} style={accentStyle(task)} className="group cursor-pointer rounded-2xl px-3 py-3 shadow-sm transition duration-200 hover:-translate-y-px hover:shadow-md sm:px-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+      <div onClick={openRow} style={accentStyle(task)} className="task-row group cursor-pointer rounded-2xl px-3 py-2.5 shadow-sm transition duration-200 hover:-translate-y-px hover:shadow-md sm:px-4 sm:py-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="tnum w-8 shrink-0 pt-0.5 text-right font-mono text-[11px] text-ink-faint">{task.serial ? `#${task.serial}` : ''}</span>
+            <span className="tnum hidden w-8 shrink-0 pt-0.5 text-right font-mono text-[11px] text-ink-faint sm:block">{task.serial ? `#${task.serial}` : ''}</span>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                 {task.code && <span className="shrink-0 font-mono text-[11px] text-ink-faint">{task.code}</span>}
                 <ExtensionChip task={task} className="shrink-0" />
-                <Link to={`/tasks/${task._id}`} onClick={openFromTitle} className="min-w-0 break-words text-[15px] font-semibold text-ink hover:text-brand">
+                <Link to={`/tasks/${task._id}`} onClick={openFromTitle} className="min-w-0 break-words text-sm font-semibold text-ink transition-colors hover:text-brand">
                   {task.title}
                 </Link>
               </div>
 
               {task.isPiece && (
                 <div className="mt-1 text-[11px] text-ink-soft">
-                  <Layers className="mr-1 inline h-3 w-3 align-[-2px] text-ink-faint" />
+                  <Layers className="mr-1 inline h-2.5 w-2.5 align-[-1px] text-ink-faint" />
                   part of{' '}
                   {parentId ? (
-                    <Link to={`/tasks/${parentId}`} onClick={(e) => e.stopPropagation()} className="text-ink hover:text-brand" title={task.parentTitle || undefined}>
+                    <Link to={`/tasks/${parentId}`} onClick={(e) => e.stopPropagation()} className="text-ink-soft transition-colors hover:text-brand" title={task.parentTitle || undefined}>
                       {task.parentCode || task.parentTitle || 'the parent task'}
                     </Link>
                   ) : (
@@ -78,31 +78,34 @@ export function TaskRow({ task, meId = '', onOpen, onAction, onSwipe, nudgedAt =
 
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-soft">
                 {onlyMe ? (
-                  <span className="inline-flex items-center gap-1">
-                    <User className="h-3 w-3 text-ink-faint" /> Your own task
+                  <span className="inline-flex min-w-0 items-center gap-1">
+                    <User className="h-3 w-3 shrink-0 text-ink-faint" /> Your own task
                   </span>
                 ) : (
                   <>
                     <span className="inline-flex min-w-0 items-center gap-1">
                       <User className="h-3 w-3 shrink-0 text-ink-faint" />
                       <span className="text-ink-faint">By</span>
-                      <span className="truncate text-ink">{setBy}</span>
+                      <span className="truncate font-medium text-ink-soft">{setBy}</span>
                       {sentBy && <span className="shrink-0 text-ink-faint">(sent by {sentBy})</span>}
                     </span>
                     <span className="inline-flex min-w-0 items-center gap-1">
                       <ArrowRight className="h-3 w-3 shrink-0 text-ink-faint" />
                       <span className="text-ink-faint">To</span>
-                      <span className="truncate text-ink">{setFor}</span>
+                      <span className="truncate font-medium text-ink-soft">{setFor}</span>
                     </span>
                   </>
                 )}
+                {/* Off a phone: the row keeps to the lines that matter there. */}
                 {assignedOn && (
-                  <span className="inline-flex items-center gap-1">
-                    <CalendarDays className="h-3 w-3 shrink-0 text-ink-faint" /> {assignedOn}
+                  <span className="hidden items-center gap-1 sm:inline-flex">
+                    <CalendarDays className="h-3 w-3 shrink-0 text-ink-faint" />
+                    <span className="text-ink-faint">Assigned</span>
+                    <span className="font-medium text-ink-soft">{assignedOn}</span>
                   </span>
                 )}
                 <DueChip task={task} />
-                {task.category && <span className="rounded-md bg-card/70 px-1.5 text-ink-soft">{task.category}</span>}
+                {task.category && <span className="text-ink-soft">{task.category}</span>}
                 {team && (
                   <span className="inline-flex items-center gap-1 text-ink-soft">
                     <Users className="h-3 w-3 text-ink-faint" /> {team}
@@ -135,7 +138,7 @@ export function TaskRow({ task, meId = '', onOpen, onAction, onSwipe, nudgedAt =
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 pl-11 md:shrink-0 md:justify-end md:pl-0">
+          <div className="flex flex-wrap items-center justify-between gap-2 sm:shrink-0 sm:justify-end">
             <div className="flex flex-wrap items-center gap-1.5">
               <OverdueChip task={task} />
               <PriorityChip priority={task.priority} />

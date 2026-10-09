@@ -1,23 +1,25 @@
 /**
- * Settings: my profile, my Task Pin, my password, and my preferences (time
- * zone, work day, approvals, default reminders, daily summary, language).
+ * Settings: me (photo, name and a way to the profile page, where the details
+ * are edited), my Task Pin, my password, and my preferences (time zone, work
+ * day, approvals, default reminders, daily summary, language). /settings#password
+ * opens on the password.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { LogOut, Monitor, Moon, ShieldCheck, Sun, Trash2 } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { LogOut, Monitor, Moon, ShieldCheck, Sun, Trash2, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../api';
 import { isSuperAdmin, useSession, useSettings } from '../session';
 import { signOutEverywhere } from '../signOut';
-import { Button, Card, Input, PageHeader, PasswordInput, PinCard, Select, Skeleton, Switch } from '../ui';
+import { Avatar, Button, Card, Input, PageHeader, PasswordInput, PinCard, Select, Skeleton, Switch } from '../ui';
 import { ReminderEditor } from '../../product/components/Reminders';
 import { AndroidAppDetails } from './mobileApp';
 import { setThemeMode, useTheme } from '../theme';
 
-export function Section({ title, description, children }) {
+export function Section({ id, title, description, children }) {
   return (
-    <Card className="p-5 sm:p-6">
+    <Card id={id} className="scroll-mt-20 p-5 sm:p-6">
       <h2 className="text-base font-semibold text-ink">{title}</h2>
       {description && <p className="mt-0.5 text-sm text-ink-soft">{description}</p>}
       <div className="mt-5">{children}</div>
@@ -25,43 +27,22 @@ export function Section({ title, description, children }) {
   );
 }
 
-function ProfileSection() {
-  const { user, updateUser } = useSession();
-  const [form, setForm] = useState({ name: user.name || '', title: user.title || '', email: user.email || '', phone: user.phoneDisplay || '' });
-  const [busy, setBusy] = useState(false);
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const save = async (e) => {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      const body = { name: form.name.trim(), title: form.title.trim() };
-      if (form.email.trim() !== (user.email || '')) body.email = form.email.trim();
-      if (form.phone.trim() !== (user.phoneDisplay || '')) body.phone = form.phone.trim();
-      const data = await api.patch('/api/auth/profile', body);
-      updateUser(data.user);
-      setForm({ name: data.user.name || '', title: data.user.title || '', email: data.user.email || '', phone: data.user.phoneDisplay || '' });
-      toast.success('Profile saved');
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setBusy(false);
-    }
-  };
+/** Me, in one line: the photo, name and job title are changed on the profile page. */
+function ProfileCard() {
+  const user = useSession((s) => s.user);
   return (
-    <Section title="My profile" description="How people see you, and how you sign in.">
-      <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
-        <Input label="Name" autoComplete="name" value={form.name} onChange={set('name')} />
-        <Input label="Job title" optional placeholder="e.g. Accounts" value={form.title} onChange={set('title')} />
-        <Input label="Email" optional type="email" autoComplete="email" value={form.email} onChange={set('email')} />
-        <Input label="Mobile number" optional type="tel" autoComplete="tel" value={form.phone} onChange={set('phone')} />
-        {user.username && <Input label="Username" value={user.username} disabled hint="You can also sign in with this." />}
-        <div className="sm:col-span-2">
-          <Button type="submit" loading={busy} disabled={!form.name.trim()}>
-            Save profile
-          </Button>
-        </div>
-      </form>
-    </Section>
+    <Card className="flex flex-wrap items-center gap-4 p-4 sm:p-5">
+      <Link to="/profile" className="shrink-0 rounded-full" aria-label="My profile">
+        <Avatar person={user} size="lg" />
+      </Link>
+      <div className="min-w-0 flex-1 basis-40">
+        <p className="truncate text-base font-semibold text-ink">{user.name}</p>
+        <p className="truncate text-sm text-ink-soft">{[user.title, user.email || user.phoneDisplay || user.username].filter(Boolean).join(' · ') || 'Add a photo and your job title'}</p>
+      </div>
+      <Button variant="secondary" icon={UserRound} to="/profile">
+        Edit your profile
+      </Button>
+    </Card>
   );
 }
 
@@ -86,7 +67,7 @@ function PasswordSection() {
     }
   };
   return (
-    <Section title="Password">
+    <Section id="password" title="Password">
       <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
         <PasswordInput label="Current password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
         <PasswordInput label="New password" autoComplete="new-password" hint="At least 8 characters." value={next} onChange={(e) => setNext(e.target.value)} />
@@ -177,7 +158,7 @@ function PreferencesSection() {
   };
 
   return (
-    <Section title="Preferences" description="How Task Pro works for you. Others don't see these.">
+    <Section title="Preferences" description="How PinTask works for you. Others don't see these.">
       {query.isLoading && !query.data ? (
         <div className="space-y-4">
           <Skeleton className="h-11" />
@@ -276,8 +257,8 @@ const THEME_OPTIONS = [
 function AppearanceSection() {
   const mode = useTheme((s) => s.mode);
   return (
-    <Section title="Appearance" description="How Task Pro looks on this device. System follows your computer or phone.">
-      <div className="inline-flex rounded-xl bg-slate-100 p-1" role="radiogroup" aria-label="Appearance">
+    <Section title="Appearance" description="How PinTask looks on this device. System follows your computer or phone.">
+      <div className="seg-track inline-flex rounded-xl p-0.5" role="radiogroup" aria-label="Appearance">
         {THEME_OPTIONS.map((o) => (
           <button
             key={o.value}
@@ -286,8 +267,8 @@ function AppearanceSection() {
             aria-checked={mode === o.value}
             onClick={() => setThemeMode(o.value)}
             className={
-              'inline-flex h-9 items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition-colors ' +
-              (mode === o.value ? 'bg-card text-ink shadow-sm' : 'text-ink-soft hover:text-ink')
+              'inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold transition-colors ' +
+              (mode === o.value ? 'seg-on text-ink shadow-sm' : 'text-ink-soft hover:text-ink')
             }
           >
             <o.icon className="h-4 w-4" aria-hidden />
@@ -302,16 +283,26 @@ function AppearanceSection() {
 export function SettingsPage() {
   const user = useSession((s) => s.user);
   const navigate = useNavigate();
+  const { hash } = useLocation();
   const superAdmin = isSuperAdmin(user);
+
+  // /settings#password (the profile page's "Change password") opens on that box.
+  useEffect(() => {
+    if (hash !== '#password') return;
+    const box = document.getElementById('password');
+    box?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    box?.querySelector('input')?.focus({ preventScroll: true });
+  }, [hash]);
+
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <PageHeader title="Settings" />
-      <ProfileSection />
+      <ProfileCard />
       {!superAdmin && <PinCard person={user} compact />}
       <PasswordSection />
       <PreferencesSection />
       <AppearanceSection />
-      <Section title="Android app" description="Task Pro on your phone, with reminders and alerts.">
+      <Section title="Android app" description="PinTask on your phone, with reminders and alerts.">
         <AndroidAppDetails />
       </Section>
       <Section title="Privacy and your account" description="How we handle your information, and how to leave.">

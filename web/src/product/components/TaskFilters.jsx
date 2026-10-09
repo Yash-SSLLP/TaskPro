@@ -78,7 +78,7 @@ function Pill({ on, onClick, children, style }) {
       onClick={onClick}
       aria-pressed={on}
       style={style}
-      className={clsx('inline-flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition', style ? '' : on ? 'border-brand bg-brand text-white' : 'border-line bg-card text-ink-soft hover:border-slate-300')}
+      className={clsx('inline-flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition', style ? '' : on ? 'border-brand bg-brand text-on-brand' : 'border-line bg-card text-ink-soft hover:border-slate-300')}
     >
       {children}
     </button>

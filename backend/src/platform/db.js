@@ -5,6 +5,7 @@
  * `npm run dev` works on a fresh machine. Its data is gone when the server stops.
  */
 const dns = require('dns');
+const path = require('path');
 const mongoose = require('mongoose');
 const config = require('../config');
 
@@ -38,7 +39,11 @@ async function connectDB(uri = config.mongoUri) {
     if (config.isProd) throw new Error('MONGO_URI must be set in production');
     // Lazy: mongodb-memory-server is a dev dependency.
     const { MongoMemoryServer } = require('mongodb-memory-server');
-    memoryServer = await MongoMemoryServer.create();
+    // The mongod binary is kept in this package's node_modules/.cache wherever
+    // the server is started from (`npm --prefix backend …` from the repo root
+    // would otherwise download another 600 MB copy into the home folder).
+    const downloadDir = path.join(__dirname, '..', '..', 'node_modules', '.cache', 'mongodb-memory-server');
+    memoryServer = await MongoMemoryServer.create({ binary: { downloadDir } });
     target = memoryServer.getUri('app');
     console.warn('[db] MONGO_URI is not set: using a TEMPORARY in-memory database. Data is lost on restart.');
   } else {

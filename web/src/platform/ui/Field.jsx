@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import { Eye, EyeOff } from 'lucide-react';
 
 const inputBase =
-  'block w-full rounded-xl border bg-card px-3.5 text-[15px] text-ink placeholder:text-ink-faint shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand/30 disabled:bg-slate-50 disabled:text-ink-soft';
+  'block w-full rounded-xl border bg-card px-3 text-[15px] text-ink placeholder:text-ink-faint shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand/30 disabled:bg-well disabled:text-ink-soft';
 
 function Shell({ id, label, hint, error, children, className, optional }) {
   return (
@@ -41,7 +41,7 @@ export const Input = forwardRef(function Input({ label, hint, error, className, 
           ref={ref}
           id={id}
           aria-invalid={!!error || undefined}
-          className={clsx(inputBase, 'h-11', prefix && 'pl-9', error ? 'border-red-400' : 'border-line focus:border-brand', inputClassName)}
+          className={clsx(inputBase, 'h-10', prefix && 'pl-9', error ? 'border-red-400' : 'border-line focus:border-brand', inputClassName)}
           {...rest}
         />
       </div>
@@ -60,16 +60,16 @@ export const PasswordInput = forwardRef(function PasswordInput({ label = 'Passwo
           id={id}
           type={show ? 'text' : 'password'}
           aria-invalid={!!error || undefined}
-          className={clsx(inputBase, 'h-11 pr-11', error ? 'border-red-400' : 'border-line focus:border-brand')}
+          className={clsx(inputBase, 'h-10 pr-10', error ? 'border-red-400' : 'border-line focus:border-brand')}
           {...rest}
         />
         <button
           type="button"
           onClick={() => setShow((s) => !s)}
-          className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-ink-faint hover:text-ink"
+          className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-ink-faint hover:text-ink"
           aria-label={show ? 'Hide password' : 'Show password'}
         >
-          {show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          {show ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
         </button>
       </div>
     </Shell>
@@ -99,7 +99,7 @@ export const Select = forwardRef(function Select({ label, hint, error, className
       <select
         ref={ref}
         id={id}
-        className={clsx(inputBase, 'h-11 appearance-none bg-[length:16px] bg-[right_12px_center] bg-no-repeat pr-9', error ? 'border-red-400' : 'border-line focus:border-brand')}
+        className={clsx(inputBase, 'h-10 appearance-none bg-[length:16px] bg-[right_12px_center] bg-no-repeat pr-9', error ? 'border-red-400' : 'border-line focus:border-brand')}
         style={{
           backgroundImage:
             "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
@@ -135,7 +135,8 @@ export function Switch({ checked, onChange, label, description, disabled }) {
           checked ? 'bg-brand' : 'bg-slate-300'
         )}
       >
-        <span className={clsx('inline-block h-5 w-5 rounded-full bg-card shadow transition-transform', checked ? 'translate-x-[22px]' : 'translate-x-0.5')} />
+        {/* The knob stays white on either track and in either theme. */}
+        <span className={clsx('inline-block h-5 w-5 rounded-full bg-white shadow transition-transform', checked ? 'translate-x-[22px]' : 'translate-x-0.5')} />
       </button>
     </div>
   );

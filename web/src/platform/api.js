@@ -6,10 +6,54 @@
  * for the whole app: an ended session signs out, a disabled account signs out
  * with a notice, and "choose a new password first" flips the session into the
  * forced-password screen.
+ *
+ * Every request says which app it is (X-Platform, X-App-Version,
+ * X-Device-Name), so the Super Admin's console can show who is signed in
+ * where and on which version.
  */
+import { version as WEB_VERSION } from '../../package.json';
 import { useSession } from './session';
 
 const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+
+/** "Chrome on Windows", read once from the browser's User-Agent. */
+export function browserName(ua = typeof navigator !== 'undefined' ? navigator.userAgent : '') {
+  const os = /Windows/i.test(ua)
+    ? 'Windows'
+    : /Android/i.test(ua)
+      ? 'Android'
+      : /iPhone|iPad|iPod/i.test(ua)
+        ? 'iOS'
+        : /CrOS/i.test(ua)
+          ? 'ChromeOS'
+          : /Mac OS X|Macintosh/i.test(ua)
+            ? 'macOS'
+            : /Linux/i.test(ua)
+              ? 'Linux'
+              : '';
+  const browser = /Edg\//.test(ua)
+    ? 'Edge'
+    : /OPR\/|Opera/.test(ua)
+      ? 'Opera'
+      : /SamsungBrowser/.test(ua)
+        ? 'Samsung Internet'
+        : /Firefox\//.test(ua)
+          ? 'Firefox'
+          : /Chrome\//.test(ua)
+            ? 'Chrome'
+            : /Safari\//.test(ua)
+              ? 'Safari'
+              : '';
+  if (browser && os) return `${browser} on ${os}`;
+  return browser || os || 'Web browser';
+}
+
+/** What this app says about itself on every request (plain ASCII: header values must be). */
+const CLIENT_HEADERS = {
+  'X-Platform': 'web',
+  'X-App-Version': String(WEB_VERSION || ''),
+  'X-Device-Name': browserName().replace(/[^\x20-\x7e]/g, '').slice(0, 80),
+};
 
 export class ApiError extends Error {
   constructor(status, message, code, data = null) {
@@ -49,7 +93,7 @@ async function toError(res) {
 
 async function request(method, path, body, { raw = false } = {}) {
   const token = useSession.getState().token;
-  const headers = { Accept: 'application/json' };
+  const headers = { Accept: 'application/json', ...CLIENT_HEADERS };
   if (token) headers.Authorization = `Bearer ${token}`;
   const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
   if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
@@ -73,6 +117,25 @@ async function request(method, path, body, { raw = false } = {}) {
   if (res.status === 204) return null;
   const text = await res.text();
   return text ? JSON.parse(text) : null;
+}
+
+/**
+ * Tell the server this device signed out, so its session ends there too.
+ * Best effort and never waited on: sign-out must not hang on the network, and
+ * an answer (even a 401 for a session that already ended) changes nothing here.
+ */
+export function endSession(token) {
+  if (!token || typeof fetch === 'undefined') return;
+  try {
+    fetch(apiUrl('/api/auth/logout'), {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...CLIENT_HEADERS },
+      body: '{}',
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    /* offline or blocked: the session simply ends when it expires */
+  }
 }
 
 /** Build a query string, skipping empty values. */

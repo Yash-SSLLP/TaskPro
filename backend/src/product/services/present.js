@@ -1,26 +1,27 @@
 /**
  * How tasks, feed rows and people look in responses (HRMS shapes).
  *
- * People inside task responses carry `_id` and `id`, `name`, `pin` and
- * `pinDisplay`. Files carry a signed `url` so an <img>/<audio> can open them
- * without a header. Everything derived (overdue, declined, the accent colour)
- * is computed here, never stored.
+ * People inside task responses carry `_id` and `id`, `name`, `pin`,
+ * `pinDisplay` and `photoUrl` (a signed link, or null). Files carry a signed
+ * `url` so an <img>/<audio> can open them without a header. Everything
+ * derived (overdue, declined, the accent colour) is computed here, never stored.
  */
 const { formatPin } = require('../../platform/pin');
 const { signedPath } = require('../../platform/services/files');
+const { photoUrlOf } = require('../../platform/models/User');
 const {
   STATUS, EXTENSION_STATUS, FREQUENCY, FREQUENCY_LABELS, DEFAULT_PRIORITY,
   statusLabel, isOverdue, isDeclined, isAwaitingAcceptance, accentFor, normalisePriority, patternLabel,
 } = require('../config');
 
 /** What populate() asks for on a User. */
-const PERSON_FIELDS = 'name pin status';
+const PERSON_FIELDS = 'name pin status photo';
 
 /** A populated user as a person object; an unpopulated id is left alone. */
 function personOut(u) {
   if (!u || typeof u !== 'object' || !u._id || u.name === undefined) return u ?? null;
   const id = String(u._id);
-  return { _id: id, id, name: u.name, pin: u.pin || '', pinDisplay: formatPin(u.pin) };
+  return { _id: id, id, name: u.name, pin: u.pin || '', pinDisplay: formatPin(u.pin), photoUrl: photoUrlOf(u) };
 }
 
 /** A team reference as `{ id, name }` (name null when not loaded), or null. */

@@ -1,11 +1,12 @@
 /**
- * Task Pro's icons: everything the platform exports, plus the Lucide icons
+ * PinTask's icons: everything the platform exports, plus the Lucide icons
  * tasks need, imported one by one to keep the bundle small.
  */
 export * from '../platform/icons';
 export { default as AlarmClock } from 'lucide-react-native/icons/alarm-clock';
 export { default as BellRing } from 'lucide-react-native/icons/bell-ring';
 export { default as CalendarClock } from 'lucide-react-native/icons/calendar-clock';
+export { default as CalendarDays } from 'lucide-react-native/icons/calendar-days';
 export { default as ChartColumn } from 'lucide-react-native/icons/chart-column';
 export { default as CircleCheckBig } from 'lucide-react-native/icons/circle-check-big';
 export { default as CircleDot } from 'lucide-react-native/icons/circle-dot';

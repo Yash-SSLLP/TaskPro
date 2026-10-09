@@ -5,13 +5,16 @@
  *
  * Toasts and confirm dialogs cannot draw above an open sheet on every
  * platform, so sheets show their own errors inline.
+ *
+ * THE HRMS SHEET (2026-10-08): the page's grey under the content (so white
+ * fields and rows stand out on it), a 22px top curve, a 19pt title with a
+ * plain close cross, and the footer's buttons set off by a hairline rule.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from '../icons';
-import { colors, radius, space, type } from '../theme';
-import { IconButton } from './Header';
+import { colors, font, radius, space, type } from '../theme';
 import { tr } from '../../i18n';
 
 export function BottomSheet({ visible, onClose, title, subtitle, children, footer, scroll = true, dismissable = true }) {
@@ -44,18 +47,28 @@ export function BottomSheet({ visible, onClose, title, subtitle, children, foote
           <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel={tr('Close')} accessibilityRole="button" />
         </Animated.View>
         <Animated.View
-          style={[styles.sheet, { marginTop: insets.top + space(10), paddingBottom: insets.bottom + space(3), transform: [{ translateY }] }]}
+          style={[styles.sheet, { marginTop: insets.top + space(10), paddingBottom: insets.bottom + space(4), transform: [{ translateY }] }]}
         >
           <View style={styles.handle} />
           {title ? (
             <View style={styles.head}>
               <View style={styles.headText}>
-                <Text style={type.heading} accessibilityRole="header">
+                <Text style={styles.title} accessibilityRole="header">
                   {title}
                 </Text>
                 {subtitle ? <Text style={[type.caption, styles.subtitle]}>{subtitle}</Text> : null}
               </View>
-              {dismissable ? <IconButton icon={X} label={tr('Close')} onPress={close} color={colors.textSecondary} /> : null}
+              {dismissable ? (
+                <Pressable
+                  onPress={close}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel={tr('Close')}
+                  style={({ pressed }) => [styles.close, pressed && styles.closePressed]}
+                >
+                  <X size={22} color={colors.textSecondary} strokeWidth={2} />
+                </Pressable>
+              ) : null}
             </View>
           ) : null}
           {scroll ? (
@@ -77,9 +90,10 @@ const styles = StyleSheet.create({
   backdrop: { backgroundColor: colors.overlay },
   sheet: {
     flexShrink: 1,
-    backgroundColor: colors.card,
-    borderTopLeftRadius: radius.card + 4,
-    borderTopRightRadius: radius.card + 4,
+    backgroundColor: colors.bg,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingTop: space(2),
   },
   handle: {
     alignSelf: 'center',
@@ -87,13 +101,22 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     backgroundColor: colors.borderStrong,
-    marginTop: space(2),
-    marginBottom: space(1),
+    marginBottom: space(3),
   },
-  head: { flexDirection: 'row', alignItems: 'center', paddingLeft: space(5), paddingRight: space(2), paddingVertical: space(1) },
+  head: { flexDirection: 'row', alignItems: 'center', gap: space(3), paddingHorizontal: space(4), marginBottom: space(3) },
   headText: { flex: 1 },
+  title: { fontSize: 19, fontWeight: font.bold, color: colors.text },
   subtitle: { marginTop: 2 },
+  close: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: -space(1) },
+  closePressed: { backgroundColor: colors.muted },
   scroll: { flexGrow: 0, flexShrink: 1 },
-  body: { paddingHorizontal: space(5), paddingTop: space(2), paddingBottom: space(2) },
-  footer: { paddingHorizontal: space(5), paddingTop: space(2), gap: space(2) },
+  body: { paddingHorizontal: space(4), paddingBottom: space(2) },
+  footer: {
+    marginTop: space(2),
+    marginHorizontal: space(4),
+    paddingTop: space(3),
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    gap: space(2),
+  },
 });

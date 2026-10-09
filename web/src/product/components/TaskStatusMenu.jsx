@@ -1,15 +1,16 @@
 /**
- * The status dropdown on every task row. The button says where the task is
- * (from this reader's side); the menu says what they may do about it — only
- * the moves the server's `can` allows — plus Edit (while terms are open) and
- * Open. Rendered in a portal at fixed coordinates so no ancestor clips it; it
- * flips above the button near the bottom of the screen and closes on scroll.
+ * The status dropdown on every task row, as the HRMS draws it. The button says
+ * where the task is (from this reader's side); the menu says what they may do
+ * about it — only the moves the server's `can` allows, each by its name alone
+ * — plus Edit (before it is accepted) and Open. Rendered in a portal at fixed
+ * coordinates so no ancestor clips it; it flips above the button near the
+ * bottom of the screen and closes on scroll.
  */
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import {
-  ArrowRightLeft, Check, CheckCircle2, ChevronDown, Clock, ExternalLink, GitBranch, Pencil, RotateCcw, Send, ThumbsDown, ThumbsUp, UserPlus,
+  Check, CheckCircle2, ChevronDown, Clock, CornerUpRight, ExternalLink, Pencil, RotateCcw, Send, ThumbsDown, ThumbsUp, UserCheck, Users,
 } from 'lucide-react';
 import { STATUS_DOT, statusActions, statusBadge, statusStyle } from '../lifecycle';
 
@@ -18,11 +19,11 @@ export const ACTION_ICONS = {
   accept: ThumbsUp,
   sendBack: RotateCcw,
   decline: ThumbsDown,
-  delegate: GitBranch,
-  transfer: ArrowRightLeft,
+  delegate: CornerUpRight,
+  transfer: Users,
   submit: Send,
   complete: Check,
-  claim: UserPlus,
+  claim: UserCheck,
   extension: Clock,
 };
 
@@ -36,7 +37,7 @@ const TONE_CHIP = {
   amber: 'bg-amber-50 text-amber-700',
 };
 
-const MENU_WIDTH = 296;
+const MENU_WIDTH = 288;
 const GAP = 6;
 
 export function TaskStatusMenu({ task, onAction, onOpen, className }) {
@@ -124,11 +125,10 @@ export function TaskStatusMenu({ task, onAction, onOpen, className }) {
         aria-haspopup="menu"
         aria-expanded={open}
         title={actions.length ? 'Change the status' : 'See what can be done'}
-        className={clsx('inline-flex h-9 items-center gap-2 rounded-xl px-3 text-xs font-semibold shadow-sm transition', statusStyle(badge.key), open ? 'ring-2 ring-slate-300' : 'hover:shadow', className)}
+        className={clsx('inline-flex min-h-[34px] items-center gap-2 rounded-xl px-3 text-xs font-semibold shadow-sm transition', statusStyle(badge.key), open ? 'ring-2 ring-slate-300' : 'hover:shadow', className)}
       >
         <span className={clsx('h-2 w-2 shrink-0 rounded-full', STATUS_DOT[badge.key] || STATUS_DOT.PENDING)} aria-hidden />
         <span className="whitespace-nowrap">{badge.label}</span>
-        {actions.length > 0 && <span className="tnum rounded-full bg-card/70 px-1.5 text-[10px] font-bold">{actions.length}</span>}
         <ChevronDown className={clsx('h-3.5 w-3.5 shrink-0 opacity-70 transition-transform', open && 'rotate-180')} aria-hidden />
       </button>
 
@@ -143,7 +143,7 @@ export function TaskStatusMenu({ task, onAction, onOpen, className }) {
             className="fixed z-[80] overflow-hidden rounded-2xl border border-line bg-card p-1.5 shadow-pop"
           >
             <p className="px-3 pb-1.5 pt-2 text-[10px] font-semibold uppercase tracking-wider text-ink-faint">{actions.length ? 'Change status' : 'Status'}</p>
-            {actions.length === 0 && <p className="px-3 pb-2 text-xs text-ink-soft">Nothing for you to change on this one right now.</p>}
+            {actions.length === 0 && <p className="px-3 pb-2 text-xs text-ink-soft">Nothing to change right now.</p>}
             {actions.map((a) => {
               const Icon = ACTION_ICONS[a.icon] || Check;
               return (
@@ -152,30 +152,28 @@ export function TaskStatusMenu({ task, onAction, onOpen, className }) {
                   type="button"
                   role="menuitem"
                   onClick={() => pick(a.key)}
-                  className="flex min-h-[44px] w-full items-start gap-3 rounded-xl px-3 py-2 text-left outline-none transition hover:bg-slate-50 focus:bg-slate-50"
+                  title={a.hint}
+                  className="flex min-h-[40px] w-full items-center gap-3 rounded-xl px-3 py-1.5 text-left outline-none transition hover:bg-well focus:bg-well"
                 >
-                  <span className={clsx('mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg', TONE_CHIP[a.tone] || TONE_CHIP.slate)}>
-                    <Icon className="h-4 w-4" />
+                  <span className={clsx('grid h-8 w-8 shrink-0 place-items-center rounded-lg', TONE_CHIP[a.tone] || TONE_CHIP.slate)}>
+                    <Icon className="h-[15px] w-[15px]" />
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-ink">{a.label}</span>
-                    <span className="block text-xs leading-snug text-ink-soft">{a.hint}</span>
-                  </span>
+                  <span className="min-w-0 flex-1 text-sm font-semibold text-ink">{a.label}</span>
                 </button>
               );
             })}
             <div className="my-1 border-t border-line" />
             {canEdit && (
-              <button type="button" role="menuitem" onClick={() => pick('edit')} className="flex min-h-[40px] w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium text-ink outline-none hover:bg-slate-50 focus:bg-slate-50">
+              <button type="button" role="menuitem" onClick={() => pick('edit')} className="flex min-h-[40px] w-full items-center gap-3 rounded-xl px-3 py-1.5 text-left text-sm font-medium text-ink outline-none hover:bg-well focus:bg-well">
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-50 text-amber-700">
                   <Pencil className="h-3.5 w-3.5" />
                 </span>
                 Edit task
-                <span className="ml-auto text-[11px] font-normal text-ink-faint">while terms are open</span>
+                <span className="ml-auto text-[11px] font-normal text-ink-faint">before it is accepted</span>
               </button>
             )}
-            <button type="button" role="menuitem" onClick={() => pick('open')} className="flex min-h-[40px] w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium text-ink-soft outline-none hover:bg-slate-50 focus:bg-slate-50">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-50 text-ink-soft">
+            <button type="button" role="menuitem" onClick={() => pick('open')} className="flex min-h-[40px] w-full items-center gap-3 rounded-xl px-3 py-1.5 text-left text-sm font-medium text-ink-soft outline-none hover:bg-well focus:bg-well">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-well text-ink-soft">
                 <ExternalLink className="h-3.5 w-3.5" />
               </span>
               Open task

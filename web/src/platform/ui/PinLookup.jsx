@@ -44,7 +44,7 @@ export function usePinLookup(pin) {
 export function PersonLine({ person, right, sub, size = 'md', you = false }) {
   return (
     <div className="flex items-center gap-3">
-      <Avatar name={person?.name} size={size === 'sm' ? 'sm' : 'md'} />
+      <Avatar person={person} size={size === 'sm' ? 'sm' : 'md'} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-[15px] font-semibold text-ink">
           {person?.name}

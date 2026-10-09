@@ -30,7 +30,7 @@ const relationTone = (relation) => (relation === 'contact' ? 'success' : relatio
 export function PersonCard({ person, badge, style }) {
   return (
     <View style={[styles.person, style]}>
-      <Avatar name={person?.name} size={44} />
+      <Avatar person={person} size={44} />
       <View style={styles.personText}>
         <Text style={styles.name} numberOfLines={1}>
           {person?.name}

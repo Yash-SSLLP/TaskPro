@@ -343,10 +343,69 @@ const shortText = (v) => {
   return s.length > 280 ? `${s.slice(0, 277)}…` : s;
 };
 
+/** How a conflict message names each field. */
+const FIELD_WORDS = {
+  title: 'the title',
+  description: 'the details',
+  category: 'the category',
+  priority: 'the priority',
+  requiresApproval: 'the review setting',
+  team: 'the team',
+  dueDate: 'the deadline',
+  startDate: 'the start date',
+  reminders: 'the reminders',
+  links: 'the links',
+  loopUsers: 'who is kept in the loop',
+  assignees: 'who is on it',
+  voiceNote: 'the voice note',
+};
+
+/** "a", "a and b", "a, b and c". */
+const andList = (list) => (list.length < 2 ? list.join('') : `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`);
+
+/**
+ * Has somebody else changed any of `fields` since the editor opened the form
+ * (`base`: the task's updatedAt they loaded)? Then saving would quietly undo
+ * their change: say who and what instead. Edits to other fields go through.
+ * Read from the edit history (each edit's line lists its fields, stamped when
+ * the edit landed) and from the transfers and delegations on the task.
+ * @returns {Promise<null | { message: string, fields: string[], by: { id: string|null, name: string } }>}
+ */
+async function editConflict(task, me, base, fields) {
+  const since = new Date(base);
+  if (Number.isNaN(since.getTime()) || !fields.length) return null;
+  const wanted = new Set(fields);
+  const theirs = [];
+  const edits = await TaskUpdate.find({ task: task._id, kind: 'EDITED', createdAt: { $gt: since }, by: { $ne: me } })
+    .select('by byName changes createdAt')
+    .lean();
+  for (const e of edits) theirs.push({ at: e.createdAt, by: e.by, name: e.byName, fields: (e.changes || []).map((c) => c.field) });
+  for (const t of task.transfers || []) {
+    if (t.at > since && idOf(t.by) !== idOf(me)) theirs.push({ at: t.at, by: t.by, name: t.byName, fields: ['assignees', 'loopUsers'] });
+  }
+  for (const d of task.delegations || []) {
+    if (d.at > since && idOf(d.from) !== idOf(me)) theirs.push({ at: d.at, by: d.from, name: d.fromName, fields: ['assignees'] });
+  }
+  const clashing = theirs.filter((c) => c.fields.some((f) => wanted.has(f))).sort((a, b) => new Date(b.at) - new Date(a.at));
+  if (!clashing.length) return null;
+  const hit = fields.filter((f) => clashing.some((c) => c.fields.includes(f)));
+  const names = [...new Set(clashing.map((c) => c.name || 'Somebody'))];
+  return {
+    message: `${andList(names)} changed ${andList(hit.map((f) => FIELD_WORDS[f] || EDIT_FIELD_LABELS[f] || f))} while you were editing. ` +
+      'Look at the latest and save again.',
+    fields: hit,
+    by: { id: clashing[0].by ? idOf(clashing[0].by) : null, name: clashing[0].name || 'Somebody' },
+  };
+}
+
 /**
  * PATCH /:id — change the terms. The assigners, only until someone takes it
  * on (409 with the reason afterwards); the Super Admin always. Every field
  * that moves goes in the trail as before → after.
+ *
+ * `baseUpdatedAt` (optional): the task's updatedAt when the form was opened.
+ * If somebody else has changed one of the same fields since, nothing is saved
+ * and the answer is a 409 { code: 'EDIT_CONFLICT', message, fields, by }.
  */
 async function updateTask(req, res) {
   const who = await access.actor(req);
@@ -455,6 +514,16 @@ async function updateTask(req, res) {
     }
   }
 
+  // Somebody else changed one of the same things since this form was opened:
+  // saving would quietly undo theirs, so nothing is saved (409). Before any
+  // file is stored; new files only ever add, so they never clash.
+  if (body.baseUpdatedAt) {
+    const fields = changes.map((c) => c.field);
+    if ((req.files || []).some((f) => f.fieldname === 'voice')) fields.push('voiceNote');
+    const clash = await editConflict(task, req.user._id, body.baseUpdatedAt, fields);
+    if (clash) return res.status(409).json({ error: clash.message, code: 'EDIT_CONFLICT', ...clash });
+  }
+
   const ref = { kind: 'task', id: task._id };
   const uploaded = uploadsOf(req);
   if (uploaded.length) {
@@ -486,6 +555,9 @@ async function updateTask(req, res) {
       byName: req.user.name,
       note: `Changed ${changed.join(', ')}.`,
       changes: changes.length ? changes : undefined,
+      // The moment the edit landed (the task's own stamp), so an editor who
+      // loaded this very version is not told it changed under them.
+      createdAt: task.updatedAt,
     });
     const said = changes.slice(0, 2).map((c) => `${c.label}: ${c.before || '—'} → ${c.after || '—'}`).join(' · ') +
       (changes.length > 2 ? ` · +${changes.length - 2} more` : '');

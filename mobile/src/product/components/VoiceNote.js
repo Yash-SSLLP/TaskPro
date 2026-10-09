@@ -7,6 +7,10 @@
  * VoiceRecorder: the microphone button → recording (time, Stop, Cancel) →
  * a player with a remove button. It hands `{ uri, name, type, durationMs }`
  * to the parent, which sends it inside the task request as `voice`.
+ *
+ * The HRMS app's player (2026-10-08): a framed muted strip, a round play
+ * button, a thin track with the length under it. The microphone buttons are
+ * 42 tall, with the rest of the smaller buttons.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -99,20 +103,22 @@ export function VoicePlayer({ source, uri, durationMs, onRemove, style }) {
         style={({ pressed }) => [styles.play, pressed && styles.pressed]}
       >
         {status.isBuffering && !status.playing ? (
-          <ActivityIndicator size="small" color={colors.white} />
+          <ActivityIndicator size="small" color={colors.onPrimary} />
         ) : status.playing ? (
-          <Pause size={18} color={colors.white} fill={colors.white} />
+          <Pause size={15} color={colors.onPrimary} fill={colors.onPrimary} />
         ) : (
-          <Play size={18} color={colors.white} fill={colors.white} style={styles.playIcon} />
+          <Play size={15} color={colors.onPrimary} fill={colors.onPrimary} style={styles.playIcon} />
         )}
       </Pressable>
-      <View style={styles.track}>
-        <View style={[styles.fill, { width: `${progress * 100}%` }]} />
+      <View style={styles.flex}>
+        <View style={styles.track}>
+          <View style={[styles.fill, { width: `${progress * 100}%` }]} />
+        </View>
+        <Text style={styles.time}>{started ? `${duration(at * 1000)} / ${duration(total * 1000)}` : duration(total * 1000)}</Text>
       </View>
-      <Text style={styles.time}>{started ? `${duration(at * 1000)} / ${duration(total * 1000)}` : duration(total * 1000)}</Text>
       {onRemove ? (
         <Pressable onPress={onRemove} hitSlop={10} style={styles.remove} accessibilityRole="button" accessibilityLabel={tr('Remove the voice note')}>
-          <Trash size={16} color={colors.textSecondary} />
+          <Trash size={15} color={colors.textFaint} />
         </Pressable>
       ) : null}
     </View>
@@ -133,7 +139,7 @@ async function allowMicrophone() {
   if (perm.canAskAgain === false) {
     const open = await confirm({
       title: tr('Allow the microphone'),
-      message: tr('To record voice notes, allow Task Pro to use the microphone in your phone settings.'),
+      message: tr('To record voice notes, allow PinTask to use the microphone in your phone settings.'),
       confirmLabel: tr('Open settings'),
       cancelLabel: tr('Not now'),
     });
@@ -259,37 +265,39 @@ export function VoiceRecorder({ value, onChange, compact = false, disabled = fal
       style={({ pressed }) => [compact ? styles.micCompact : styles.micWide, (disabled || rec.phase !== 'idle') && styles.off, pressed && styles.pressed]}
       hitSlop={6}
     >
-      {rec.phase === 'starting' ? <ActivityIndicator size="small" color={colors.textSecondary} /> : <Mic size={19} color={colors.textSecondary} />}
+      {rec.phase === 'starting' ? <ActivityIndicator size="small" color={colors.textSecondary} /> : <Mic size={18} color={colors.textSecondary} />}
       {!compact ? <Text style={styles.micLabel}>{tr('Record a voice note')}</Text> : null}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   player: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space(3),
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.chip,
-    paddingVertical: space(1.5),
-    paddingLeft: space(1.5),
-    paddingRight: space(3),
+    gap: space(2.5),
+    paddingHorizontal: space(3),
+    paddingVertical: space(2),
+    borderRadius: radius.input,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.muted,
     alignSelf: 'stretch',
     maxWidth: 420,
   },
-  play: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  play: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   playIcon: { marginLeft: 2 },
   pressed: { opacity: 0.8 },
   off: { opacity: 0.45 },
-  track: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.primaryBorder, overflow: 'hidden' },
-  fill: { height: 4, backgroundColor: colors.primary },
-  time: { fontSize: 13, fontWeight: font.medium, color: colors.primary, ...tabular },
-  remove: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  failed: { color: colors.textFaint, fontSize: 13 },
+  track: { height: 5, borderRadius: 3, backgroundColor: colors.border, overflow: 'hidden' },
+  fill: { height: 5, borderRadius: 3, backgroundColor: colors.primary },
+  time: { marginTop: 4, fontSize: 12, fontWeight: font.medium, color: colors.textSecondary, ...tabular },
+  remove: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
+  failed: { color: colors.textFaint, fontSize: 12 },
   micCompact: {
-    minHeight: 44,
-    minWidth: 44,
+    minHeight: 42,
+    minWidth: 42,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.input,
@@ -298,7 +306,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
   },
   micWide: {
-    minHeight: 44,
+    minHeight: 42,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -309,7 +317,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.card,
   },
-  micLabel: { color: colors.textSecondary, fontSize: 14, fontWeight: font.medium },
+  micLabel: { color: colors.textSecondary, fontSize: 13.5, fontWeight: font.semibold },
   recording: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -325,7 +333,7 @@ const styles = StyleSheet.create({
   recTime: { color: colors.dangerPressed, fontSize: 14, fontWeight: font.semibold, ...tabular },
   recHint: { flex: 1, color: colors.dangerPressed, fontSize: 13 },
   stopBtn: {
-    minHeight: 34,
+    minHeight: 32,
     flexDirection: 'row',
     alignItems: 'center',
     gap: space(1),
@@ -334,6 +342,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.dangerFill,
   },
   stopText: { color: colors.white, fontSize: 13, fontWeight: font.semibold },
-  cancelBtn: { minHeight: 34, justifyContent: 'center', paddingHorizontal: space(2) },
+  cancelBtn: { minHeight: 32, justifyContent: 'center', paddingHorizontal: space(2) },
   cancelText: { color: colors.dangerPressed, fontSize: 13 },
 });

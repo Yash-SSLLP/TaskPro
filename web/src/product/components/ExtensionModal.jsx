@@ -3,6 +3,9 @@
  *   mode 'ask'     the doer names a later date and says why   POST /:id/extension
  *   mode 'decide'  the approver answers                         POST /:id/extension/:reqId
  * It is not a status: the work carries on while the answer is awaited.
+ *
+ * One narrow box, as the HRMS draws it: the title with an amber clock, the task
+ * it is about, the fields, and the buttons underneath (no footer bar).
  */
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Check, Clock, XCircle } from 'lucide-react';
@@ -13,10 +16,21 @@ import { Button, Modal } from '../../platform/ui';
 import * as T from '../api';
 import { dateTimeLabel, dayLabel, timeAgo } from '../lifecycle';
 
+const LABEL = 'mb-1 block text-xs font-medium text-ink-soft';
+const BOX = 'block w-full rounded-xl border border-line bg-card px-3 text-sm text-ink placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
+
 function suggested(dueDate, tz) {
   const base = dueDate ? new Date(dueDate) : new Date();
   const out = new Date(base.getTime() + 2 * 86400000);
   return toLocalInput(out, tz);
+}
+
+function Title({ children }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <Clock className="h-4 w-4 shrink-0 text-amber-500" /> {children}
+    </span>
+  );
 }
 
 export function ExtensionModal({ open, onClose, task, can = {}, mode = 'ask', requestId = null, initialApprove, onDone }) {
@@ -39,7 +53,9 @@ export function ExtensionModal({ open, onClose, task, can = {}, mode = 'ask', re
     setReason('');
     setNote('');
     setSaving(false);
-  }, [open, task, tz]);
+    // By id: a live refresh of the same task must not wipe what is being typed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, task?._id, tz]);
 
   if (!open || !task) return null;
 
@@ -81,37 +97,20 @@ export function ExtensionModal({ open, onClose, task, can = {}, mode = 'ask', re
   };
 
   const summary = (
-    <div className="rounded-xl border border-line bg-slate-50 px-3 py-2.5">
-      <p className="truncate text-sm font-semibold text-ink">{task.title}</p>
+    <div className="rounded-xl border border-line bg-well px-3 py-2.5">
+      <p className="truncate text-sm font-medium text-ink">{task.title}</p>
       <p className="mt-0.5 flex items-center gap-1.5 text-xs text-ink-soft">
-        <CalendarDays className="h-3 w-3" /> Due {task.dueDate ? dateTimeLabel(task.dueDate, tz) : 'no deadline set'}
+        <CalendarDays className="h-[11px] w-[11px] shrink-0" /> Due {task.dueDate ? dateTimeLabel(task.dueDate, tz) : 'no deadline set'}
       </p>
     </div>
   );
 
   if (deciding) {
+    // The button they pressed on the task to get here is the answer they had in mind: it opens lit.
+    const declining = initialApprove === false;
+    // A step wider than the ask: its three buttons (Cancel · Decline · Give until …) need one line.
     return (
-      <Modal
-        open
-        onClose={onClose}
-        title="More time?"
-        subtitle="Nothing else moves either way — the task stays exactly where it is."
-        footer={
-          request && (
-            <>
-              <Button variant="secondary" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button variant={initialApprove === false ? 'danger' : 'secondary'} icon={XCircle} disabled={saving} onClick={() => decide(false)}>
-                Decline
-              </Button>
-              <Button variant={initialApprove === false ? 'secondary' : 'primary'} icon={Check} disabled={saving} onClick={() => decide(true)}>
-                Give until {dayLabel(request.toDate, tz)}
-              </Button>
-            </>
-          )
-        }
-      >
+      <Modal open onClose={onClose} size="md" title={<Title>More time?</Title>}>
         <div className="space-y-3">
           {summary}
           {!request ? (
@@ -119,59 +118,85 @@ export function ExtensionModal({ open, onClose, task, can = {}, mode = 'ask', re
           ) : (
             <>
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3">
-                <p className="text-sm font-semibold text-amber-900">
+                <p className="text-sm font-medium text-amber-900">
                   {request.requestedByName || 'Somebody'} wants until {dateTimeLabel(request.toDate, tz)}
                 </p>
-                <p className="mt-0.5 text-xs text-amber-700">asked {timeAgo(request.requestedAt, tz)}</p>
+                <p className="mt-0.5 text-[11px] text-amber-700">asked {timeAgo(request.requestedAt, tz)}</p>
                 {request.reason && <p className="mt-1.5 whitespace-pre-wrap text-sm text-amber-900">{request.reason}</p>}
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-ink" htmlFor="ext-note">
+                <label className={LABEL} htmlFor="ext-note">
                   Anything to say back? <span className="font-normal text-ink-faint">(optional)</span>
                 </label>
-                <textarea id="ext-note" value={note} onChange={(e) => setNote(e.target.value)} rows={3} maxLength={1000} className="block w-full resize-y rounded-xl border border-line px-3.5 py-2.5 text-[15px] focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30" />
+                <textarea id="ext-note" value={note} onChange={(e) => setNote(e.target.value)} rows={3} maxLength={1000} placeholder="e.g. Fine, but it cannot slip again." className={`${BOX} resize-y py-2`} />
               </div>
-              <p className="text-xs text-ink-faint">Giving the time moves the deadline and re-arms the reminders. It does not undo a late delivery already on file.</p>
             </>
           )}
+          <div className="flex flex-wrap justify-end gap-2 pt-1">
+            <Button variant="secondary" onClick={onClose}>
+              Cancel
+            </Button>
+            {request && (
+              <>
+                {declining ? (
+                  <Button variant="danger" icon={XCircle} disabled={saving} onClick={() => decide(false)}>
+                    Decline
+                  </Button>
+                ) : (
+                  <Button variant="secondary" icon={XCircle} disabled={saving} onClick={() => decide(false)}>
+                    Decline
+                  </Button>
+                )}
+                {declining ? (
+                  <Button variant="secondary" icon={Check} disabled={saving} onClick={() => decide(true)}>
+                    Give until {dayLabel(request.toDate, tz)}
+                  </Button>
+                ) : (
+                  <Button variant="go" icon={Check} disabled={saving} onClick={() => decide(true)}>
+                    {saving ? 'Saving…' : `Give until ${dayLabel(request.toDate, tz)}`}
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </Modal>
     );
   }
 
+  const waiting = can.canRequestExtension === false;
   return (
-    <Modal
-      open
-      onClose={onClose}
-      title="Ask for more time"
-      subtitle="The task does not stop while you wait for an answer."
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button icon={Clock} loading={saving} disabled={can.canRequestExtension === false} onClick={askIt}>
-            Ask for more time
-          </Button>
-        </>
-      }
-    >
+    <Modal open onClose={onClose} size="sm" title={<Title>Ask for more time</Title>}>
       <div className="space-y-3">
         {summary}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-ink" htmlFor="ext-date">
+          <label className={LABEL} htmlFor="ext-date">
             New date you need <span className="text-red-600">*</span>
           </label>
-          <input id="ext-date" type="datetime-local" value={toDate} min={task.dueDate ? toLocalInput(task.dueDate, tz) : undefined} onChange={(e) => setToDate(e.target.value)} className="block h-11 w-full rounded-xl border border-line px-3 text-[15px] focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30" />
-          <p className="mt-1 text-xs text-ink-faint">It has to be later than the deadline you have now.</p>
+          <input id="ext-date" type="datetime-local" value={toDate} min={task.dueDate ? toLocalInput(task.dueDate, tz) : undefined} onChange={(e) => setToDate(e.target.value)} className={`${BOX} h-10`} />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-ink" htmlFor="ext-reason">
-            Why <span className="text-red-600">*</span>
+          <label className={LABEL} htmlFor="ext-reason">
+            Why do you need longer? <span className="text-red-600">*</span>
+            <span className="ml-1 font-normal text-ink-faint">(required)</span>
           </label>
-          <textarea id="ext-reason" value={reason} onChange={(e) => setReason(e.target.value)} rows={4} maxLength={1000} placeholder="e.g. the supplier has not sent the invoices yet — I have chased twice" className="block w-full resize-y rounded-xl border border-line px-3.5 py-2.5 text-[15px] placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30" />
+          <textarea id="ext-reason" value={reason} onChange={(e) => setReason(e.target.value)} rows={4} maxLength={1000} placeholder="e.g. the supplier has not sent the invoices yet — I have chased twice" className={`${BOX} resize-y py-2`} />
         </div>
-        <p className="text-xs text-ink-faint">{task.approverName || task.createdByName || 'Whoever set this'} answers it. You can only have one request waiting at a time.</p>
+        <div className="flex flex-wrap justify-end gap-2 pt-1">
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="warning"
+            icon={Clock}
+            loading={saving}
+            disabled={waiting || !reason.trim()}
+            title={waiting ? 'You already have a request waiting on this task' : !reason.trim() ? 'Say why you need longer first' : undefined}
+            onClick={askIt}
+          >
+            {saving ? 'Asking…' : 'Ask for more time'}
+          </Button>
+        </div>
       </div>
     </Modal>
   );

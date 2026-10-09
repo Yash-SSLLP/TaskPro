@@ -7,14 +7,14 @@
  * ({ list: [strings] }).
  */
 export const PRIVACY = {
-  app: 'Task Pro',
+  app: 'PinTask',
   org: 'Sequence Surface LLP',
   email: 'support@sequencesurface.com',
-  updated: '5 October 2026',
+  updated: '9 October 2026',
 
   intro: [
-    'This policy explains what information Task Pro (the mobile app and the website) collects, why, who it is shared with, and the choices you have. Task Pro is run by Sequence Surface LLP ("we", "us").',
-    'By creating an account or using Task Pro you agree to this policy. If you do not agree, please do not use Task Pro.',
+    'This policy explains what information PinTask (the mobile app and the website) collects, why, who it is shared with, and the choices you have. PinTask is run by Sequence Surface LLP ("we", "us").',
+    'By creating an account or using PinTask you agree to this policy. If you do not agree, please do not use PinTask.',
   ],
 
   sections: [
@@ -25,10 +25,11 @@ export const PRIVACY = {
         {
           list: [
             'Account details: your name, your email address or mobile number, and your password (stored only in scrambled, hashed form; we cannot read it). You can also add a job title.',
+            'Your profile photo, if you add one. Anyone signed in to PinTask can see it next to your name.',
             'Your Task Pin: the short ID we give you so other people can find and add you.',
             'Your work: tasks, sub-tasks, descriptions, notes and comments, due dates, priorities, reminders, repeating schedules, templates, categories, links and status changes.',
             'Files you attach: photos, documents and videos you choose to upload, and voice notes you record.',
-            'Your contacts and teams inside Task Pro: the people you have added by their Task Pin, the teams you create or join, and your role in them. Task Pro does not read the address book on your phone.',
+            'Your contacts and teams inside PinTask: the people you have added by their Task Pin, the teams you create or join, and your role in them. PinTask does not read the address book on your phone.',
             'Your settings: time zone, language, reminder and daily-summary choices.',
           ],
         },
@@ -36,8 +37,9 @@ export const PRIVACY = {
         {
           list: [
             'A push-notification token for your phone (and whether it is Android or iOS), so we can send you task alerts.',
-            'When you last signed in and last used Task Pro.',
-            'Your IP address, which our server sees with every request and uses to stop password guessing. It is not stored with your account.',
+            'Your sign-ins: for each phone or browser you are signed in on, the kind of device, the app version, the network (IP) address and when it was last used. You can sign a device out, and so can our administrators.',
+            'A record of what happens in your account, for example sign-ins, changes to your profile and the tasks you work on. It is kept for 180 days, to keep PinTask secure and to help when something goes wrong.',
+            'Your IP address, which our server also uses to stop password guessing.',
           ],
         },
         'We do not collect your location, we do not read your phone contacts, and we do not use advertising or analytics trackers.',
@@ -46,11 +48,11 @@ export const PRIVACY = {
     {
       title: 'Phone permissions',
       body: [
-        'Task Pro asks for a permission only when you use the feature that needs it, and you can turn each one off in your phone settings at any time:',
+        'PinTask asks for a permission only when you use the feature that needs it, and you can turn each one off in your phone settings at any time:',
         {
           list: [
-            'Camera: to take a photo to attach to a task.',
-            'Photos and files: to pick a photo or document to attach. Only the items you pick are uploaded.',
+            'Camera: to take a photo to attach to a task, or a profile photo.',
+            'Photos and files: to pick a photo or document to attach, or a profile photo. Only the items you pick are uploaded.',
             'Microphone: to record a voice note on a task. The microphone is used only while you are recording.',
             'Notifications: to alert you about new tasks, reminders and updates.',
           ],
@@ -66,7 +68,7 @@ export const PRIVACY = {
             'To show your tasks to you and to the people you share them with, and to send the tasks, reminders, nudges and daily summaries you set up.',
             'To let people find you by your Task Pin, and to run your contacts and teams.',
             'To send password-reset emails when you ask for one.',
-            'To keep Task Pro secure, prevent abuse and fix problems.',
+            'To keep PinTask secure, prevent abuse and fix problems.',
             'To meet our legal obligations.',
           ],
         },
@@ -80,7 +82,7 @@ export const PRIVACY = {
           list: [
             'People you work with: anyone on a task (whoever set it, the people doing it, people kept in the loop, and the owner and admins of a team it is filed under) can see that task, its history, its files and the names of the people on it.',
             'People who have your Task Pin can see your name and Task Pin, and can send you a contact request or a team invite. Your email and mobile number are never shown to other users.',
-            'Our administrators: a small number of Task Pro administrators can see accounts and tasks to provide support, deal with abuse, and keep the service running. They do this only when needed.',
+            'Our administrators: a small number of PinTask administrators can see accounts, signed-in devices, the activity record and tasks to provide support, deal with abuse, and keep the service running. They do this only when needed.',
           ],
         },
       ],
@@ -88,10 +90,10 @@ export const PRIVACY = {
     {
       title: 'Service providers we share with',
       body: [
-        'We use a few trusted companies to run Task Pro. They process information only on our instructions and only to provide their service to us:',
+        'We use a few trusted companies to run PinTask. They process information only on our instructions and only to provide their service to us:',
         {
           list: [
-            'Cloud hosting and database providers, which store Task Pro\'s data and files on secure servers.',
+            'Cloud hosting and database providers, which store PinTask\'s data and files on secure servers.',
             'Expo (expo.dev), Google Firebase Cloud Messaging and Apple Push Notification service, which deliver push notifications to your phone. They receive your push token and the text of the alert.',
             'An email provider, which delivers password-reset emails to your email address.',
           ],
@@ -136,19 +138,19 @@ export const PRIVACY = {
     {
       title: 'Children',
       body: [
-        'Task Pro is meant for people aged 18 and over and is not directed at children. We do not knowingly collect information from children. If you believe a child has given us information, contact us and we will delete it.',
+        'PinTask is meant for people aged 18 and over and is not directed at children. We do not knowingly collect information from children. If you believe a child has given us information, contact us and we will delete it.',
       ],
     },
     {
       title: 'Where your information is stored',
       body: [
-        'Task Pro\'s servers and our service providers may be located outside the country where you live. Wherever your information is processed, we protect it as this policy describes.',
+        'PinTask\'s servers and our service providers may be located outside the country where you live. Wherever your information is processed, we protect it as this policy describes.',
       ],
     },
     {
       title: 'Changes to this policy',
       body: [
-        'We may update this policy from time to time. We will change the "Last updated" date above, and for important changes we will let you know in the app. Continuing to use Task Pro after a change means you accept the updated policy.',
+        'We may update this policy from time to time. We will change the "Last updated" date above, and for important changes we will let you know in the app. Continuing to use PinTask after a change means you accept the updated policy.',
       ],
     },
     {

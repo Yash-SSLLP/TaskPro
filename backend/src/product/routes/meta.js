@@ -57,6 +57,7 @@ router.get('/meta', async (req, res) => {
     title: p.title || '',
     pin: p.pin,
     pinDisplay: p.pinDisplay,
+    photoUrl: p.photoUrl || null,
     relation: relationOf(p),
     teams: (p.teams || []).map((t) => t.id),
     canAssign: true,

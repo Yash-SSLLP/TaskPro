@@ -7,7 +7,6 @@
  * row). What lives here is colour, wording and date phrasing.
  */
 import { dayKey, formatDate, formatTime } from '../platform/format';
-import { isDark } from '../platform/theme';
 
 // ===== States =====
 
@@ -88,43 +87,52 @@ export function normalisePriority(value) {
   return LEGACY_PRIORITY[title] || null;
 }
 
-/** Mirrors the server's PRIORITY_COLORS; `/meta` may send its own (it wins). */
-export const PRIORITY_COLORS = {
-  Urgent: { ink: '#B42318', bg: '#FEF3F2', border: '#FDA29B', solid: '#D92D20' },
-  Medium: { ink: '#B54708', bg: '#FFFAEB', border: '#FEC84B', solid: '#F79009' },
-  Low: { ink: '#475467', bg: '#F2F4F7', border: '#D0D5DD', solid: '#98A2B3' },
-};
-export const DONE_COLOR = { ink: '#027A48', bg: '#ECFDF3', border: '#6CE9A6', solid: '#12B76A' };
-export const CANCELLED_COLOR = { ink: '#667085', bg: '#F9FAFB', border: '#EAECF0', solid: '#98A2B3' };
-
-/** The same keys for the dark theme. The server only sends light tints, so dark always uses these. */
-const DARK_COLORS = {
-  Urgent: { ink: '#FDA29B', bg: '#3B1714', border: '#7A271A', solid: '#F04438' },
-  Medium: { ink: '#FEC84B', bg: '#3A2A0C', border: '#7A4A06', solid: '#F79009' },
-  Low: { ink: '#D0D5DD', bg: '#1F2937', border: '#344054', solid: '#98A2B3' },
-  DONE: { ink: '#6CE9A6', bg: '#0B2E1F', border: '#05603A', solid: '#12B76A' },
-  CANCELLED: { ink: '#98A2B3', bg: '#1A2230', border: '#2B3546', solid: '#667085' },
-};
-
-let servedPalette = null;
-/** Called once `/meta` lands, so every chip uses the server's palette. */
-export function setServedPalette(meta) {
-  if (!meta) return;
-  servedPalette = {
-    priority: meta.priorityColors || null,
-    done: meta.doneColor || null,
-    cancelled: meta.cancelledColor || null,
+/*
+ * The colours themselves are CSS variables (src/index.css, --tp-<key>-*), one
+ * set per theme, so a row repaints the moment the look changes; nothing here
+ * needs to know which look is on. The server sends the light palette too
+ * (`/meta`, `task.accent`): setServedPalette writes it over the light set, so
+ * the server's palette still wins there.
+ */
+const VAR_OF = { Urgent: 'urgent', Medium: 'medium', Low: 'low', DONE: 'done', CANCELLED: 'cancelled' };
+const tokens = (key) => {
+  const name = VAR_OF[key] || VAR_OF[DEFAULT_PRIORITY];
+  return {
+    ink: `var(--tp-${name}-ink)`,
+    bg: `var(--tp-${name}-bg)`,
+    border: `var(--tp-${name}-border)`,
+    solid: `var(--tp-${name}-solid)`,
   };
+};
+
+/** Called once `/meta` lands: the server's light palette, written over the defaults. */
+export function setServedPalette(meta) {
+  if (!meta || typeof document === 'undefined') return;
+  const sets = { ...(meta.priorityColors || {}), DONE: meta.doneColor, CANCELLED: meta.cancelledColor };
+  const hex = (v) => (typeof v === 'string' && /^#[0-9a-f]{3,8}$/i.test(v) ? v : null);
+  const lines = [];
+  for (const [key, c] of Object.entries(sets)) {
+    const name = VAR_OF[key];
+    if (!name || !c) continue;
+    for (const part of ['ink', 'bg', 'border', 'solid']) {
+      if (hex(c[part])) lines.push(`--tp-${name}-${part}:${c[part]};`);
+    }
+  }
+  if (!lines.length) return;
+  let el = document.getElementById('tp-served-palette');
+  if (!el) {
+    el = document.createElement('style');
+    el.id = 'tp-served-palette';
+    document.head.appendChild(el);
+  }
+  // `:root` only: html.dark (more specific) keeps the dark set.
+  el.textContent = `:root{${lines.join('')}}`;
 }
 
 export function priorityColor(priority) {
   const key = normalisePriority(priority) || DEFAULT_PRIORITY;
-  if (isDark()) return { key, ...(DARK_COLORS[key] || DARK_COLORS[DEFAULT_PRIORITY]) };
-  const palette = servedPalette?.priority?.[key] || PRIORITY_COLORS[key] || PRIORITY_COLORS[DEFAULT_PRIORITY];
-  return { key, ...palette };
+  return { key, ...tokens(key) };
 }
-
-const served = (a) => Boolean(a && a.solid && a.bg && a.border && a.ink);
 
 function fallbackKey(task) {
   if (task?.status === STATUS.COMPLETED) return 'DONE';
@@ -134,15 +142,9 @@ function fallbackKey(task) {
 
 /** `{ key, ink, bg, border, solid }` for one task. */
 export function accentFor(task) {
-  if (isDark()) {
-    const key = task?.accent?.key || fallbackKey(task);
-    return { key, ...(DARK_COLORS[key] || priorityColor(task?.priority)) };
-  }
-  if (served(task?.accent)) return { key: task.accent.key || fallbackKey(task), ...task.accent };
-  const key = fallbackKey(task);
-  if (key === 'DONE') return { key, ...(servedPalette?.done || DONE_COLOR) };
-  if (key === 'CANCELLED') return { key, ...(servedPalette?.cancelled || CANCELLED_COLOR) };
-  return priorityColor(task?.priority);
+  const served = task?.accent?.key;
+  const key = served && VAR_OF[served] ? served : fallbackKey(task);
+  return { key, ...tokens(key) };
 }
 
 /** The tinted row/card: priority wash, a coloured rail on the left. */
@@ -157,9 +159,14 @@ export function accentStyle(task, { rail = 4 } = {}) {
   };
 }
 
+/**
+ * A chip in a priority's colours. Its fill is a step stronger than the wash
+ * (the HRMS lays an 18% chip on a 12% card), so on a row or header tinted the
+ * same colour it still reads as a chip, not just an outline.
+ */
 export function tintStyle(colour) {
   if (!colour) return {};
-  return { backgroundColor: colour.bg, borderColor: colour.border, color: colour.ink };
+  return { backgroundColor: `color-mix(in srgb, ${colour.solid} 12%, ${colour.bg})`, borderColor: colour.border, color: colour.ink };
 }
 
 // ===== Progress =====
@@ -242,8 +249,24 @@ export function repeatLabel(repeat) {
  *   in progress    right → Complete        left → Ask for more time
  *   in review      right → Complete        left → Send it back
  * …plus a routine (daily) task, whose only move is Done. Read off `can`.
+ *
+ * A TASK I SET THAT NOBODY HAS TAKEN ON YET swipes right to Edit (the HRMS
+ * rule): `can.canEdit` is the server's "the terms are still open", so the
+ * swipe goes the moment somebody accepts. Nothing swipes once a task is
+ * finished (as in the app).
  */
 export function swipeActionsFor(task) {
+  if (!task || TERMINAL.includes(task.status)) return { right: null, left: null };
+  const pair = pairedSwipes(task);
+  const can = task.can || {};
+  if (!pair.right && can.canEdit && !can.canAccept) {
+    return { ...pair, right: { key: 'edit', label: 'Edit', icon: 'edit', tone: 'blue' } };
+  }
+  return pair;
+}
+
+/** The three pairs, without the Edit above. */
+function pairedSwipes(task) {
   const can = task?.can || {};
   const status = task?.status;
   if (can.canApprove) {
@@ -450,27 +473,30 @@ export const RANGES = [
 
 /** The piles (the API's `scope`). `team` needs a team I own or admin; `all` is the Super Admin's. */
 export const PILES = [
-  { key: 'mine', label: 'Mine', sub: 'Assigned to me' },
-  { key: 'delegated', label: 'Given by me', sub: 'Assigned by me' },
-  { key: 'loop', label: 'In the loop', sub: 'Kept informed' },
-  { key: 'team', label: 'Team', sub: 'Filed under my teams', teamOnly: true },
-  { key: 'all', label: 'All tasks', sub: 'Everyone', adminOnly: true },
+  { key: 'mine', label: 'Assigned to me' },
+  { key: 'delegated', label: 'Assigned by me' },
+  { key: 'loop', label: 'In the loop' },
+  { key: 'team', label: 'Team tasks', teamOnly: true },
+  { key: 'all', label: 'All tasks', adminOnly: true },
 ];
 
 /**
- * The stat bar: Total (open work) · Not accepted yet · Overdue · In progress ·
- * In review · More time asked · Completed. Each is a filter; the slices come
- * from the server's counters and do not overlap (Overdue wins).
+ * The figures, as the HRMS has them since 2026-09-29: Total (open work) · Not
+ * Accepted Yet · Overdue · In Progress · Under Review · More Time Asked on the
+ * bar (STAT_BAR_FIGURES), and Completed as the button beside Filter. Each is
+ * a filter; the slices come from the server's counters and do not overlap
+ * (Overdue wins).
  */
 export const STAT_BAR = [
-  { key: 'total', label: 'Total', colour: '#4f46e5', query: { status: OPEN_STATUSES.join(',') } },
-  { key: 'pending', label: 'Not accepted yet', colour: '#DC6803', query: { status: STATUS.PENDING, overdue: 'false' } },
+  { key: 'total', label: 'Total', colour: 'rgb(var(--brand))', query: { status: OPEN_STATUSES.join(',') } },
+  { key: 'pending', label: 'Not Accepted Yet', colour: '#DC6803', query: { status: STATUS.PENDING, overdue: 'false' } },
   { key: 'overdue', label: 'Overdue', colour: '#D92D20', query: { overdue: 'true' } },
-  { key: 'inProgress', label: 'In progress', colour: '#0086C9', query: { status: STATUS.IN_PROGRESS, overdue: 'false' } },
-  { key: 'inReview', label: 'In review', colour: '#7C3AED', query: { status: STATUS.SUBMITTED } },
-  { key: 'moreTime', label: 'More time asked', colour: '#B54708', query: { moreTime: '1' } },
+  { key: 'inProgress', label: 'In Progress', colour: '#0086C9', query: { status: STATUS.IN_PROGRESS, overdue: 'false' } },
+  { key: 'inReview', label: 'Under Review', colour: '#7C3AED', query: { status: STATUS.SUBMITTED } },
+  { key: 'moreTime', label: 'More Time Asked', colour: '#B54708', query: { moreTime: '1' } },
   { key: 'completed', label: 'Completed', colour: '#079455', query: { status: STATUS.COMPLETED } },
 ];
+export const STAT_BAR_FIGURES = STAT_BAR.filter((s) => s.key !== 'completed');
 
 /** Total is the open work: everything bar the finished and the called-off. */
 export function statValue(counters = {}, key) {
@@ -493,22 +519,24 @@ export const EXTENSION_LOOK = {
 };
 
 /**
- * The status dropdown on every row: Pick it up · Approve/Accept · Reject/
- * Send back · Delegate · Transfer · In review · Mark done · Completed — only
- * what `can` allows.
+ * The status dropdown on every row — the HRMS's six words: Approve · Reject ·
+ * Delegate · Transfer · In Review · Completed (plus Pick it up on an open
+ * piece and Mark done on a routine), only what `can` allows. Two words mean
+ * different things by side: Approve is the doer's accept or the assigner's
+ * sign-off; Reject is the doer's decline or the assigner's send-back. More
+ * time is asked from the task itself (and by a swipe), not from this menu.
  */
 export function statusActions(task) {
   const can = task?.can || {};
   const out = [];
   if (can.canClaim) out.push({ key: 'claim', label: 'Pick it up', hint: 'Nobody is on this piece yet — make it yours', tone: 'blue', icon: 'claim' });
   if (can.canApprove) out.push({ key: 'approve', label: 'Approve', hint: 'Sign off the work — it is completed', tone: 'green', icon: 'approve' });
-  else if (can.canAccept) out.push({ key: 'accept', label: 'Accept', hint: 'Take it on and start working on it', tone: 'green', icon: 'accept' });
-  if (can.canReject) out.push({ key: 'sendBack', label: 'Send back', hint: 'Send it back with what still needs doing', tone: 'red', icon: 'sendBack' });
-  else if (can.canDecline) out.push({ key: 'decline', label: 'Decline', hint: 'Turn it down — say why', tone: 'red', icon: 'decline' });
+  else if (can.canAccept) out.push({ key: 'accept', label: 'Approve', hint: 'Accept it and start working on it', tone: 'green', icon: 'accept' });
+  if (can.canReject) out.push({ key: 'sendBack', label: 'Reject', hint: 'Send it back with what still needs doing', tone: 'red', icon: 'sendBack' });
+  else if (can.canDecline) out.push({ key: 'decline', label: 'Reject', hint: 'Turn it down — say why', tone: 'red', icon: 'decline' });
   if (can.canDelegate || can.canSplit) out.push({ key: 'delegate', label: 'Delegate', hint: 'Hand it on or split it — you review the work', tone: 'indigo', icon: 'delegate' });
   if (can.canTransfer) out.push({ key: 'transfer', label: 'Transfer', hint: 'It went to the wrong person — move it fully', tone: 'slate', icon: 'transfer' });
-  if (can.canRequestExtension) out.push({ key: 'extension', label: 'Ask for more time', hint: 'Ask to move the deadline', tone: 'amber', icon: 'extension' });
-  if (can.canSubmit) out.push({ key: 'submit', label: 'Send for review', hint: 'Hand it in for the setter to check', tone: 'violet', icon: 'submit' });
+  if (can.canSubmit) out.push({ key: 'submit', label: 'In Review', hint: 'Hand it in for the setter to check', tone: 'violet', icon: 'submit' });
   if (can.canDone) out.push({ key: 'done', label: 'Mark done', hint: 'Today’s routine is finished', tone: 'green', icon: 'approve' });
   const canComplete = (can.transitions || []).some((t) => t.to === STATUS.COMPLETED);
   if (canComplete && !can.canApprove && !can.canDone) out.push({ key: 'complete', label: 'Completed', hint: 'Mark it done', tone: 'green', icon: 'complete' });
@@ -518,9 +546,9 @@ export function statusActions(task) {
 /** What the dropdown's own button says, from THIS reader's side. */
 export function statusBadge(task) {
   if (!task) return { label: '', key: STATUS.PENDING };
-  if (task.declined) return { label: 'Declined', key: 'DECLINED' };
+  if (task.declined) return { label: 'Rejected', key: 'DECLINED' };
   if (task.status === STATUS.SUBMITTED && task.can?.canApprove) return { label: 'Needs your review', key: STATUS.SUBMITTED };
-  if (task.status === STATUS.PENDING && task.awaitingAcceptance) return { label: 'Not accepted yet', key: STATUS.PENDING };
+  if (task.status === STATUS.PENDING && task.awaitingAcceptance) return { label: 'Not accepted', key: STATUS.PENDING };
   if (task.routine && task.status === STATUS.IN_PROGRESS) return { label: 'To do', key: STATUS.PENDING };
   return { label: statusLabel(task.status), key: task.status };
 }

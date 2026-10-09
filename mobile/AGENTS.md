@@ -27,7 +27,7 @@ Run lint and typecheck before declaring any task done.
 
 - This app uses **React Navigation 7** (native stack + bottom tabs), not Expo Router.
 - `src/platform/navigation/RootNavigator.js` builds the navigators; the product's tabs and stack screens are declared in `src/product/navigation.js`.
-- `src/platform/` is the shared app shell (API client, session, push, UI kit, shared screens); `src/product/` is the product (Task Pro). `src/product/config.js` is the only product file the platform reads.
+- `src/platform/` is the shared app shell (API client, session, push, UI kit, shared screens); `src/product/` is the product (PinTask). `src/product/config.js` is the only product file the platform reads.
 
 ## Building with EAS
 

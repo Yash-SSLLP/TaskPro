@@ -16,6 +16,7 @@ const Contact = require('../models/Contact');
 const Device = require('../models/Device');
 const Notification = require('../models/Notification');
 const { notify } = require('./notify');
+const { deleteFilesByRef } = require('./files');
 
 const DELETED_NAME = 'Deleted user';
 
@@ -62,6 +63,8 @@ async function deleteAccount(user) {
     Notification.deleteMany({ user: user._id }),
   ]);
   await product.onUserDeleted?.({ user, deletedName: DELETED_NAME });
+  // Their profile photo (and any older one left behind).
+  await deleteFilesByRef({ kind: 'avatar', id: user._id });
 
   await User.updateOne(
     { _id: user._id },
@@ -76,7 +79,7 @@ async function deleteAccount(user) {
         tokenVersion: (user.tokenVersion || 0) + 1,
         deletedAt: new Date(),
       },
-      $unset: { pin: 1, email: 1, phone: 1, username: 1, title: 1, resetTokenHash: 1, resetTokenExpires: 1, lastLoginAt: 1, lastSeenAt: 1 },
+      $unset: { pin: 1, email: 1, phone: 1, username: 1, title: 1, photo: 1, resetTokenHash: 1, resetTokenExpires: 1, lastLoginAt: 1, lastSeenAt: 1 },
     }
   );
 }

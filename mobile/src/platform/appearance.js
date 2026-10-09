@@ -11,7 +11,7 @@ import { AppState, Appearance, Pressable, StyleSheet, Text, View } from 'react-n
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNRestart from 'react-native-restart';
 import { tr } from '../i18n';
-import { Check, Moon, Smartphone, Sun } from './icons';
+import { Check, Moon, Smartphone, Sun, SunMoon } from './icons';
 import { colors, font, radius, space, theme, THEME_KEY, THEME_MODES } from './theme';
 import { BottomSheet, confirm, toast } from './ui';
 
@@ -93,7 +93,34 @@ export function ThemeSheet({ visible, onClose }) {
   );
 }
 
+/** A small round button showing the current look (the sign-in screen); opens ThemeSheet. */
+export function ThemeButton({ onPress, style }) {
+  // Sun and moon for System: a phone outline here would read as "get the app".
+  const Icon = theme.mode === 'light' ? Sun : theme.mode === 'dark' ? Moon : SunMoon;
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${tr('Appearance')}: ${themeLabel(theme.mode)}`}
+      hitSlop={6}
+      style={({ pressed }) => [styles.button, pressed && styles.pressed, style]}
+    >
+      <Icon size={18} color={colors.textSecondary} strokeWidth={2} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  button: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.chip,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+  },
   row: {
     minHeight: 56,
     flexDirection: 'row',

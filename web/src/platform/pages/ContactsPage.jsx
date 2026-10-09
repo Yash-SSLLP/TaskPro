@@ -99,7 +99,7 @@ function AddByPin({ incoming }) {
               <p className="text-sm text-ink-soft">
                 {person.name} is already in your contacts.{' '}
                 <Link to={`/tasks?assign=${person.id}`} className="font-semibold text-brand hover:underline">
-                  Give a task
+                  Assign a task
                 </Link>
               </p>
             );
@@ -244,7 +244,7 @@ function ContactList({ contacts, loading, tz }) {
             </div>
             <div className="flex shrink-0 items-center gap-1 pl-[52px] sm:pl-0">
               <Button size="sm" variant="soft" to={`/tasks?assign=${c.person?.id}`}>
-                Give a task
+                Assign task
               </Button>
               <Button
                 size="sm"

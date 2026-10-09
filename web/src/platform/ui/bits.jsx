@@ -1,9 +1,12 @@
 /**
  * Small building blocks: cards, chips, avatars, empty states, skeletons.
  */
+import { useState } from 'react';
 import clsx from 'clsx';
 import { Loader2 } from 'lucide-react';
+import { apiUrl } from '../api';
 import { initials } from '../format';
+import { usePlace } from '../place';
 
 export function Card({ className, children, as: Tag = 'div', ...rest }) {
   return (
@@ -33,7 +36,7 @@ export function Badge({ tone = 'neutral', className, children }) {
 /** A selectable pill (filters, categories). */
 export function Chip({ active, onClick, children, className, tone = 'brand', ...rest }) {
   const activeTone = {
-    brand: 'border-brand bg-brand text-white',
+    brand: 'border-brand bg-brand text-on-brand',
     in: 'border-cashin bg-cashin text-white',
     out: 'border-cashout bg-cashout text-white',
   }[tone];
@@ -43,8 +46,8 @@ export function Chip({ active, onClick, children, className, tone = 'brand', ...
       onClick={onClick}
       aria-pressed={!!active}
       className={clsx(
-        'inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm font-medium transition-colors',
-        active ? activeTone : 'border-line bg-card text-ink hover:bg-slate-50',
+        'inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-[13px] font-medium transition-colors',
+        active ? activeTone : 'border-line bg-card text-ink hover:bg-well',
         className
       )}
       {...rest}
@@ -67,16 +70,48 @@ const AVATAR_COLORS = [
   'bg-orange-100 text-orange-800',
 ];
 
-export function Avatar({ name, size = 'md', className }) {
+const AVATAR_SIZES = {
+  xs: 'h-6 w-6 text-[10px]',
+  sm: 'h-8 w-8 text-xs',
+  md: 'h-10 w-10 text-sm',
+  lg: 'h-14 w-14 text-lg',
+  xl: 'h-20 w-20 text-2xl',
+  '2xl': 'h-28 w-28 text-4xl sm:h-32 sm:w-32',
+};
+
+/**
+ * A person's profile photo, or their initials on a soft colour picked from
+ * the name (the same person always gets the same colour). Pass `person`
+ * (anything with `name` and `photoUrl`), or `name` and `photoUrl`; `src`
+ * shows a local preview. A photo that fails to load falls back to initials.
+ * `sizeClass` replaces the size steps for a spot drawn at its own size;
+ * `tone` 'brand' or 'plain' colours the initials instead of the name.
+ */
+export function Avatar({ person, name, photoUrl, src, size = 'md', sizeClass, tone, className }) {
+  const label = name ?? person?.name ?? '';
+  const url = src || photoUrl || person?.photoUrl || null;
+  const [failed, setFailed] = useState(null);
+  const sizing = sizeClass || AVATAR_SIZES[size] || AVATAR_SIZES.md;
+  if (url && failed !== url) {
+    return (
+      <img
+        src={apiUrl(url)}
+        alt=""
+        aria-hidden
+        draggable={false}
+        loading="lazy"
+        decoding="async"
+        onError={() => setFailed(url)}
+        className={clsx('inline-block shrink-0 select-none rounded-full bg-well object-cover', sizing, className)}
+      />
+    );
+  }
   let hash = 0;
-  for (const ch of String(name || '')) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  const sizes = { xs: 'h-6 w-6 text-[10px]', sm: 'h-8 w-8 text-xs', md: 'h-10 w-10 text-sm', lg: 'h-14 w-14 text-lg' };
+  for (const ch of String(label)) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  const colour = tone === 'brand' ? 'bg-brand text-on-brand' : tone === 'plain' ? 'bg-slate-100 text-ink-soft' : AVATAR_COLORS[hash % AVATAR_COLORS.length];
   return (
-    <span
-      className={clsx('inline-flex shrink-0 items-center justify-center rounded-full font-semibold', AVATAR_COLORS[hash % AVATAR_COLORS.length], sizes[size], className)}
-      aria-hidden
-    >
-      {initials(name)}
+    <span className={clsx('inline-flex shrink-0 select-none items-center justify-center rounded-full font-semibold', colour, sizing, className)} aria-hidden>
+      {initials(label)}
     </span>
   );
 }
@@ -97,7 +132,7 @@ export function EmptyState({ icon: Icon, title, text, action, className }) {
 }
 
 export function Skeleton({ className }) {
-  return <div className={clsx('animate-pulse rounded-lg bg-slate-200/70', className)} />;
+  return <div className={clsx('animate-pulse rounded-lg bg-slate-200', className)} />;
 }
 
 export function Spinner({ className, label = 'Loading' }) {
@@ -123,10 +158,10 @@ export function ErrorState({ error, onRetry }) {
   );
 }
 
-/** Two or three mutually exclusive options. */
+/** Two or three mutually exclusive options. The track and the lit option swap depth in dark (index.css .seg-*). */
 export function Segmented({ value, onChange, options, className }) {
   return (
-    <div className={clsx('inline-flex rounded-xl bg-slate-100 p-1', className)} role="tablist">
+    <div className={clsx('seg-track inline-flex rounded-xl p-0.5', className)} role="tablist">
       {options.map((o) => (
         <button
           key={o.value}
@@ -135,8 +170,8 @@ export function Segmented({ value, onChange, options, className }) {
           aria-selected={value === o.value}
           onClick={() => onChange(o.value)}
           className={clsx(
-            'h-9 rounded-lg px-3.5 text-sm font-semibold transition-colors',
-            value === o.value ? 'bg-card text-ink shadow-sm' : 'text-ink-soft hover:text-ink'
+            'h-8 rounded-lg px-3 text-[13px] font-semibold transition-colors',
+            value === o.value ? 'seg-on text-ink shadow-sm' : 'text-ink-soft hover:text-ink'
           )}
         >
           {o.label}
@@ -146,15 +181,34 @@ export function Segmented({ value, onChange, options, className }) {
   );
 }
 
-export function PageHeader({ title, subtitle, actions, back }) {
+/**
+ * The page's header, as the HRMS draws it: the sidebar row's icon in a tile,
+ * the row's section as a small eyebrow, the title, and the actions on the
+ * right (they wrap to the right, never under the title on the left). `icon`
+ * and `eyebrow` override what the sidebar says; `eyebrow={null}` drops it.
+ */
+/** `compact`: on a phone the actions stay on the title's line (short titles, icon actions). */
+export function PageHeader({ title, subtitle, actions, back, icon, eyebrow, compact = false }) {
+  const place = usePlace();
+  const Icon = icon === undefined ? place?.icon : icon;
+  let label = eyebrow === undefined ? place?.group : eyebrow;
+  if (label && typeof title === 'string' && label.toLowerCase() === title.trim().toLowerCase()) label = null;
   return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-      <div className="min-w-0">
-        {back}
-        <h1 className="truncate text-2xl font-bold tracking-tight text-ink">{title}</h1>
-        {subtitle && <p className="mt-0.5 text-[15px] text-ink-soft">{subtitle}</p>}
+    <div className={clsx('flex flex-wrap items-center justify-between gap-3', compact ? 'mb-3 sm:mb-5' : 'mb-5')}>
+      <div className={clsx('flex min-w-0 grow items-center gap-3', compact ? 'basis-0 sm:basis-72' : 'basis-72')}>
+        {Icon && (
+          <span className="page-head-icon" aria-hidden>
+            <Icon className="h-5 w-5" />
+          </span>
+        )}
+        <div className="min-w-0">
+          {back}
+          {label && <div className="page-eyebrow">{label}</div>}
+          <h1 className="truncate text-[22px] font-bold leading-tight tracking-tight text-ink">{title}</h1>
+          {subtitle && <p className="mt-0.5 text-sm text-ink-soft">{subtitle}</p>}
+        </div>
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="ml-auto flex flex-wrap items-center justify-end gap-2">{actions}</div>}
     </div>
   );
 }

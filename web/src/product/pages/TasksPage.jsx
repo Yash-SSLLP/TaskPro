@@ -1,11 +1,20 @@
 /**
- * Tasks: the piles (Mine · Given by me · In the loop · Team · All tasks), a
- * search box and the Filter panel, the stat bar (every figure a filter), and
- * the rows — each with its status dropdown (and a swipe on touch screens) — or
- * the board. Templates, Dashboard, Recurring and Excel export sit in the
- * header. Every filter runs on the server; the figures come back with the rows.
+ * Tasks, laid out as the HRMS's page is (pages/Tasks.jsx there):
  *
- * URL: ?scope=mine|delegated|loop|team|all  &team=<id>  &view=board
+ *   THE PILES       Assigned to me · Assigned by me · In the loop (· Team
+ *                   tasks for a team's owner/admins · All tasks for the Super
+ *                   Admin), each wearing its own figures.
+ *   SEARCH · FILTER one box that finds a task by its name, code or a person,
+ *                   one button for the rest, and Completed beside them.
+ *   THE FIGURES     Total · Not Accepted Yet · Overdue · In Progress · Under
+ *                   Review · More Time Asked, one bar; every figure a filter.
+ *   THE ROWS        each with its status dropdown (and a swipe on a touch
+ *                   screen).
+ * One way to give a task: the floating button. Report and Templates sit in the
+ * header, with Excel. Every filter runs on the server; the figures come back
+ * with the rows.
+ *
+ * URL: ?scope=mine|delegated|loop|team|all  &team=<id>
  *      ?assign=1|<personId>  &onBehalfOf=<id>  (opens the form)  ?assignedTo=<id>
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -13,24 +22,28 @@ import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { BarChart3, Bookmark, ChevronLeft, ChevronRight, Download, Filter, KanbanSquare, List, Plus, Repeat, Search, X } from 'lucide-react';
+import { BarChart3, Bookmark, CheckCircle2, ChevronLeft, ChevronRight, Download, Filter, Plus, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { isSuperAdmin, useSession } from '../../platform/session';
-import { Button, ErrorState, PageHeader, Segmented, Skeleton } from '../../platform/ui';
+import { ErrorState, PageHeader, Segmented, Skeleton } from '../../platform/ui';
 import * as T from '../api';
 import { useAdminTeams, useCategories, useInvalidateTasks, useMeId, useTaskMeta } from '../hooks';
-import { PILES, RANGES, TASK_PRIORITY, statQueryFor, statValue, statusLabel, swipeActionsFor } from '../lifecycle';
+import { PILES, RANGES, STAT_BAR, TASK_PRIORITY, statQueryFor, statValue, statusLabel } from '../lifecycle';
 import { AssignTaskModal } from '../components/AssignTaskModal';
 import { DEFAULT_FILTERS, TaskFilters, activeFilterCount, split } from '../components/TaskFilters';
 import { TaskPileCards, TaskStatBar } from '../components/TaskOverview';
 import { TaskRow } from '../components/TaskRow';
-import { TaskBoard } from '../components/TaskBoard';
 import { TaskModal } from '../components/TaskModal';
 import { TemplatesDrawer } from '../components/TaskTemplates';
 import { EmptyTasks } from '../components/TaskChips';
 import { useTaskActions } from '../components/TaskActions';
 
 const PAGE_SIZE = 50;
+/** Completed's colour, for the button beside Filter. */
+const COMPLETED = STAT_BAR.find((s) => s.key === 'completed');
+/** The header's outline buttons, as the HRMS's. */
+// Icon squares on a phone (the header keeps to one line), labelled buttons from sm up.
+const HEAD_BTN = 'inline-flex h-8 w-8 items-center justify-center gap-2 rounded-lg border border-line bg-card text-sm font-medium text-ink-soft shadow-sm transition hover:border-slate-300 hover:text-brand sm:h-9 sm:w-auto sm:rounded-xl sm:px-3';
 
 function useDebouncedText(value, ms = 300) {
   const [v, setV] = useState(value);
@@ -41,27 +54,22 @@ function useDebouncedText(value, ms = 300) {
   return v;
 }
 
+/** Shown only when there is a second page: the count, then ‹ Page x of y ›. */
 function Pager({ page, pages, total, onPage }) {
-  if (pages <= 1) return total ? <p className="pt-1 text-xs text-ink-faint">{total} task{total === 1 ? '' : 's'}</p> : null;
-  const nums = [...new Set([1, page - 1, page, page + 1, pages])].filter((n) => n >= 1 && n <= pages).sort((a, b) => a - b);
+  if (pages <= 1) return null;
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-ink-soft">
+    <div className="flex items-center justify-between pt-1 text-xs text-ink-soft">
       <span>
-        {total} task{total === 1 ? '' : 's'} · page {page} of {pages}
+        {total} task{total === 1 ? '' : 's'}
       </span>
-      <div className="flex items-center gap-1">
-        <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} className="grid h-9 w-9 place-items-center rounded-xl border border-line bg-card disabled:opacity-40" aria-label="Previous page">
+      <div className="flex items-center gap-2">
+        <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} className="grid h-9 w-9 place-items-center rounded-xl border border-line bg-card transition hover:border-slate-300 disabled:opacity-40" aria-label="Previous page">
           <ChevronLeft className="h-4 w-4" />
         </button>
-        {nums.map((n, i) => (
-          <span key={n} className="flex items-center">
-            {i > 0 && n - nums[i - 1] > 1 && <span className="px-1 text-ink-faint">…</span>}
-            <button type="button" onClick={() => onPage(n)} aria-current={n === page ? 'page' : undefined} className={clsx('tnum h-9 min-w-[36px] rounded-xl border px-2 text-sm font-semibold', n === page ? 'border-brand bg-brand text-white' : 'border-line bg-card text-ink hover:border-slate-300')}>
-              {n}
-            </button>
-          </span>
-        ))}
-        <button type="button" disabled={page >= pages} onClick={() => onPage(page + 1)} className="grid h-9 w-9 place-items-center rounded-xl border border-line bg-card disabled:opacity-40" aria-label="Next page">
+        <span className="tnum">
+          Page {page} of {pages}
+        </span>
+        <button type="button" disabled={page >= pages} onClick={() => onPage(page + 1)} className="grid h-9 w-9 place-items-center rounded-xl border border-line bg-card transition hover:border-slate-300 disabled:opacity-40" aria-label="Next page">
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
@@ -88,7 +96,6 @@ export function TasksPage() {
   const wanted = search.get('scope');
   const pile = piles.some((p) => p.key === wanted) ? wanted : wanted === 'team' && !meta ? 'team' : superAdmin ? 'all' : 'mine';
   const teamParam = search.get('team') || '';
-  const view = search.get('view') === 'board' ? 'board' : 'list';
 
   const setParam = useCallback(
     (patch) => {
@@ -164,7 +171,6 @@ export function TasksPage() {
   const list = useQuery({
     queryKey: ['tasks', 'list', params, page],
     queryFn: () => T.listTasks({ ...params, page, limit: PAGE_SIZE, withScopes: 1 }),
-    enabled: view === 'list',
     placeholderData: (prev) => prev,
   });
   const tasks = list.data?.tasks || [];
@@ -173,10 +179,6 @@ export function TasksPage() {
 
   const onChanged = useCallback((id) => invalidate(id), [invalidate]);
   const actions = useTaskActions({ meta, onChanged, onEdit: (task) => setOpenTask({ id: task._id, edit: true }) });
-  const anySwipe = tasks.some((t) => {
-    const a = swipeActionsFor(t);
-    return a.left || a.right;
-  });
 
   // ===== Chips for what narrows the list =====
   const people = meta?.people || [];
@@ -218,38 +220,33 @@ export function TasksPage() {
     setParam({ scope: key, team: key === 'team' ? teamParam : null });
   };
   const selectedTeam = adminTeams.find((t) => String(t.id) === teamParam);
+  const completedOn = stat === 'completed';
 
   return (
-    <div className="pb-16 lg:pb-0">
+    <div className="pb-20">
       <PageHeader
+        compact
         title={superAdmin ? 'All tasks' : 'Tasks'}
-        subtitle={superAdmin ? 'Every task on Task Pro — open, edit, remove, or give one on someone’s behalf.' : 'Give work out, and know where it has got to.'}
         actions={
           <>
-            <Button variant="secondary" size="sm" icon={Bookmark} onClick={() => setTemplatesOpen(true)}>
-              <span className="hidden sm:inline">Templates</span>
-            </Button>
-            <Button variant="secondary" size="sm" icon={BarChart3} to="/dashboard">
-              <span className="hidden sm:inline">Dashboard</span>
-            </Button>
-            <Button variant="secondary" size="sm" icon={Repeat} to="/recurring" className="hidden sm:inline-flex">
-              Recurring
-            </Button>
-            <Button variant="secondary" size="sm" icon={Download} loading={exporting} onClick={doExport} title="Download these tasks as Excel">
-              <span className="hidden sm:inline">Excel</span>
-            </Button>
-            <Button size="sm" icon={Plus} onClick={openAssign} className="hidden lg:inline-flex">
-              Give a task
-            </Button>
+            <Link to="/dashboard" className={HEAD_BTN} title="Report — who is on top of their work">
+              <BarChart3 className="h-[15px] w-[15px]" /> <span className="hidden sm:inline">Report</span>
+            </Link>
+            <button type="button" onClick={() => setTemplatesOpen(true)} className={HEAD_BTN} title="Templates — tasks worth setting again">
+              <Bookmark className="h-[15px] w-[15px]" /> <span className="hidden sm:inline">Templates</span>
+            </button>
+            <button type="button" onClick={doExport} disabled={exporting} className={clsx(HEAD_BTN, 'disabled:opacity-60')} title="Download these tasks as Excel">
+              <Download className="h-[15px] w-[15px]" /> <span className="hidden sm:inline">{exporting ? 'Exporting…' : 'Excel'}</span>
+            </button>
           </>
         }
       />
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {piles.length > 1 && <TaskPileCards piles={piles} active={pile} onPick={pickPile} scopes={scopes} />}
 
         {pile === 'team' && (
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-card p-2 shadow-card">
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-card p-2 shadow-sm">
             <span className="px-2 text-sm font-medium text-ink-soft">Team</span>
             <Segmented
               className="max-w-full overflow-x-auto"
@@ -265,69 +262,66 @@ export function TasksPage() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-card px-3 shadow-sm focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/30 sm:max-w-md">
-            <Search className="h-4 w-4 shrink-0 text-ink-faint" />
-            <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Search a task, code or person…" aria-label="Search tasks" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-ink-faint" />
+        {/* ── Search · Filter · Completed ───────────────────────── */}
+        <div className="flex items-center gap-2">
+          <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-card px-3 shadow-sm sm:h-10 transition focus-within:border-slate-300 sm:max-w-md">
+            <Search className="h-[15px] w-[15px] shrink-0 text-ink-faint" />
+            <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Search tasks" aria-label="Search tasks or people" className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-ink-faint" />
             {text && (
-              <button type="button" onClick={() => setText('')} className="text-ink-faint hover:text-ink" aria-label="Clear the search">
-                <X className="h-4 w-4" />
+              <button type="button" onClick={() => setText('')} className="shrink-0 text-ink-faint transition-colors hover:text-ink" aria-label="Clear the search">
+                <X className="h-[15px] w-[15px]" />
               </button>
             )}
           </label>
           <button
             type="button"
             onClick={() => setFiltersOpen(true)}
-            className={clsx('inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border px-3.5 text-sm font-semibold shadow-sm', filterCount ? 'border-brand bg-brand-soft text-brand' : 'border-line bg-card text-ink hover:border-slate-300')}
+            className={clsx('ml-auto inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border bg-card px-3 text-sm font-semibold shadow-sm transition sm:h-10 sm:px-3.5', filterCount ? 'border-brand text-brand' : 'border-line text-ink-soft hover:border-slate-300')}
           >
-            <Filter className="h-4 w-4" /> Filter
-            {filterCount > 0 && <span className="tnum grid h-5 min-w-[20px] place-items-center rounded-full bg-brand px-1.5 text-[11px] font-bold text-white">{filterCount}</span>}
+            <Filter className="h-[15px] w-[15px]" /> Filter
+            {filterCount > 0 && <span className="tnum grid h-5 min-w-[20px] place-items-center rounded-full bg-brand px-1.5 text-[11px] font-bold text-on-brand">{filterCount}</span>}
           </button>
-          <Segmented
-            value={view}
-            onChange={(v) => setParam({ view: v === 'board' ? 'board' : null })}
-            options={[
-              { value: 'list', label: <span className="inline-flex items-center gap-1.5"><List className="h-4 w-4" /><span className="hidden sm:inline">List</span></span> },
-              { value: 'board', label: <span className="inline-flex items-center gap-1.5"><KanbanSquare className="h-4 w-4" /><span className="hidden sm:inline">Board</span></span> },
-            ]}
-          />
+          {/* Completed (the HRMS's, 2026-09-29): the finished work, one click; again for Total. */}
+          <button
+            type="button"
+            onClick={() => setStat((s) => (s === 'completed' ? '' : 'completed'))}
+            aria-pressed={completedOn}
+            title="Show completed tasks only"
+            aria-label={`Completed: ${list.isLoading ? 'loading' : statValue(counters, 'completed')}`}
+            style={completedOn ? { borderColor: COMPLETED.colour, color: COMPLETED.colour, backgroundColor: `color-mix(in srgb, ${COMPLETED.colour} 8%, rgb(var(--card)))` } : undefined}
+            className="inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border border-line bg-card px-3 text-sm font-semibold text-ink-soft shadow-sm transition hover:border-slate-300 sm:h-10"
+          >
+            <CheckCircle2 className="h-[15px] w-[15px]" style={{ color: COMPLETED.colour }} />
+            <span className="hidden sm:inline">Completed</span>
+            <span className="tnum">{list.isLoading ? '·' : statValue(counters, 'completed')}</span>
+          </button>
         </div>
 
+        {/* What is narrowing the list — each one removable, so a filter never hides work without saying so. */}
         {chips.length > 0 && (
           <div className="-mt-1 flex flex-wrap items-center gap-1.5">
             {chips.map((c) => (
-              <span key={c.key} className="inline-flex h-7 items-center gap-1 rounded-lg border border-line bg-card pl-2.5 pr-1 text-xs font-medium text-ink-soft">
+              <span key={c.key} className="inline-flex min-h-[28px] items-center gap-1 rounded-lg border border-line bg-card py-0.5 pl-2.5 pr-1 text-xs font-medium text-ink-soft">
                 {c.label}
-                <button type="button" onClick={() => setFilters((f) => ({ ...f, ...c.clear }))} className="grid h-5 w-5 place-items-center rounded-md text-ink-faint hover:bg-slate-100 hover:text-ink" aria-label={`Remove ${c.label}`}>
+                <button type="button" onClick={() => setFilters((f) => ({ ...f, ...c.clear }))} className="grid h-6 w-6 place-items-center rounded-md text-ink-faint transition hover:bg-well hover:text-ink" aria-label={`Remove ${c.label}`}>
                   <X className="h-3 w-3" />
                 </button>
               </span>
             ))}
             {chips.length > 1 && (
-              <button type="button" onClick={() => setFilters((f) => ({ ...DEFAULT_FILTERS, sort: f.sort, dir: f.dir }))} className="px-2 text-xs font-semibold text-ink-soft hover:text-brand">
+              <button type="button" onClick={() => setFilters((f) => ({ ...DEFAULT_FILTERS, sort: f.sort, dir: f.dir }))} className="min-h-[28px] px-2 text-xs font-medium text-ink-soft transition hover:text-brand">
                 Clear all
               </button>
             )}
           </div>
         )}
 
-        {view === 'list' && <TaskStatBar counters={counters} active={stat} onPick={setStat} loading={list.isLoading} />}
+        <TaskStatBar counters={counters} active={completedOn ? '' : stat} onPick={setStat} loading={list.isLoading} />
 
-        {view === 'list' && anySwipe && <p className="-mt-1 hidden text-[11px] text-ink-faint [@media(pointer:coarse)]:block">Swipe a task right to accept or complete it, left to decline, send back or ask for more time.</p>}
-
-        {view === 'board' ? (
-          <TaskBoard
-            params={(() => {
-              const { status, ...rest } = params; // the board makes its own columns
-              return rest.overdue === 'false' ? { ...rest, overdue: undefined } : rest;
-            })()}
-            onOpen={(t) => setOpenTask({ id: t._id })}
-            onAction={actions.run}
-          />
-        ) : list.error ? (
+        {list.error ? (
           <ErrorState error={list.error} onRetry={list.refetch} />
         ) : list.isLoading ? (
-          <div className="space-y-2.5">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[84px] rounded-2xl" />)}</div>
+          <div className="space-y-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[76px] rounded-2xl" />)}</div>
         ) : tasks.length === 0 ? (
           <EmptyTasks scope={pile} filtered={narrowed} onAssign={narrowed || superAdmin ? undefined : openAssign} completedHint={!stat && statValue(counters, 'completed') > 0} />
         ) : (
@@ -348,13 +342,28 @@ export function TasksPage() {
           </div>
         )}
 
-        {view === 'list' && !list.isLoading && <Pager page={list.data?.page || page} pages={list.data?.pages || 1} total={list.data?.total || 0} onPage={(n) => { setPage(n); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
+        {!list.isLoading && (
+          <Pager
+            page={list.data?.page || page}
+            pages={list.data?.pages || 1}
+            total={list.data?.total || 0}
+            onPage={(n) => {
+              setPage(n);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        )}
       </div>
 
-      {/* The phone's way in: a floating button over the bottom tabs. */}
+      {/* ONE way to give a task: the floating button (above the bottom tabs on a
+          phone). Portalled: a transformed ancestor would capture position:fixed. */}
       {createPortal(
-        <button type="button" onClick={openAssign} className="fixed bottom-20 right-4 z-30 inline-flex h-12 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white shadow-pop hover:bg-brand-dark lg:hidden">
-          <Plus className="h-5 w-5" /> Give a task
+        <button
+          type="button"
+          onClick={openAssign}
+          className="fixed bottom-20 right-4 z-30 inline-flex h-11 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-on-brand shadow-pop transition hover:bg-brand-dark lg:bottom-6 lg:right-6"
+        >
+          <Plus className="h-[18px] w-[18px]" /> Assign task
         </button>,
         document.body
       )}
@@ -375,4 +384,3 @@ export function TasksPage() {
     </div>
   );
 }
-

@@ -7,13 +7,18 @@
  * share. An empty box opens on Myself, then the chosen team, team-mates and
  * contacts; typing searches name and Task Pin. `onAddByPin` adds a footer
  * link for somebody who is not in the list yet.
+ *
+ * Drawn as the HRMS draws it: a 12px grey label, a 40px field, the chosen as
+ * plain grey chips, each person's photo or plain initials in the list ("Me"
+ * in brand for yourself, or your photo ringed in brand), and a footer only
+ * when it has something to say.
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
-import { ChevronDown, KeyRound, Search, X } from 'lucide-react';
-import { Avatar } from '../../platform/ui';
+import { ChevronDown, KeyRound, X } from 'lucide-react';
 import { pinOf } from '../../platform/pin';
+import { Avatar } from '../../platform/ui';
 import { RELATION_LABEL, idOf } from '../lifecycle';
 
 const PER_GROUP = 25;
@@ -171,8 +176,8 @@ export function PeoplePicker({
   return (
     <div ref={boxRef} className={clsx('relative', className)}>
       {label && (
-        <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-ink">
-          {Icon && <Icon className="h-4 w-4 text-ink-faint" aria-hidden />} {label}
+        <label className="mb-1 flex items-center gap-1.5 text-xs font-medium text-ink-soft">
+          {Icon && <Icon className="h-3 w-3" aria-hidden />} {label}
         </label>
       )}
       <div
@@ -183,15 +188,15 @@ export function PeoplePicker({
           setTimeout(() => inputRef.current?.focus(), 0);
         }}
         className={clsx(
-          'flex min-h-11 w-full flex-wrap items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-sm shadow-sm',
+          'flex min-h-[40px] w-full flex-wrap items-center gap-1.5 rounded-xl border px-2 py-1.5 text-sm transition-colors',
           open ? 'border-brand ring-2 ring-brand/30' : 'border-line',
-          disabled ? 'bg-slate-50 opacity-60' : 'cursor-text bg-card'
+          disabled ? 'bg-well opacity-60' : 'cursor-text bg-card'
         )}
       >
         {chosen.map((p) => (
-          <span key={idOf(p)} className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft py-0.5 pl-0.5 pr-2 text-sm font-medium text-brand">
-            <Avatar name={p.name} size="xs" />
+          <span key={idOf(p)} className="inline-flex min-h-[24px] items-center gap-1 rounded-lg bg-well px-2 py-0.5 text-xs font-medium text-ink-soft ring-1 ring-inset ring-line">
             {idOf(p) === myId ? 'Myself' : p.name}
+            {p.departed && <span className="text-[10px] font-normal text-ink-faint">(left)</span>}
             {!disabled && (
               <button
                 type="button"
@@ -199,10 +204,10 @@ export function PeoplePicker({
                   e.stopPropagation();
                   remove(idOf(p));
                 }}
-                className="-mr-1 rounded-full p-0.5 hover:bg-brand/15"
+                className="text-ink-faint transition-colors hover:text-red-600"
                 aria-label={`Remove ${p.name}`}
               >
-                <X className="h-3 w-3" />
+                <X className="h-[11px] w-[11px]" />
               </button>
             )}
           </span>
@@ -219,11 +224,11 @@ export function PeoplePicker({
           placeholder={chosen.length ? '' : placeholder}
           disabled={disabled}
           aria-label={label || placeholder}
-          className="h-8 min-w-[7rem] flex-1 border-0 bg-transparent px-1 text-[15px] text-ink placeholder:text-ink-faint focus:outline-none"
+          className="h-6 min-w-[6rem] flex-1 border-0 bg-transparent px-1 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
         />
-        <ChevronDown className={clsx('h-4 w-4 shrink-0 text-ink-faint transition-transform', open && 'rotate-180')} aria-hidden />
+        <ChevronDown className={clsx('h-3.5 w-3.5 shrink-0 text-ink-faint transition-transform', open && 'rotate-180')} aria-hidden />
       </div>
-      {hint && <p className="mt-1 text-xs text-ink-soft">{hint}</p>}
+      {hint && <p className="mt-1 text-[11px] text-ink-faint">{hint}</p>}
 
       {open &&
         !disabled &&
@@ -236,12 +241,10 @@ export function PeoplePicker({
             onMouseDown={(e) => e.preventDefault()}
           >
             <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto py-1">
-              {!flat.length && (
-                <p className="px-3 py-3 text-sm text-ink-soft">{query ? 'Nobody matches that.' : 'Nobody to choose from yet.'}</p>
-              )}
+              {!flat.length && <p className="px-3 py-3 text-xs text-ink-faint">{query ? 'Nobody matches that.' : 'Nobody to choose from yet.'}</p>}
               {groups.map(([heading, rows, extra]) => (
                 <div key={heading}>
-                  <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-ink-faint">{heading}</p>
+                  <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wide text-ink-faint">{heading}</p>
                   {rows.map((p) => {
                     index += 1;
                     const here = index;
@@ -255,12 +258,18 @@ export function PeoplePicker({
                         onMouseEnter={() => setCursor(here)}
                         onClick={() => add(idOf(p))}
                         disabled={blocked}
-                        className={clsx('flex min-h-[44px] w-full items-center gap-2.5 px-3 py-1.5 text-left', cursor === here && 'bg-slate-50', blocked && 'cursor-not-allowed opacity-40')}
+                        className={clsx('flex min-h-[44px] w-full items-center gap-2.5 px-3 py-1.5 text-left', cursor === here && 'bg-well', blocked && 'cursor-not-allowed opacity-40')}
                       >
-                        <Avatar name={p.name} size="sm" />
+                        {isMe && !p.photoUrl ? (
+                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand text-[11px] font-semibold text-on-brand" aria-hidden>
+                            Me
+                          </span>
+                        ) : (
+                          <Avatar person={p} sizeClass="h-8 w-8 text-[11px]" tone="plain" className={clsx(isMe && 'ring-2 ring-brand')} />
+                        )}
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-medium text-ink">{isMe ? `Myself (${p.name})` : p.name}</span>
-                          <span className="block truncate text-xs text-ink-soft">
+                          <span className="block truncate text-sm text-ink">{isMe ? `Myself (${p.name})` : p.name}</span>
+                          <span className="block truncate text-[11px] text-ink-soft">
                             <span className="font-mono">{pinOf(p)}</span>
                             {!isMe && p.relation && RELATION_LABEL[p.relation] ? ` · ${RELATION_LABEL[p.relation]}` : ''}
                           </span>
@@ -268,27 +277,28 @@ export function PeoplePicker({
                       </button>
                     );
                   })}
-                  {extra > 0 && <p className="px-3 pb-1 text-xs text-ink-faint">+{extra} more — keep typing to narrow it down</p>}
+                  {extra > 0 && <p className="px-3 pb-1 text-[11px] text-ink-faint">+{extra} more</p>}
                 </div>
               ))}
             </div>
-            <div className="flex shrink-0 items-center justify-between gap-2 border-t border-line bg-slate-50 px-3 py-2 text-xs text-ink-soft">
-              <span className="inline-flex items-center gap-1.5">
-                <Search className="h-3 w-3" /> {full && !single ? `That is all ${max}.` : 'Search by name or Task Pin.'}
-              </span>
-              {onAddByPin && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    onAddByPin();
-                  }}
-                  className="inline-flex items-center gap-1 font-semibold text-brand hover:underline"
-                >
-                  <KeyRound className="h-3 w-3" /> Add by Task Pin
-                </button>
-              )}
-            </div>
+            {/* Only when there is something to say: the list is full, or somebody can be added by their pin. */}
+            {((full && !single) || onAddByPin) && (
+              <div className="flex shrink-0 items-center justify-between gap-2 border-t border-line px-3 py-1 text-[11px] text-ink-soft">
+                <span>{full && !single ? `That is all ${max} — remove somebody to change it.` : ''}</span>
+                {onAddByPin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      onAddByPin();
+                    }}
+                    className="inline-flex min-h-[28px] shrink-0 items-center gap-1 rounded-lg px-1.5 font-medium text-brand transition hover:bg-well"
+                  >
+                    <KeyRound className="h-3 w-3" /> Add by Task Pin
+                  </button>
+                )}
+              </div>
+            )}
           </div>,
           document.body
         )}

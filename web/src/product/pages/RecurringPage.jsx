@@ -3,6 +3,9 @@
  * ordinary task that lands in the doer's Tasks when it is due to appear.
  * Pause / resume, run now, edit, delete. Open to everyone; the server decides
  * who may change which (creator, the team's owner/admin, the Super Admin).
+ *
+ * The cards are the HRMS's (TaskRecurring there): a brand tile, the title and
+ * its pattern, a small on/off switch, who and when, and labelled small buttons.
  */
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -10,7 +13,7 @@ import clsx from 'clsx';
 import { ArrowRight, Bell, CalendarDays, CheckCircle2, Pencil, Play, Plus, Repeat, Search, Trash2, User, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTz } from '../../platform/session';
-import { Button, Card, EmptyState, ErrorState, PageHeader, Segmented, Skeleton, Switch, useConfirm } from '../../platform/ui';
+import { Button, ErrorState, PageHeader, Segmented, Skeleton, useConfirm } from '../../platform/ui';
 import * as T from '../api';
 import { useMeId, useTaskMeta } from '../hooks';
 import { dateTimeLabel, idOf, patternLabel, personName, reminderLabel, statusLabel } from '../lifecycle';
@@ -20,12 +23,37 @@ import { RecurringFormModal } from '../components/RecurringFormModal';
 /** May I change this one? The server's word when it sends one; otherwise assume yes (it still refuses). */
 const mayManage = (r) => r.can?.edit ?? r.canManage ?? true;
 
+/** A small labelled button on a card's foot (HRMS 32px). */
+const FOOT_BTN = 'inline-flex min-h-[32px] items-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50';
+
 function Stat({ label, value, tone }) {
   return (
-    <Card className="px-4 py-3">
-      <p className={clsx('tnum text-2xl font-bold', tone || 'text-ink')}>{value}</p>
-      <p className="text-xs font-medium text-ink-soft">{label}</p>
-    </Card>
+    <div className="shrink-0 rounded-xl border border-line bg-card px-3 py-1.5 sm:py-2">
+      <p className={clsx('tnum text-base font-semibold sm:text-lg', tone || 'text-ink')}>{value}</p>
+      <p className="whitespace-nowrap text-[11px] text-ink-soft">{label}</p>
+    </div>
+  );
+}
+
+/** The HRMS's small switch (18 × 32): running or paused. */
+function MiniSwitch({ checked, onChange, disabled, label }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={onChange}
+      className={clsx(
+        'relative inline-flex h-[18px] w-8 shrink-0 items-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-45',
+        checked ? 'border-transparent bg-brand' : 'border-slate-300 bg-slate-200 hover:bg-slate-300'
+      )}
+    >
+      {/* The knob stays white on either track, in either theme. */}
+      <span className={clsx('pointer-events-none inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-150', checked ? 'translate-x-[14px]' : 'translate-x-[2px]')} />
+    </button>
   );
 }
 
@@ -94,7 +122,6 @@ export function RecurringPage() {
     <div>
       <PageHeader
         title="Recurring"
-        subtitle="Set it up once — each time it comes round, it lands in their Tasks on its own."
         actions={
           <Button icon={Plus} onClick={() => setForm({})}>
             New recurring task
@@ -102,7 +129,8 @@ export function RecurringPage() {
         }
       />
 
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+      {/* One sideways strip on a phone (the list starts high), five across from sm up. */}
+      <div className="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 scrollbar-none sm:mx-0 sm:mb-4 sm:grid sm:grid-cols-5 sm:px-0">
         <Stat label="Schedules" value={stats.total} />
         <Stat label="Running" value={stats.running} tone="text-green-600" />
         <Stat label="Paused" value={stats.paused} tone="text-ink-soft" />
@@ -111,9 +139,9 @@ export function RecurringPage() {
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-card px-3 shadow-sm sm:max-w-sm">
-          <Search className="h-4 w-4 text-ink-faint" />
-          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Search schedules" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none" aria-label="Search schedules" />
+        <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-card px-3 shadow-sm focus-within:border-slate-300 sm:max-w-sm">
+          <Search className="h-[15px] w-[15px] shrink-0 text-ink-faint" />
+          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Search" className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-faint focus-visible:ring-0 focus-visible:ring-offset-0" aria-label="Search schedules" />
         </label>
         <Segmented
           value={show}
@@ -127,11 +155,17 @@ export function RecurringPage() {
       </div>
 
       {q.error && <ErrorState error={q.error} onRetry={q.refetch} />}
-      {q.isLoading && <div className="grid gap-3 md:grid-cols-2">{[0, 1].map((i) => <Skeleton key={i} className="h-48 rounded-2xl" />)}</div>}
+      {q.isLoading && <div className="grid gap-3 md:grid-cols-2">{[0, 1].map((i) => <Skeleton key={i} className="h-44 rounded-2xl" />)}</div>}
       {q.data && rows.length === 0 && (
-        <Card>
-          <EmptyState icon={Repeat} title="No recurring tasks yet" text="The daily cash count, Friday’s report, the month-end stock take — set it up once, and each one lands in their Tasks when it comes round." action={<Button icon={Plus} onClick={() => setForm({})}>New recurring task</Button>} />
-        </Card>
+        <div className="rounded-2xl border border-dashed border-line bg-card px-6 py-12 text-center">
+          <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-ink-soft">
+            <Repeat className="h-5 w-5" />
+          </span>
+          <p className="font-semibold text-ink">No recurring tasks yet</p>
+          <Button className="mt-4" icon={Plus} onClick={() => setForm({})}>
+            New recurring task
+          </Button>
+        </div>
       )}
       {q.data && rows.length > 0 && shown.length === 0 && <p className="py-10 text-center text-sm text-ink-soft">Nothing matches.</p>}
 
@@ -145,44 +179,40 @@ export function RecurringPage() {
           const manage = mayManage(r);
           const team = r.team?.name || r.teamName;
           return (
-            <Card key={r._id} className={clsx('flex flex-col gap-3 p-4', !r.isActive && 'bg-slate-50')}>
+            <div key={r._id} className={clsx('flex flex-col gap-3 rounded-2xl border border-line p-4 shadow-sm transition', r.isActive ? 'bg-card' : 'bg-well')}>
               <div className="flex items-start gap-3">
-                <span className={clsx('grid h-10 w-10 shrink-0 place-items-center rounded-xl', r.isActive ? 'bg-brand text-white' : 'bg-slate-100 text-ink-faint')}>
-                  <Repeat className="h-[18px] w-[18px]" />
+                <span className={clsx('grid h-10 w-10 shrink-0 place-items-center rounded-xl', r.isActive ? 'bg-brand text-on-brand' : 'bg-slate-100 text-ink-faint')}>
+                  <Repeat className="h-[17px] w-[17px]" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="break-words text-[15px] font-semibold text-ink">{r.title}</p>
+                  <p className="break-words font-semibold text-ink">{r.title}</p>
                   <p className="mt-0.5 text-xs font-semibold text-ink-soft">{r.patternLabel || patternLabel(r)}</p>
                 </div>
-                {manage && (
-                  <div className="shrink-0" title={r.isActive ? 'Running — pause it' : 'Paused — resume it'}>
-                    <Switch checked={Boolean(r.isActive)} onChange={() => toggle.mutate(r)} disabled={toggle.isPending} label={<span className="sr-only">{r.isActive ? 'Pause' : 'Resume'}</span>} />
-                  </div>
-                )}
+                {manage && <MiniSwitch checked={Boolean(r.isActive)} onChange={() => toggle.mutate(r)} disabled={toggle.isPending} label={r.isActive ? 'Running — pause it' : 'Paused — resume it'} />}
               </div>
-              <div className="space-y-1.5 text-xs text-ink-soft">
+              <div className="space-y-1.5 text-xs text-slate-600">
                 <p className="flex items-start gap-2">
-                  <User className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-faint" />
+                  <User className="mt-0.5 h-[13px] w-[13px] shrink-0 text-ink-faint" />
                   {onlyMe ? (
                     <span>Your own task</span>
                   ) : (
                     <span className="min-w-0 break-words">
                       <span className="text-ink-faint">By </span>
-                      <span className="font-medium text-ink">{setBy}</span>
+                      <span className="font-medium text-slate-700">{setBy}</span>
                       {r.onBehalf?.byName && <span className="text-ink-faint"> (sent by {r.onBehalf.byName})</span>}
-                      <ArrowRight className="mx-1.5 inline h-3 w-3 text-ink-faint" />
+                      <ArrowRight className="mx-1.5 inline h-[11px] w-[11px] align-[-1px] text-ink-faint" />
                       <span className="text-ink-faint">To </span>
-                      <span className="font-medium text-ink">{who || 'the setter'}</span>
+                      <span className="font-medium text-slate-700">{who || 'the setter'}</span>
                     </span>
                   )}
                 </p>
                 {team && (
                   <p className="flex items-center gap-2">
-                    <Users className="h-3.5 w-3.5 text-ink-faint" /> {team}
+                    <Users className="h-[13px] w-[13px] shrink-0 text-ink-faint" /> {team}
                   </p>
                 )}
                 <p className="flex items-start gap-2">
-                  <CalendarDays className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-faint" />
+                  <CalendarDays className="mt-0.5 h-[13px] w-[13px] shrink-0 text-ink-faint" />
                   {r.isActive && (r.next || r.nextDueDate) ? (
                     <span>
                       Next due <span className="font-semibold text-ink">{dateTimeLabel(r.next?.dueAt || r.nextDueDate, tz)}</span>
@@ -194,7 +224,7 @@ export function RecurringPage() {
                 </p>
                 {(r.reminders || []).length > 0 && (
                   <p className="flex items-start gap-2">
-                    <Bell className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-faint" />
+                    <Bell className="mt-0.5 h-[13px] w-[13px] shrink-0 text-ink-faint" />
                     <span>{(r.reminderLabels || r.reminders.map(reminderLabel)).join(' · ')}</span>
                   </p>
                 )}
@@ -203,7 +233,7 @@ export function RecurringPage() {
                 <PriorityChip priority={r.priority} always />
                 {r.routine && (
                   <span className="inline-flex items-center gap-1 rounded-md border border-line px-2 py-0.5 text-[11px] font-semibold text-ink-soft">
-                    <CheckCircle2 className="h-3 w-3" /> Mark done only
+                    <CheckCircle2 className="h-[11px] w-[11px]" /> Mark done only
                   </span>
                 )}
                 {r.stats?.raised > 0 && (
@@ -214,19 +244,19 @@ export function RecurringPage() {
                 )}
                 {manage && (
                   <div className="ml-auto flex flex-wrap items-center gap-1.5">
-                    <Button size="sm" variant="secondary" icon={Play} loading={run.isPending && run.variables?._id === r._id} disabled={!r.isActive} onClick={() => run.mutate(r)} title="Raise any occurrence that is due now">
-                      Run now
-                    </Button>
-                    <Button size="sm" variant="secondary" icon={Pencil} onClick={() => setForm({ id: r._id })}>
-                      Edit
-                    </Button>
-                    <button type="button" onClick={() => remove(r)} className="grid h-9 w-9 place-items-center rounded-xl text-ink-faint hover:bg-red-50 hover:text-red-600" aria-label="Delete">
-                      <Trash2 className="h-4 w-4" />
+                    <button type="button" onClick={() => run.mutate(r)} disabled={!r.isActive || (run.isPending && run.variables?._id === r._id)} title="Raise any occurrence that is due now" className={clsx(FOOT_BTN, 'border-line bg-card text-slate-700 hover:border-slate-300')}>
+                      <Play className="h-[13px] w-[13px]" /> {run.isPending && run.variables?._id === r._id ? 'Running…' : 'Run now'}
+                    </button>
+                    <button type="button" onClick={() => setForm({ id: r._id })} className={clsx(FOOT_BTN, 'border-line bg-card text-slate-700 hover:border-slate-300')}>
+                      <Pencil className="h-[13px] w-[13px]" /> Edit
+                    </button>
+                    <button type="button" onClick={() => remove(r)} title="Delete this recurring task" className={clsx(FOOT_BTN, 'border-red-200 bg-card text-red-600 hover:bg-red-50')}>
+                      <Trash2 className="h-[13px] w-[13px]" /> Delete
                     </button>
                   </div>
                 )}
               </div>
-            </Card>
+            </div>
           );
         })}
       </div>

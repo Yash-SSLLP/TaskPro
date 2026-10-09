@@ -5,10 +5,12 @@
  *
  *   const actions = useTaskActions({ meta, onChanged, onEdit });
  *   actions.run(key, task)    // from the dropdown
- *   actions.swipe(key, task)  // from a swipe: the remark is required while meta says so
+ *   actions.swipe(key, task)  // from a swipe: Accept happens at once and Edit opens the
+ *                             // form, as from the dropdown (the HRMS's); any other move
+ *                             // opens its remark box, required while meta says so
  *   {actions.element}         // render once
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useConfirm } from '../../platform/ui';
 import * as T from '../api';
@@ -32,16 +34,23 @@ export function useTaskActions({ meta, onChanged, onEdit }) {
   const [delegating, setDelegating] = useState(null);
   const [transferring, setTransferring] = useState(null);
   const [extending, setExtending] = useState(null);
+  // Tasks being accepted right now, so a second pick or swipe before the
+  // first answer cannot send it twice.
+  const accepting = useRef(new Set());
 
   const run = useCallback(
     async (key, task) => {
       if (key === 'accept') {
+        if (accepting.current.has(task._id)) return;
+        accepting.current.add(task._id);
         try {
           await T.acceptTask(task._id);
           toast.success(SAID.accept);
           onChanged?.(task._id);
         } catch (err) {
           toast.error(err.message || 'Could not accept that task.');
+        } finally {
+          accepting.current.delete(task._id);
         }
         return;
       }
@@ -66,11 +75,15 @@ export function useTaskActions({ meta, onChanged, onEdit }) {
     [confirm, onChanged, onEdit]
   );
 
-  const swipe = useCallback((key, task) => {
-    if (key === 'extension') return setExtending(task);
-    setAction({ key, task, swipe: true });
-    return undefined;
-  }, []);
+  const swipe = useCallback(
+    (key, task) => {
+      if (key === 'accept' || key === 'edit') return run(key, task);
+      if (key === 'extension') return setExtending(task);
+      setAction({ key, task, swipe: true });
+      return undefined;
+    },
+    [run]
+  );
 
   const confirmAction = useCallback(
     async (note, voice) => {

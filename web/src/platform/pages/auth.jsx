@@ -3,7 +3,7 @@
  * account (and see your new Task Pin), forgot / reset password, and the forced
  * "choose your own password" step.
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Copy, KeyRound, MessageCircle, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
@@ -11,7 +11,8 @@ import { product } from '../../product/config';
 import { api } from '../api';
 import { useSession } from '../session';
 import { copyText, pinOf, whatsappUrl } from '../pin';
-import { Logo } from '../Logo';
+import { Logo, Wordmark } from '../Logo';
+import { ThemeToggle } from '../ThemeToggle';
 import { Button, Input, PasswordInput } from '../ui';
 import { signOutEverywhere } from '../signOut';
 
@@ -21,27 +22,33 @@ const homeFor = (user) => (user?.role === 'superadmin' ? '/console' : HOME);
 function AuthLayout({ title, subtitle, children, footer }) {
   return (
     <div className="flex min-h-screen">
-      <aside className="relative hidden w-[44%] max-w-xl flex-col justify-between overflow-hidden bg-brand p-10 text-white lg:flex">
-        <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-card/10" aria-hidden />
-        <div className="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-card/5" aria-hidden />
+      {/* Ink in both themes, lit like the logo's tile, with the mark as a watermark. */}
+      <aside className="auth-hero relative hidden w-[44%] max-w-xl flex-col justify-between overflow-hidden p-10 lg:flex">
+        <img src="/mark.svg" alt="" aria-hidden className="pointer-events-none absolute -bottom-24 -right-28 w-[30rem] max-w-none opacity-[0.06]" />
         <div className="relative flex items-center gap-3">
-          <img src="/logo.svg" width={40} height={40} alt="" className="rounded-[22%] ring-2 ring-white/30" />
-          <span className="text-xl font-bold">{product.name}</span>
+          <img src="/logo.svg" width={44} height={44} alt="" className="drop-shadow" />
+          <Wordmark className="text-xl text-[#f1ece2]" />
         </div>
         <div className="relative">
-          <h2 className="text-3xl font-bold leading-tight">{product.tagline}</h2>
-          <ul className="mt-8 space-y-4">
+          <h2 className="max-w-md text-[2.15rem] font-semibold leading-[1.15] tracking-[-0.02em] text-[#f1ece2]">{product.tagline}</h2>
+          <ul className="mt-9 space-y-4">
             {(product.pitch || []).map((line) => (
-              <li key={line} className="flex items-start gap-3 text-[17px] text-white/90">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-white" aria-hidden />
+              <li key={line} className="flex items-start gap-3 text-[16px] leading-snug text-[#f1ece2]/85">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#ff5a3c]" aria-hidden />
                 {line}
               </li>
             ))}
           </ul>
         </div>
-        <p className="relative text-sm text-white/70">Works on your phone and computer.</p>
+        <p className="relative text-sm text-[#a39d8f]">Works on your phone and computer.</p>
       </aside>
-      <main className="flex flex-1 flex-col items-center justify-center px-5 py-10">
+      <main className="relative flex flex-1 flex-col items-center justify-center px-5 py-10">
+        {/* Light or dark before signing in, as inside: the top corner, level
+            with the panel's logo on a wide screen. A wrapper places it, since
+            the switch draws itself `relative`. */}
+        <div className="absolute right-5 top-5 sm:right-8 sm:top-8 lg:right-10 lg:top-12">
+          <ThemeToggle />
+        </div>
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:hidden">
             <Logo size={40} />
@@ -98,8 +105,15 @@ export function SignInPage() {
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const formRef = useRef(null);
   const { busy, error, run } = useSubmit(async () => {
-    const data = await api.post('/api/auth/login', { identifier, password });
+    // The fields themselves too: a browser's autofill fills them without
+    // telling React until the person touches the page.
+    const field = (name) => formRef.current?.querySelector(`input[autocomplete="${name}"]`)?.value || '';
+    const id = (identifier || field('username')).trim();
+    const pw = password || field('current-password');
+    if (!id || !pw) throw new Error('Enter your email, mobile or username, and your password.');
+    const data = await api.post('/api/auth/login', { identifier: id, password: pw });
     setSession(data);
     navigate(homeFor(data.user), { replace: true });
   });
@@ -117,7 +131,7 @@ export function SignInPage() {
         </>
       }
     >
-      <form onSubmit={run} className="space-y-4" noValidate>
+      <form ref={formRef} onSubmit={run} className="space-y-4" noValidate>
         {notice && !error && <div className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800">{notice}</div>}
         <FormError>{error}</FormError>
         <Input
@@ -134,7 +148,7 @@ export function SignInPage() {
             Forgot password?
           </Link>
         </div>
-        <Button type="submit" size="lg" className="w-full" loading={busy} disabled={!identifier || !password}>
+        <Button type="submit" size="lg" className="w-full" loading={busy}>
           Sign in
         </Button>
       </form>

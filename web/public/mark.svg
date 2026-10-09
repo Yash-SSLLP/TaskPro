@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1024" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2B2721"/><stop offset=".55" stop-color="#1A1814"/><stop offset="1" stop-color="#100E0B"/></linearGradient>
+<radialGradient id="sheen" cx="300" cy="110" r="760" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity=".11"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<linearGradient id="glyph" x1="0" y1="220" x2="0" y2="820" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FCFAF5"/><stop offset="1" stop-color="#E9E2D4"/></linearGradient>
+<linearGradient id="check" x1="520" y1="620" x2="860" y2="240" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#D9381E"/><stop offset="1" stop-color="#F45E3E"/></linearGradient>
+<mask id="cut" maskUnits="userSpaceOnUse" x="-512" y="-512" width="2048" height="2048"><rect x="-512" y="-512" width="2048" height="2048" fill="#fff"/><path d="M526.9,489.9L582.9,565.4L641.1,510.6L569.1,450.1ZM643.1,563.1L840.1,276.2L819.9,259.8L580.9,512.9ZM519.0,470a29,29 0 1 0 58,0a29,29 0 1 0 -58,0ZM572.0,538a40,40 0 1 0 80,0a40,40 0 1 0 -80,0ZM817.0,268a13,13 0 1 0 26,0a13,13 0 1 0 -26,0Z" fill="#000" stroke="#000" stroke-width="48" stroke-linejoin="round"/></mask>
+</defs>
+
+<g transform="translate(512 512) scale(1.25) translate(-530 -522)">
+<g mask="url(#cut)" fill="url(#glyph)">
+<rect x="232" y="273" width="180" height="78"/>
+<path d="M373,273H451V642Q451,739.5 412,792Q373,739.5 373,642Z"/>
+<path d="M412,312H540A110,110 0 0 1 540,532H412" fill="none" stroke="url(#glyph)" stroke-width="78" stroke-linejoin="round"/>
+</g>
+<path d="M526.9,489.9L582.9,565.4L641.1,510.6L569.1,450.1ZM643.1,563.1L840.1,276.2L819.9,259.8L580.9,512.9ZM519.0,470a29,29 0 1 0 58,0a29,29 0 1 0 -58,0ZM572.0,538a40,40 0 1 0 80,0a40,40 0 1 0 -80,0ZM817.0,268a13,13 0 1 0 26,0a13,13 0 1 0 -26,0Z" fill="url(#check)"/>
+</g>
+</svg>

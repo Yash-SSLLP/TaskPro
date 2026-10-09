@@ -14,12 +14,19 @@ const { protect, isSuperAdmin, requirePerson } = require('../auth');
 const { z, parse, trimmed, idParam, objectId } = require('../validate');
 const { badRequest, forbidden, notFound, conflict } = require('../errors');
 const { notify } = require('../services/notify');
+const activity = require('../services/activity');
 const { findByPin } = require('./contacts');
 
 const router = express.Router();
 router.use(protect);
 
 const person = (u) => (u ? publicUser(u, { full: false }) : null);
+
+/** Someone named in a team activity row: { id, name } (one small read). */
+async function named(userId) {
+  const u = await User.findById(userId).select('name').lean();
+  return { id: String(userId), name: u?.name || 'someone' };
+}
 
 /** A team as the API returns it. `withMembers` adds the member list. */
 async function teamView(team, viewer, { withMembers = true } = {}) {
@@ -106,6 +113,7 @@ router.post('/', requirePerson, async (req, res) => {
     owner: req.user._id,
     members: [{ user: req.user._id, role: 'owner', status: 'active', invitedAt: now, joinedAt: now }],
   });
+  await activity.record({ req, action: 'team.created', target: activity.teamTarget(team) });
   res.status(201).json({ team: await teamView(team, req.user) });
 });
 
@@ -120,9 +128,14 @@ router.patch('/:id', async (req, res) => {
   const team = await loadTeam(req);
   requireRole(team, req.user, ['owner', 'admin']);
   const body = parse(teamSchema.partial(), req.body);
+  const before = { name: team.name, description: team.description || '' };
   if (body.name !== undefined) team.name = body.name;
   if (body.description !== undefined) team.description = body.description;
   await team.save();
+  const changes = ['name', 'description']
+    .filter((f) => before[f] !== (team[f] || ''))
+    .map((f) => ({ field: f, before: before[f], after: team[f] || '' }));
+  if (changes.length) await activity.record({ req, action: 'team.updated', target: activity.teamTarget(team), meta: { changes } });
   res.json({ team: await teamView(team, req.user) });
 });
 
@@ -137,6 +150,12 @@ async function deleteTeam(team, by) {
   const others = team.members.filter((m) => m.status === 'active').map((m) => m.user);
   await Team.deleteOne({ _id: team._id });
   await product.onTeamDeleted?.(team._id);
+  await activity.record({
+    action: isSuperAdmin(by) ? 'admin.team_deleted' : 'team.deleted',
+    actor: by,
+    target: activity.teamTarget(team),
+    meta: { members: others.length },
+  });
   notify(others, {
     title: `The team "${team.name}" was deleted`,
     body: `${by.name} deleted it. Tasks filed under it are kept.`,
@@ -161,6 +180,12 @@ router.post('/:id/members', async (req, res) => {
 
   team.members.push({ user: invitee._id, role: body.role, status: 'invited', invitedBy: req.user._id, invitedAt: new Date() });
   await team.save();
+  await activity.record({
+    req,
+    action: 'team.invited',
+    target: activity.teamTarget(team),
+    meta: { person: { id: String(invitee._id), name: invitee.name }, role: body.role },
+  });
   notify([invitee._id], {
     title: `${req.user.name} invited you to the team "${team.name}"`,
     body: 'Open Teams to join or decline.',
@@ -182,6 +207,7 @@ router.post('/:id/accept', requirePerson, async (req, res) => {
   m.status = 'active';
   m.joinedAt = new Date();
   await team.save();
+  await activity.record({ req, action: 'team.joined', target: activity.teamTarget(team) });
   notify(team.members.filter((x) => x.status === 'active' && ['owner', 'admin'].includes(x.role)).map((x) => x.user), {
     title: `${req.user.name} joined the team "${team.name}"`,
     link: `/teams/${team._id}`,
@@ -195,6 +221,7 @@ router.post('/:id/decline', requirePerson, async (req, res) => {
   const { team } = await myInvite(req);
   team.members = team.members.filter((x) => String(x.user) !== String(req.user._id));
   await team.save();
+  await activity.record({ req, action: 'team.declined', target: activity.teamTarget(team) });
   res.json({ ok: true });
 });
 
@@ -205,8 +232,12 @@ router.patch('/:id/members/:userId', async (req, res) => {
   const m = team.memberOf(idParam(req.params.userId, 'person'));
   if (!m) throw notFound('Person not found in this team');
   if (m.role === 'owner') throw badRequest('Hand the team over first to change the owner');
+  const changed = m.role !== body.role;
   m.role = body.role;
   await team.save();
+  if (changed) {
+    await activity.record({ req, action: 'team.role_changed', target: activity.teamTarget(team), meta: { person: await named(m.user), role: body.role } });
+  }
   res.json({ team: await teamView(team, req.user) });
 });
 
@@ -226,6 +257,15 @@ router.delete('/:id/members/:userId', async (req, res) => {
   }
   team.members = team.members.filter((x) => String(x.user) !== String(targetId));
   await team.save();
+  if (leaving) await activity.record({ req, action: 'team.left', target: activity.teamTarget(team) });
+  else {
+    await activity.record({
+      req,
+      action: 'team.member_removed',
+      target: activity.teamTarget(team),
+      meta: { person: await named(targetId), invite: m.status === 'invited' },
+    });
+  }
   if (!leaving && m.status === 'active') {
     notify([targetId], { title: `You were removed from the team "${team.name}"`, link: '/teams', kind: 'team' });
   }
@@ -243,6 +283,7 @@ router.post('/:id/transfer', async (req, res) => {
   next.role = 'owner';
   team.owner = next.user;
   await team.save();
+  await activity.record({ req, action: 'team.transferred', target: activity.teamTarget(team), meta: { person: await named(next.user) } });
   notify([next.user], {
     title: `You are now the owner of the team "${team.name}"`,
     link: `/teams/${team._id}`,

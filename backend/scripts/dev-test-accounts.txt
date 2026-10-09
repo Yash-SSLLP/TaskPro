@@ -1,4 +1,4 @@
-# Test accounts used to try Task Pro locally (development only, database taskpro_v2).
+# Test accounts used to try PinTask locally (development only, database taskpro_v2).
 # Disable or delete them from the Super Admin console when no longer needed.
 # Super Admin: SUPERADMIN_USERNAME / SUPERADMIN_PASSWORD in backend/.env
 person1_name=QA Asha

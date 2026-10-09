@@ -2,11 +2,15 @@
  * Transfer: it went to the wrong person. NOT delegation: whoever it is on
  * comes off it completely, progress resets, and the reason is required. The
  * warning stays on screen, and the confirmation names who loses the task.
+ *
+ * Laid out as the HRMS app's sheet (2026-10-08): the warning, small bold
+ * labels, a flat list of everybody (a mistake can point anywhere), a 15pt
+ * reason box and one red 46 button.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text } from 'react-native';
 import { tr } from '../../i18n';
-import { colors, font, space } from '../../platform/theme';
+import { colors, space } from '../../platform/theme';
 import { BottomSheet, Button, Notice, TextField, toast } from '../../platform/ui';
 import { transferTask } from '../api';
 import { ArrowLeftRight } from '../icons';
@@ -65,13 +69,13 @@ export default function TransferSheet({ visible, task, meta, onClose, onDone }) 
       title={tr('Transfer this task')}
       footer={<Button title={tr('Transfer it')} icon={ArrowLeftRight} variant="danger" size="lg" onPress={confirmIt} />}
     >
-      <Notice tone="danger">
+      <Notice tone="danger" style={styles.warn}>
         {tr('This is for work that went to the wrong person. {who} comes off it completely and stops hearing about it, and the progress so far is cleared. To hand work on and stay involved, use Delegate.', { who })}
       </Notice>
       <Text style={styles.label}>{tr('It should have gone to')}</Text>
       <TaskPeoplePicker people={meta?.people || []} value={to} onChange={setTo} max={1} grouped={false} exclude={onIt} autoFocus maxListHeight={300} />
+      <Text style={styles.label}>{tr('Why is it moving?')}</Text>
       <TextField
-        label={tr('Why is it moving?')}
         value={reason}
         onChangeText={(t) => {
           setReason(t);
@@ -80,6 +84,8 @@ export default function TransferSheet({ visible, task, meta, onClose, onDone }) 
         placeholder={tr("e.g. this is the accounts team's, not mine")}
         multiline
         maxLength={1000}
+        accessibilityLabel={tr('Why is it moving?')}
+        inputStyle={styles.input}
         style={styles.reason}
         hint={tr('Required. It stays on the task’s record.')}
       />
@@ -89,6 +95,8 @@ export default function TransferSheet({ visible, task, meta, onClose, onDone }) 
 }
 
 const styles = StyleSheet.create({
-  label: { color: colors.text, fontSize: 14, fontWeight: font.medium, marginBottom: space(2) },
-  reason: { marginTop: space(4) },
+  warn: { marginBottom: 0 },
+  label: { color: colors.textSecondary, fontSize: 12, fontWeight: '700', marginTop: space(4), marginBottom: space(2) },
+  input: { fontSize: 15 },
+  reason: { marginBottom: space(3) },
 });

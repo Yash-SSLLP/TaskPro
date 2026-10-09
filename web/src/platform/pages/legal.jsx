@@ -9,6 +9,7 @@ import { api, apiUrl } from '../api';
 import { useSession } from '../session';
 import { signOutEverywhere } from '../signOut';
 import { Logo } from '../Logo';
+import { ThemeToggle } from '../ThemeToggle';
 import { PRIVACY } from '../privacy';
 import { Button, Card, Input, PasswordInput } from '../ui';
 
@@ -21,9 +22,12 @@ export function LegalShell({ children }) {
           <Link to="/" aria-label="Home">
             <Logo size={32} />
           </Link>
-          <Link to={signedIn ? '/' : '/sign-in'} className="text-sm font-semibold text-brand hover:underline">
-            {signedIn ? 'Open the app' : 'Sign in'}
-          </Link>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Link to={signedIn ? '/' : '/sign-in'} className="text-sm font-semibold text-brand hover:underline">
+              {signedIn ? 'Open the app' : 'Sign in'}
+            </Link>
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">{children}</main>

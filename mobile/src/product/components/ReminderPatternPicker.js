@@ -10,14 +10,19 @@
  * forms use it, as the HRMS app does); a rule saved in another shape still
  * shows its own controls.
  *
+ * THE HRMS APP'S LOOK (2026-10-08): small bold labels over the time boxes,
+ * seven equal day buttons, and no "Every hour / 2 / 3 hours" shortcuts on an
+ * hourly rule — the stepper alone sets the gap, as there. (The kit's Chip is
+ * the HRMS chip now: filled when picked.)
+ *
  * Also here: what a schedule starts with (remindersFor), how saved reminders
  * split for the form (splitReminders), and a new rule of a shape (repeatingRule).
  */
 import React, { useRef } from 'react';
 import { StyleSheet, Switch, Text, View } from 'react-native';
 import { tr } from '../../i18n';
-import { colors, font, radius, space } from '../../platform/theme';
-import { Chip, ChipRow, Segmented, TimeField } from '../../platform/ui';
+import { colors, radius, space } from '../../platform/theme';
+import { Chip, Segmented, TimeField } from '../../platform/ui';
 import { BellRing } from '../icons';
 import {
   DEFAULT_REMIND_AT,
@@ -135,7 +140,7 @@ export default function ReminderPatternPicker({ value, onChange, hints = {}, tit
 
       {value && !hourlyOnly ? (
         <Segmented
-          style={allowOff ? styles.top : null}
+          style={allowOff ? styles.segTop : null}
           options={REMINDER_PATTERNS.map((k) => ({ value: k, label: reminderPatternLabel(k) }))}
           value={pattern}
           onChange={pick}
@@ -144,16 +149,6 @@ export default function ReminderPatternPicker({ value, onChange, hints = {}, tit
 
       {pattern === 'HOURLY' ? (
         <>
-          <Text style={styles.subLabel}>{tr('How often')}</Text>
-          <ChipRow>
-            {[
-              [1, tr('Every hour')],
-              [2, tr('Every 2 hours')],
-              [3, tr('Every 3 hours')],
-            ].map(([n, label]) => (
-              <Chip key={n} label={label} selected={value.unit !== 'MINUTES' && Number(value.amount) === n} onPress={() => set({ unit: 'HOURS', amount: n })} />
-            ))}
-          </ChipRow>
           <Stepper
             label={tr('Every')}
             value={hours}
@@ -163,8 +158,14 @@ export default function ReminderPatternPicker({ value, onChange, hints = {}, tit
             format={(n) => (n === 1 ? tr('1 hour') : tr('{n} hours', { n }))}
           />
           <View style={styles.twoCol}>
-            <TimeField style={styles.col} label={tr('From')} value={win.from} onChange={(from) => set({ from, to: win.to })} />
-            <TimeField style={styles.col} label={tr('Until')} value={win.to} onChange={(to) => set({ from: win.from, to })} />
+            <View style={styles.col}>
+              <Text style={styles.subLabel}>{tr('From')}</Text>
+              <TimeField value={win.from} onChange={(from) => set({ from, to: win.to })} />
+            </View>
+            <View style={styles.col}>
+              <Text style={styles.subLabel}>{tr('Until')}</Text>
+              <TimeField value={win.to} onChange={(to) => set({ from: win.from, to })} />
+            </View>
           </View>
           {badWindow ? <Text style={styles.error}>{tr('“Until” has to be later than “From” — otherwise it goes between 9:00 AM and 9:00 PM.')}</Text> : null}
         </>
@@ -173,7 +174,7 @@ export default function ReminderPatternPicker({ value, onChange, hints = {}, tit
       {pattern === 'DAILY' ? (
         <>
           <Text style={styles.subLabel}>{tr('How often')}</Text>
-          <ChipRow>
+          <View style={styles.chipRow}>
             {[
               [1, tr('Every day')],
               [2, tr('Alternate days')],
@@ -181,7 +182,7 @@ export default function ReminderPatternPicker({ value, onChange, hints = {}, tit
             ].map(([n, label]) => (
               <Chip key={n} label={label} selected={Number(value.amount) === n} onPress={() => set({ amount: n })} />
             ))}
-          </ChipRow>
+          </View>
           <Stepper
             label={tr('Every')}
             value={Math.max(1, Math.round(Number(value.amount) || 1))}
@@ -218,7 +219,7 @@ export default function ReminderPatternPicker({ value, onChange, hints = {}, tit
       {pattern === 'MONTHLY' ? (
         <>
           <Segmented
-            style={styles.top}
+            style={styles.segTop}
             options={[
               { value: 'DATE', label: tr('On a date') },
               { value: 'WEEKDAY', label: tr('On a weekday') },
@@ -229,17 +230,17 @@ export default function ReminderPatternPicker({ value, onChange, hints = {}, tit
           {value.monthlyMode === 'WEEKDAY' ? (
             <>
               <Text style={styles.subLabel}>{tr('Which one')}</Text>
-              <ChipRow>
+              <View style={styles.chipRow}>
                 {NTH_WEEK_KEYS.map((n) => (
                   <Chip key={n} label={nthLabel(n)} selected={(value.nthWeek ?? 1) === n} onPress={() => set({ nthWeek: n })} />
                 ))}
-              </ChipRow>
+              </View>
               <Text style={styles.subLabel}>{tr('Day')}</Text>
-              <ChipRow>
+              <View style={styles.chipRow}>
                 {[1, 2, 3, 4, 5, 6, 0].map((d) => (
                   <Chip key={d} label={weekdayShort(d)} selected={(value.weekday ?? 1) === d} onPress={() => set({ weekday: d })} />
                 ))}
-              </ChipRow>
+              </View>
             </>
           ) : (
             <>
@@ -258,13 +259,16 @@ export default function ReminderPatternPicker({ value, onChange, hints = {}, tit
       ) : null}
 
       {pattern === 'DAILY' || pattern === 'WEEKLY' || pattern === 'MONTHLY' ? (
-        <TimeField style={styles.topField} label={tr('At')} value={value.at || DEFAULT_REMIND_AT} onChange={(at) => set({ at })} />
+        <>
+          <Text style={styles.subLabel}>{tr('At')}</Text>
+          <TimeField value={value.at || DEFAULT_REMIND_AT} onChange={(at) => set({ at })} />
+        </>
       ) : null}
 
       {value ? (
         <View style={styles.preview}>
           <View style={styles.previewIcon}>
-            <BellRing size={15} color={colors.white} />
+            <BellRing size={15} color={colors.onPrimary} />
           </View>
           <View style={styles.flex}>
             <Text style={styles.previewTitle}>{repeatingReminderText(value)}</Text>
@@ -275,7 +279,7 @@ export default function ReminderPatternPicker({ value, onChange, hints = {}, tit
           </View>
         </View>
       ) : (
-        <Text style={[styles.hint, styles.topField]}>{tr('No repeating reminder — nobody is chased on a timer.')}</Text>
+        <Text style={[styles.hint, styles.segTop]}>{tr('No repeating reminder — nobody is chased on a timer.')}</Text>
       )}
     </View>
   );
@@ -284,14 +288,15 @@ export default function ReminderPatternPicker({ value, onChange, hints = {}, tit
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space(3) },
-  title: { flex: 1, color: colors.text, fontSize: 15, fontWeight: font.semibold },
-  top: { marginTop: space(3) },
-  topField: { marginTop: space(3) },
-  subLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: font.semibold, marginTop: space(3), marginBottom: space(2) },
-  twoCol: { flexDirection: 'row', gap: space(2.5), marginTop: space(3) },
+  title: { flex: 1, color: colors.text, fontSize: 13, fontWeight: '700' },
+  segTop: { marginTop: space(3) },
+  subLabel: { color: colors.textSecondary, fontSize: 12, fontWeight: '700', marginTop: space(3), marginBottom: 6 },
+  twoCol: { flexDirection: 'row', gap: space(2.5) },
   col: { flex: 1 },
-  dayRow: { flexDirection: 'row', gap: space(1), flexWrap: 'wrap' },
-  dayChip: { minWidth: 40, justifyContent: 'center', paddingHorizontal: space(2) },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  // Seven across a 320px phone without wrapping: each takes an equal share.
+  dayRow: { flexDirection: 'row', gap: 6 },
+  dayChip: { flex: 1, minHeight: 42, paddingHorizontal: 0 },
   preview: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -302,8 +307,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
   },
   previewIcon: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
-  previewTitle: { color: colors.text, fontSize: 14, fontWeight: font.bold },
+  previewTitle: { color: colors.text, fontSize: 14, fontWeight: '800' },
   previewHint: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 2 },
-  hint: { color: colors.textFaint, fontSize: 12, lineHeight: 17, marginTop: space(1.5) },
-  error: { color: colors.danger, fontSize: 12, fontWeight: font.semibold, lineHeight: 17, marginTop: space(1.5) },
+  hint: { color: colors.textFaint, fontSize: 12, lineHeight: 17, marginTop: 6 },
+  error: { color: colors.danger, fontSize: 12, fontWeight: '700', lineHeight: 17, marginTop: 6 },
 });

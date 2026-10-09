@@ -36,6 +36,42 @@ const FEED_KIND = {
 
 const load = (who, taskId) => access.loadVisible(who, taskId);
 
+const raced = () => fail('Somebody else changed this task a moment ago. Open it again to see where it is.', 409);
+
+/**
+ * It happens once: claim the task exactly as it was read. `rev` moves with
+ * every status move, answer, delegation and transfer, so a second press, or
+ * somebody else's change in between, finds nothing to claim. `extra` narrows
+ * it further (my answer is still open); `set` records the answer in the same
+ * step, so a second press reading in between sees it given. False when
+ * somebody got there first.
+ */
+async function claimAsRead(task, extra = {}, set = null) {
+  const rev = task.rev || 0;
+  const claimed = await Task.updateOne({ _id: task._id, rev, ...extra }, { $inc: { rev: 1 }, ...(set ? { $set: set } : {}) });
+  if (!claimed.matchedCount) return false;
+  task.rev = rev + 1;
+  return true;
+}
+
+/**
+ * Save a claimed task, only if nobody has claimed it since: somebody who read
+ * it between our claim and this save, then claimed it themselves, wins, and
+ * this person hears it plainly. So does a save Mongoose refuses because the
+ * people on it were rewritten meanwhile (VersionError: an edit).
+ */
+async function saveAsRead(task) {
+  task.$where = { rev: task.rev || 0 };
+  try {
+    await task.save();
+  } catch (err) {
+    if (err?.name === 'VersionError' || err?.name === 'DocumentNotFoundError') throw raced();
+    throw err;
+  } finally {
+    task.$where = undefined;
+  }
+}
+
 async function afterChildChange(task) {
   if (task.parentTask) await recomputeParent(task.parentTask).catch((e) => console.warn('[tasks] parent recompute:', e.message));
 }
@@ -143,7 +179,7 @@ async function move({ taskId, who, to, note = '', voiceNote = null, files = [], 
     task.submittedAt = undefined;
   }
   task.updateCount = (task.updateCount || 0) + 1;
-  await task.save();
+  await saveAsRead(task);
   await afterChildChange(task);
 
   const update = await feed(task, who, {
@@ -167,12 +203,21 @@ async function move({ taskId, who, to, note = '', voiceNote = null, files = [], 
 }
 
 /** Take the job on: accepting also starts it (it leaves To do). */
-async function accept({ taskId, who, note = '' }) {
+async function accept({ taskId, who, note = '', retried = false }) {
   const task = await load(who, taskId);
   const mine = task.assigneeFor(who.id);
   if (!mine) throw fail('That task is not yours to accept.', 403);
   if (isTerminal(task.status)) throw fail('That task is closed.');
   if (mine.acceptance === ACCEPTANCE.ACCEPTED) return { task, update: null, unchanged: true };
+
+  // Once, while my answer is still open. Somebody got there first (my other
+  // device, a second press, anybody's move): look again, once. A second
+  // press then finds it accepted; a cancelled task says so.
+  const open = { assignees: { $elemMatch: { user: who.user._id, acceptance: { $ne: ACCEPTANCE.ACCEPTED } } } };
+  if (!(await claimAsRead(task, open, { 'assignees.$.acceptance': ACCEPTANCE.ACCEPTED }))) {
+    if (!retried) return accept({ taskId, who, note, retried: true });
+    throw raced();
+  }
 
   const now = new Date();
   mine.acceptance = ACCEPTANCE.ACCEPTED;
@@ -184,7 +229,7 @@ async function accept({ taskId, who, note = '' }) {
     if (!mine.startedAt) mine.startedAt = now;
   }
   task.updateCount = (task.updateCount || 0) + 1;
-  await task.save();
+  await saveAsRead(task);
   await afterChildChange(task);
 
   const update = await feed(task, who, { kind: 'ACCEPTED', note: String(note || '').trim() || 'Accepted this, and started on it.' });
@@ -193,7 +238,7 @@ async function accept({ taskId, who, note = '' }) {
 }
 
 /** Refuse it, with a reason. Doesn't cancel anything: the setter reassigns or calls it off. */
-async function decline({ taskId, who, reason = '' }) {
+async function decline({ taskId, who, reason = '', retried = false }) {
   const task = await load(who, taskId);
   const mine = task.assigneeFor(who.id);
   if (!mine) throw fail('That task is not yours to decline.', 403);
@@ -201,6 +246,15 @@ async function decline({ taskId, who, reason = '' }) {
   if (isTerminal(task.status)) throw fail('That task is closed.');
   const why = String(reason || '').trim();
   if (!why) throw fail('Say why you cannot take this on, so it can be given to somebody else.');
+  // Already declined (a second press, another device): nothing more to say.
+  if (mine.acceptance === ACCEPTANCE.REJECTED) return { task, update: null, unchanged: true };
+
+  // Once, while my answer is still open (as accept does).
+  const open = { assignees: { $elemMatch: { user: who.user._id, acceptance: { $ne: ACCEPTANCE.REJECTED }, status: { $ne: STATUS.COMPLETED } } } };
+  if (!(await claimAsRead(task, open, { 'assignees.$.acceptance': ACCEPTANCE.REJECTED }))) {
+    if (!retried) return decline({ taskId, who, reason, retried: true });
+    throw raced();
+  }
 
   mine.acceptance = ACCEPTANCE.REJECTED;
   mine.declinedAt = new Date();
@@ -208,7 +262,7 @@ async function decline({ taskId, who, reason = '' }) {
   mine.status = STATUS.PENDING;
   mine.startedAt = undefined;
   task.updateCount = (task.updateCount || 0) + 1;
-  await task.save();
+  await saveAsRead(task);
   await afterChildChange(task);
 
   const update = await feed(task, who, { kind: 'REJECTED', note: why });
@@ -235,6 +289,10 @@ async function delegate({ taskId, who, to, note = '' }) {
   const [fresh] = await people.buildAssignees([targetId]);
   if (!fresh) throw fail('That person is no longer here.');
 
+  // Once, on the task as I read it: a second press, or anybody's move in
+  // between, is told to look again rather than passing on a stale picture.
+  if (!(await claimAsRead(task))) throw raced();
+
   const said = String(note || '').trim();
   Object.assign(fresh, { acceptance: ACCEPTANCE.AWAITING, delegatedFrom: who.user._id, delegatedFromName: who.user.name });
   task.assignees = (task.assignees || []).filter((a) => idOf(a.user) !== who.id).concat([fresh]);
@@ -245,7 +303,7 @@ async function delegate({ taskId, who, to, note = '' }) {
   task.approver = who.user._id;
   task.approverName = who.user.name;
   task.updateCount = (task.updateCount || 0) + 1;
-  await task.save();
+  await saveAsRead(task);
   await afterChildChange(task);
 
   const update = await feed(task, who, { kind: 'DELEGATED', note: said ? `Passed to ${fresh.name}: ${said}` : `Passed to ${fresh.name}.` });
@@ -272,6 +330,8 @@ async function transferTask({ taskId, who, to, reason = '' }) {
   await people.assertAssignable(who.user, [targetId]);
   const [row] = await people.buildAssignees([targetId]);
   if (!row) throw fail('That person is no longer here.');
+  // Once, on the task as I read it (as delegate does).
+  if (!(await claimAsRead(task))) throw raced();
 
   const now = new Date();
   const leaving = (task.assignees || []).map((a) => ({ id: idOf(a.user), name: a.name || '' }));
@@ -298,7 +358,7 @@ async function transferTask({ taskId, who, to, reason = '' }) {
   task.firedReminders = [];
   task.stateNote = said.slice(0, 1000);
   task.updateCount = (task.updateCount || 0) + 1;
-  await task.save();
+  await saveAsRead(task);
   await afterChildChange(task);
 
   const fromNames = leaving.map((l) => l.name).filter(Boolean).join(', ');

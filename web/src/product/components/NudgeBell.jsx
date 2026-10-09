@@ -53,21 +53,22 @@ export function NudgeBell({ task, override = null, onNudged, labelled = false, d
     }
   };
 
-  const tone = waiting ? 'border-line bg-slate-50 text-ink-faint' : review ? 'border-violet-200 bg-violet-50 text-violet-700' : 'border-amber-200 bg-amber-50 text-amber-700';
+  const tone = waiting ? 'border-line bg-well text-ink-faint' : review ? 'border-violet-200 bg-violet-50 text-violet-700' : 'border-amber-200 bg-amber-50 text-amber-700';
   const title = waiting ? `Reminder sent — you can remind ${who} again in ${state.waitMin} min` : review ? 'Remind the reviewer to review it' : 'Send a reminder';
 
   if (labelled) {
     return (
-      <button type="button" onClick={ring} disabled={busy || disabled} title={title} aria-label={title} className={clsx('inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-sm font-semibold transition disabled:opacity-60', tone)}>
-        <Bell className={clsx('h-4 w-4', busy && 'animate-pulse')} />
+      <button type="button" onClick={ring} disabled={busy || disabled} title={title} aria-label={title} className={clsx('inline-flex min-h-[36px] items-center gap-1.5 rounded-xl border px-3 text-sm font-semibold transition disabled:opacity-60', tone)}>
+        <Bell className={clsx('h-[15px] w-[15px] shrink-0', busy && 'animate-pulse')} />
         {waiting ? `Reminded · again in ${state.waitMin}m` : review ? 'Remind to review' : 'Remind'}
       </button>
     );
   }
 
+  // 36px, the height of the status button beside it on a row.
   return (
     <button type="button" onClick={ring} disabled={busy || disabled} title={title} aria-label={title} className={clsx('relative grid h-9 w-9 shrink-0 place-items-center rounded-xl border transition disabled:opacity-60', tone)}>
-      <Bell className={clsx('h-4 w-4', busy && 'animate-pulse')} />
+      <Bell className={clsx('h-[15px] w-[15px]', busy && 'animate-pulse')} />
       {waiting && (
         <span className="tnum pointer-events-none absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-md border border-line bg-card px-1 text-[9.5px] font-bold leading-4 text-ink-soft">
           {state.waitMin}m

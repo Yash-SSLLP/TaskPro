@@ -270,14 +270,40 @@ export function repeatLabel(repeat) {
  *   in progress    right → Complete    left → Ask for more time
  *   in review      right → Complete    left → Send it back
  * …plus a routine (daily) task, whose only move is Done. Read off `can`.
+ *
+ * EVERY OPEN CARD SWIPES (as in the HRMS app since 2026-09-30): a side the
+ * pairs above leave empty opens the status menu instead ('menu', the sheet
+ * the status pill opens), so the setter's cards and a card waiting in review
+ * move too. Only when that menu would have nothing to do does a side stay
+ * still. A task I set that nobody has taken on yet swipes right to Edit
+ * ('edit'), the assign form. Nothing swipes once a task is finished.
+ *
+ * Each move carries its pane's `fill` (under a white `ink`) and a `tone`
+ * the swipe answers in: a success tap for 'success', a heavier one for
+ * 'danger', a light one for the rest.
  */
 export function swipeActionsFor(task) {
+  if (!task || isTerminal(task.status)) return { right: null, left: null };
+  const pair = pairedSwipes(task);
+  const can = task.can || {};
+  const hasMenu = statusActions(task).length > 0 || Boolean(can.canEdit) || Boolean(can.canRequestExtension);
+  const menu = hasMenu ? { key: 'menu', label: tr('Status'), icon: 'menu', tone: 'neutral', fill: '#475467', ink: '#fff' } : null;
+  // The HRMS rule, exactly: `canEdit` is the server's "the terms are still
+  // open" (nobody has taken it on yet; a Super Admin may always edit), so the
+  // swipe goes back to the menu the moment somebody accepts.
+  const edit =
+    !pair.right && can.canEdit && !can.canAccept ? { key: 'edit', label: tr('Edit'), icon: 'edit', tone: 'info', fill: '#2563EB', ink: '#fff' } : null;
+  return { right: pair.right || edit || menu, left: pair.left || menu };
+}
+
+/** The user's three pairs, without the fallbacks above. */
+function pairedSwipes(task) {
   const can = task?.can || {};
   const status = task?.status;
   const tone = {
-    success: { fill: colors.successFill, ink: '#fff' },
-    danger: { fill: colors.dangerFill, ink: '#fff' },
-    warning: { fill: colors.warningFill, ink: '#fff' },
+    success: { tone: 'success', fill: colors.successFill, ink: '#fff' },
+    danger: { tone: 'danger', fill: colors.dangerFill, ink: '#fff' },
+    warning: { tone: 'warning', fill: colors.warningFill, ink: '#fff' },
   };
   if (can.canApprove) {
     return {
@@ -293,7 +319,8 @@ export function swipeActionsFor(task) {
     };
   }
   const canComplete = (can.transitions || []).some((t) => t.to === STATUS.COMPLETED);
-  if (status === STATUS.IN_PROGRESS && (can.canSubmit || canComplete) && (can.myAcceptance || can.canSubmit)) {
+  // Only someone on it (`myAcceptance` is theirs), as the HRMS app has it.
+  if (status === STATUS.IN_PROGRESS && (can.canSubmit || canComplete) && can.myAcceptance) {
     return {
       right: can.canSubmit
         ? { key: 'submit', label: tr('Complete'), icon: 'complete', ...tone.success }
@@ -494,16 +521,22 @@ export function rangeLabel(key) {
   );
 }
 
-/** The figure tiles on the Tasks screen, in order. */
+/**
+ * The figure tiles on the Tasks screen, in order. `tint` is for the light
+ * theme, `tintDark` for the dark one, where the same reds and greens read too
+ * dark against the card (the HRMS app's pairs); tileTint() picks.
+ */
 export const GRID_TILES = [
-  { key: 'total', icon: 'layers', tint: '#2a78d6' },
-  { key: 'pending', icon: 'hourglass', tint: '#DC6803' },
-  { key: 'overdue', icon: 'alert', tint: '#D92D20' },
-  { key: 'inProgress', icon: 'play', tint: '#0086C9' },
-  { key: 'inReview', icon: 'eye', tint: '#7C3AED' },
-  { key: 'moreTime', icon: 'clock', tint: '#B54708' },
+  // Total wears the PinTask accent (no tint: tileTint falls back to the primary), as on the web.
+  { key: 'total', icon: 'layers' },
+  { key: 'pending', icon: 'hourglass', tint: '#DC6803', tintDark: '#FDB022' },
+  { key: 'overdue', icon: 'alert', tint: '#D92D20', tintDark: '#F97066' },
+  { key: 'inProgress', icon: 'play', tint: '#0086C9', tintDark: '#36BFFA' },
+  { key: 'inReview', icon: 'eye', tint: '#7C3AED', tintDark: '#A78BFA' },
+  { key: 'moreTime', icon: 'clock', tint: '#B54708', tintDark: '#FDB022' },
 ];
 export const COMPLETED_TINT = '#079455';
+export const tileTint = (tile) => (theme.dark && tile?.tintDark) || tile?.tint || colors.primary;
 
 export function tileLabel(key) {
   return (
@@ -539,41 +572,85 @@ export function statValue(counters = {}, key) {
   return Number(counters[key]) || 0;
 }
 
+/**
+ * FILTER → COMPLETED TASKS (the HRMS app's, 2026-10-02; it replaced the
+ * Completed button beside Filter): '' hides them (Total is the open work),
+ * 'with' shows them in Total too, 'only' shows them alone. Closed = finished
+ * or called off.
+ */
+export const CLOSED_KEYS = ['', 'with', 'only'];
+export function closedLabel(key) {
+  if (key === 'with') return tr('Show in Total');
+  if (key === 'only') return tr('Only completed');
+  return tr('Hide');
+}
+const OPEN_STATES = [STATUS.PENDING, STATUS.IN_PROGRESS, STATUS.SUBMITTED];
+const CLOSED_STATES = [STATUS.COMPLETED, STATUS.CANCELLED];
+
+/** The rows "Total" stands for, by the Completed tasks choice. */
+export function totalQuery(closed) {
+  if (closed === 'with') return { status: [...OPEN_STATES, ...CLOSED_STATES].join(',') };
+  if (closed === 'only') return { status: CLOSED_STATES.join(',') };
+  return TILE_QUERY.total;
+}
+
+/** …and the figure on the Total tile, from the same counters. */
+export function totalValue(counters = {}, closed) {
+  const n = (k) => Number(counters[k]) || 0;
+  if (closed === 'with') return n('total');
+  if (closed === 'only') return n('completed') + n('cancelled');
+  return statValue(counters, 'total');
+}
+
+/**
+ * Where the latest ask for more time stands, for the chip on a card. `icon`
+ * is 'clock' while it waits, 'check' once approved, 'x' once declined.
+ */
 export function extensionLook(status) {
-  if (status === 'PENDING') return { label: tr('More time: Pending'), tone: 'warning' };
-  if (status === 'APPROVED') return { label: tr('More time: Approved'), tone: 'success' };
-  if (status === 'DECLINED') return { label: tr('More time: Declined'), tone: 'danger' };
+  if (status === 'PENDING') return { label: tr('More time: Pending'), tone: 'warning', icon: 'clock' };
+  if (status === 'APPROVED') return { label: tr('More time: Approved'), tone: 'success', icon: 'check' };
+  if (status === 'DECLINED') return { label: tr('More time: Declined'), tone: 'danger', icon: 'x' };
   return null;
 }
 
 /**
  * THE STATUS BUTTON ON EVERY CARD: what this person may do to this task, read
  * from the server's `can` only, in a fixed order.
+ *
+ * In the HRMS app's words (2026-10-08): Approve · Reject · Delegate ·
+ * Transfer · In Review · Completed. Approve and Reject mean accept / turn down
+ * to the person doing it, and approve / send back to the person who set it;
+ * `key` says which. 'extension' stays on the list for whoever reads it here;
+ * the status sheet draws it as its own row after the others.
  */
 export function statusActions(task) {
   const can = task?.can || {};
   const out = [];
   if (can.canClaim) out.push({ key: 'claim', label: tr('Pick it up'), hint: tr('Nobody is on this piece yet — make it yours'), tone: 'info', icon: 'claim' });
   if (can.canApprove) out.push({ key: 'approve', label: tr('Approve'), hint: tr('Sign off the work — it is completed'), tone: 'success', icon: 'approve' });
-  else if (can.canAccept) out.push({ key: 'accept', label: tr('Accept'), hint: tr('Accept it and start working on it'), tone: 'success', icon: 'accept' });
-  if (can.canReject) out.push({ key: 'sendBack', label: tr('Send back'), hint: tr('Send it back with what still needs doing'), tone: 'danger', icon: 'sendBack' });
-  else if (can.canDecline) out.push({ key: 'decline', label: tr('Decline'), hint: tr('Turn it down — say why'), tone: 'danger', icon: 'decline' });
+  else if (can.canAccept) out.push({ key: 'accept', label: tr('Approve'), hint: tr('Accept it and start working on it'), tone: 'success', icon: 'accept' });
+  if (can.canReject) out.push({ key: 'sendBack', label: tr('Reject'), hint: tr('Send it back with what still needs doing'), tone: 'danger', icon: 'sendBack' });
+  else if (can.canDecline) out.push({ key: 'decline', label: tr('Reject'), hint: tr('Turn it down — say why'), tone: 'danger', icon: 'decline' });
   if (can.canDelegate || can.canSplit) out.push({ key: 'delegate', label: tr('Delegate'), hint: tr('Hand it to someone — you review their work'), tone: 'primary', icon: 'delegate' });
   if (can.canTransfer) out.push({ key: 'transfer', label: tr('Transfer'), hint: tr('It went to the wrong person — move it fully'), tone: 'neutral', icon: 'transfer' });
-  if (can.canSubmit) out.push({ key: 'submit', label: tr('Send for review'), hint: tr('Hand it in for the assigner to check'), tone: 'review', icon: 'submit' });
-  if (can.canDone) out.push({ key: 'done', label: tr('Mark done'), hint: tr('Today’s routine is finished'), tone: 'success', icon: 'approve' });
+  if (can.canSubmit) out.push({ key: 'submit', label: tr('In Review'), hint: tr('Hand it in for the assigner to check'), tone: 'review', icon: 'submit' });
+  if (can.canDone) out.push({ key: 'done', label: tr('Mark done'), hint: tr('Today’s routine is finished'), tone: 'success', icon: 'done' });
   if (can.canRequestExtension) out.push({ key: 'extension', label: tr('Ask for more time'), hint: tr('Ask for a later deadline'), tone: 'warning', icon: 'extension' });
   const canComplete = (can.transitions || []).some((t) => t.to === STATUS.COMPLETED);
-  if (canComplete && !can.canApprove && !can.canDone) out.push({ key: 'complete', label: tr('Mark completed'), hint: tr('Mark it done'), tone: 'success', icon: 'complete' });
+  if (canComplete && !can.canApprove && !can.canDone) out.push({ key: 'complete', label: tr('Completed'), hint: tr('Mark it done'), tone: 'success', icon: 'complete' });
   return out;
 }
 
-/** What the status button itself says, from this reader's side. */
+/**
+ * What the status button itself says, from this reader's side, in the HRMS
+ * app's words: "Rejected" (everybody on it turned it down, the same word as
+ * the doer's button), "Needs your review", "Not accepted", "To do".
+ */
 export function statusBadge(task) {
   if (!task) return { label: '', status: STATUS.PENDING };
-  if (task.declined) return { label: tr('Declined'), status: 'DECLINED' };
+  if (task.declined || task.rejectionKept) return { label: tr('Rejected'), status: 'DECLINED' };
   if (task.status === STATUS.SUBMITTED && task.can?.canApprove) return { label: tr('Needs your review'), status: STATUS.SUBMITTED };
-  if (task.status === STATUS.PENDING && task.awaitingAcceptance) return { label: tr('Awaiting acceptance'), status: STATUS.PENDING };
+  if (task.status === STATUS.PENDING && task.awaitingAcceptance) return { label: tr('Not accepted'), status: STATUS.PENDING };
   if (task.routine && task.status === STATUS.IN_PROGRESS) return { label: tr('To do'), status: STATUS.PENDING };
   return { label: statusLabel(task.status), status: task.status };
 }

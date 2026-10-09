@@ -3,7 +3,7 @@
  * phone; `Drawer` slides in from the right (details panels). Both close on
  * Escape and on a click outside, and keep focus inside while open.
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import { X } from 'lucide-react';
@@ -64,50 +64,60 @@ function useDialogBehaviour(open, onClose, panelRef, focusFirst = true) {
   }, [open]);
 }
 
-function Header({ title, subtitle, onClose }) {
+/**
+ * The header bar, as the HRMS's dialogs draw it: a hairline under it, a 16px
+ * title, a 32px close. `actions` sit just left of the close; `compact` is the
+ * slim 52px bar of a window that is mostly content (a task opened over a list).
+ */
+function Header({ id, title, subtitle, onClose, actions, compact = false }) {
   return (
-    <div className="flex items-start justify-between gap-4 px-5 pb-2 pt-5">
+    <div className={clsx('flex justify-between gap-4 border-b border-line', compact ? 'items-center px-4 py-2.5 sm:px-5' : 'items-start px-5 py-3.5')}>
       <div className="min-w-0">
-        <h2 className="text-lg font-semibold text-ink">{title}</h2>
-        {subtitle && <p className="mt-0.5 text-sm text-ink-soft">{subtitle}</p>}
+        <h2 id={id} className="text-base font-semibold text-ink">
+          {title}
+        </h2>
+        {subtitle && <p className="mt-0.5 text-xs text-ink-soft">{subtitle}</p>}
       </div>
-      {onClose && (
-        <button
-          type="button"
-          onClick={onClose}
-          className="-mr-2 -mt-1 rounded-lg p-2 text-ink-faint hover:bg-slate-100 hover:text-ink"
-          aria-label="Close"
-        >
-          <X className="h-5 w-5" />
-        </button>
+      {(actions || onClose) && (
+        <div className="-mr-1.5 flex shrink-0 items-center gap-1">
+          {actions}
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-faint hover:bg-slate-100 hover:text-ink"
+              aria-label="Close"
+            >
+              <X className="h-[18px] w-[18px]" />
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
 }
 
-export function Modal({ open, onClose, title, subtitle, children, footer, size = 'md', tone, focusFirst = true, bodyClassName }) {
+export function Modal({ open, onClose, title, subtitle, actions, compact = false, children, footer, size = 'md', tone, focusFirst = true, bodyClassName }) {
   const panelRef = useRef(null);
+  const titleId = useId();
   useDialogBehaviour(open, onClose, panelRef, focusFirst);
   if (!open) return null;
   const width = { sm: 'sm:max-w-sm', md: 'sm:max-w-lg', lg: 'sm:max-w-2xl', xl: 'sm:max-w-5xl' }[size];
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="presentation">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" onClick={onClose} aria-hidden />
+      <div className="modal-backdrop absolute inset-0 bg-black/40" onClick={onClose} aria-hidden />
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label={typeof title === 'string' ? title : undefined}
+        aria-labelledby={title ? titleId : undefined}
         tabIndex={-1}
-        className={clsx(
-          'relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl bg-card shadow-pop outline-none sm:rounded-2xl',
-          width
-        )}
+        className={clsx('modal-panel relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl bg-card outline-none sm:rounded-[1.1rem]', width)}
       >
         {tone && <div className={clsx('h-1.5 w-full', tone)} />}
-        <Header title={title} subtitle={subtitle} onClose={onClose} />
-        <div className={clsx('flex-1 overflow-y-auto', bodyClassName ?? 'px-5 pb-5 pt-2')}>{children}</div>
-        {footer && <div className="safe-bottom flex flex-wrap items-center justify-end gap-2 border-t border-line bg-slate-50/60 px-5 py-3">{footer}</div>}
+        <Header id={titleId} title={title} subtitle={subtitle} onClose={onClose} actions={actions} compact={compact} />
+        <div className={clsx('flex-1 overflow-y-auto', bodyClassName ?? 'px-5 py-4')}>{children}</div>
+        {footer && <div className="safe-bottom flex flex-wrap items-center justify-end gap-2 border-t border-line px-5 py-3">{footer}</div>}
       </div>
     </div>,
     document.body
@@ -116,20 +126,21 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
 
 export function Drawer({ open, onClose, title, subtitle, children, footer, wide = false }) {
   const panelRef = useRef(null);
+  const titleId = useId();
   useDialogBehaviour(open, onClose, panelRef);
   if (!open) return null;
   return createPortal(
     <div className="fixed inset-0 z-50 flex justify-end" role="presentation">
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} aria-hidden />
+      <div className="modal-backdrop absolute inset-0 bg-black/30" onClick={onClose} aria-hidden />
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label={typeof title === 'string' ? title : undefined}
+        aria-labelledby={title ? titleId : undefined}
         tabIndex={-1}
         className={clsx('relative flex h-full w-full flex-col bg-card shadow-pop outline-none', wide ? 'max-w-2xl' : 'max-w-md')}
       >
-        <Header title={title} subtitle={subtitle} onClose={onClose} />
+        <Header id={titleId} title={title} subtitle={subtitle} onClose={onClose} />
         <div className="flex-1 overflow-y-auto px-5 pb-6 pt-2">{children}</div>
         {footer && <div className="safe-bottom flex flex-wrap justify-end gap-2 border-t border-line px-5 py-3">{footer}</div>}
       </div>

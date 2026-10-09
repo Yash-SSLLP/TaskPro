@@ -1,5 +1,5 @@
 /**
- * Task Pro, as the platform sees it: its name, settings, file rules, routes,
+ * PinTask, as the platform sees it: its name, settings, file rules, routes,
  * and the hooks the platform calls (sign-up, file access, team deletion, the
  * Super Admin console's numbers, background jobs).
  *
@@ -14,13 +14,14 @@ const RecurringTask = require('./models/RecurringTask');
 const TaskTemplate = require('./models/TaskTemplate');
 const TaskCategory = require('./models/TaskCategory');
 require('./models/TaskDigest');
+require('./models/Reminder');
 const { STATUS, OPEN_STATUS, DOING_STATUS, ACCEPTANCE } = require('./config');
 
 const oid = (id) => new mongoose.Types.ObjectId(String(id));
 
 module.exports = {
   key: 'taskpro',
-  name: 'Task Pro',
+  name: 'PinTask',
 
   settings,
 
@@ -40,13 +41,15 @@ module.exports = {
 
   mountRoutes(app) {
     app.use('/api/tasks', require('./routes'));
+    app.use('/api/reminders', require('./routes/reminders'));
+    app.use('/api/calendar', require('./routes/calendar'));
   },
 
   /** A new person starts with one task that shows them how it works. */
   async onUserCreated({ user }) {
     if (!user || user.role === 'superadmin') return;
     const task = await Task.create({
-      title: 'Welcome to Task Pro: share your Task Pin',
+      title: 'Welcome to PinTask: share your Task Pin',
       description:
         'Share your Task Pin with the people you work with and add theirs from Contacts. ' +
         'Create a team to give tasks to everyone in it. Mark this done when you have added your first contact.',
@@ -56,11 +59,13 @@ module.exports = {
       requiresApproval: false,
       reminders: [],
     });
-    await TaskUpdate.create({ task: task._id, kind: 'CREATED', byName: 'Task Pro', to: task.status, note: 'Welcome aboard.', system: true });
+    await TaskUpdate.create({ task: task._id, kind: 'CREATED', byName: 'PinTask', to: task.status, note: 'Welcome aboard.', system: true });
   },
 
   /** May this person open a file attached to `ref`? (Uploader and Super Admin are let in by the platform.) */
   async canAccessFile({ user, ref }) {
+    // Profile photos are seen wherever people are listed: anyone signed in.
+    if (ref?.kind === 'avatar') return true;
     const access = require('./services/access');
     const who = await access.actorFor(user);
     const sees = async (task) => !!task && !task.archived && (access.canSee(who, task) || (await access.canSeeThroughParent(who, task)));
@@ -127,7 +132,7 @@ module.exports = {
     return map;
   },
 
-  /** A team was deleted: its tasks, schedules and templates are no longer filed under it. */
+  /** A team was deleted: its tasks, schedules, templates and reminders are no longer filed under it. */
   async onTeamDeleted(teamId) {
     const team = oid(teamId);
     await Promise.all([
@@ -135,6 +140,7 @@ module.exports = {
       RecurringTask.updateMany({ team }, { $set: { team: null } }),
       // A shared template goes back to whoever made it.
       TaskTemplate.updateMany({ team }, { $set: { team: null } }),
+      require('./services/calendar').onTeamDeleted(team),
     ]);
     // Team categories become their creator's own (or go, if they already have one by that name).
     const cats = await TaskCategory.find({ team });
@@ -206,6 +212,9 @@ module.exports = {
       for (const p of parents) await engine.recomputeParent(p).catch(() => {});
     }
 
+    // Their reminders go, and they leave everyone else's.
+    await require('./services/calendar').onUserDeleted(me);
+
     // What stays reads "Deleted user".
     await Promise.all([
       Task.updateMany({ createdBy: me }, { $set: { createdByName: deletedName } }),
@@ -223,6 +232,13 @@ module.exports = {
     require('./jobs').startJobs();
   },
 
+  /**
+   * A cheap catch-up the platform runs while people use the app (the unread
+   * count both apps poll). On a host that never runs startJobs (Vercel calls
+   * the app per request), this is what makes calendar reminders ring on time.
+   */
+  catchUp: (now) => require('./jobs').catchUp(now),
+
   /** The job ticks, for tests and one-off runs (each takes an optional `now`). */
   get jobs() {
     return require('./jobs');
@@ -232,4 +248,5 @@ module.exports = {
   reminderTick: (now) => require('./jobs').reminderTick(now),
   overdueTick: (now) => require('./jobs').overdueTick(now),
   digestTick: (now) => require('./jobs').digestTick(now),
+  calendarTick: (now) => require('./jobs').calendarTick(now),
 };

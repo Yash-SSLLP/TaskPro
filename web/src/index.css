@@ -2,37 +2,94 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Colours as "r g b" so Tailwind can add opacity. Task Pro is indigo (Seq Book: emerald).
-   html.dark (set by src/platform/theme.js) swaps them; the slate and hue scales
-   are swapped by the plugin in tailwind.config.js. */
+/* Colours as "r g b" so Tailwind can add opacity. PinTask's palette: Bone and
+   Ink with one red accent (Seq Book: emerald). html.dark (set by
+   src/platform/theme.js) swaps them; the slate and hue scales are swapped by
+   the plugin in tailwind.config.js, and slate is warmed to match. */
 :root {
-  --brand: 79 70 229; /* #4f46e5 */
-  --brand-dark: 67 56 202; /* #4338ca */
-  --brand-soft: 238 242 255; /* #eef2ff */
-  --brand-accent: 99 102 241; /* #6366f1 */
-  --ink: 15 23 42; /* #0f172a */
-  --ink-soft: 100 116 139; /* #64748b */
-  --ink-faint: 148 163 184; /* #94a3b8 */
-  --line: 226 232 240; /* #e2e8f0 */
-  --page: 248 250 252; /* #f8fafc */
-  --card: 255 255 255;
+  --brand: 217 56 30; /* #d9381e: buttons, links, done checks */
+  --brand-dark: 182 47 25; /* #b62f19: the accent's hover */
+  --brand-soft: 247 228 220; /* #f7e4dc: the accent as a wash on the surface */
+  --brand-accent: 232 71 43; /* #e8472b: the logo's check, large graphics only */
+  --on-brand: 255 255 255; /* text and icons on the accent */
+  --ink: 21 19 15; /* #15130f: Ink */
+  --ink-soft: 107 102 91; /* #6b665b */
+  --ink-faint: 138 133 122; /* #8a857a: Stone */
+  --line: 217 210 195; /* #d9d2c3: Sand */
+  --page: 241 236 226; /* #f1ece2: Bone */
+  --card: 250 247 241; /* #faf7f1: cards, inputs, sheets */
+  --well: 246 242 234; /* #f6f2ea: a step between the card and the page */
   /* How much of a colour tints a selected tile. */
   --tint: 7%;
+  --shadow-card: 0 1px 2px rgb(21 19 15 / 0.05), 0 2px 8px rgb(21 19 15 / 0.05);
+  --shadow-pop: 0 10px 30px -10px rgb(21 19 15 / 0.25), 0 4px 10px -4px rgb(21 19 15 / 0.1);
+
+  /* A task's wash, by priority (and green once done, grey once cancelled):
+     background, its edge, the ink on it, and the solid rail / dot. The server
+     may send its own light palette, which lifecycle.js writes over these. */
+  --tp-urgent-ink: #b42318;
+  --tp-urgent-bg: #f8e8e1;
+  --tp-urgent-border: #eca299;
+  --tp-urgent-solid: #d92d20;
+  --tp-medium-ink: #b54708;
+  --tp-medium-bg: #faefe0;
+  --tp-medium-border: #f9cc90;
+  --tp-medium-solid: #f79009;
+  --tp-low-ink: #57524a;
+  --tp-low-bg: #f1eee7;
+  --tp-low-border: #d9d5cc;
+  --tp-low-solid: #a39d8f;
+  --tp-done-ink: #027a48;
+  --tp-done-bg: #e9f2e7;
+  --tp-done-border: #99dcb8;
+  --tp-done-solid: #12b76a;
+  --tp-cancelled-ink: #6b665b;
+  --tp-cancelled-bg: #f2efe8;
+  --tp-cancelled-border: #dbd7ce;
+  --tp-cancelled-solid: #a8a294;
   color-scheme: light;
 }
 
 html.dark {
-  --brand: 99 102 241; /* #6366f1: a step lighter, to read on the dark surface */
-  --brand-dark: 79 70 229;
-  --brand-soft: 30 27 75; /* #1e1b4b */
-  --brand-accent: 129 140 248;
-  --ink: 226 232 240; /* #e2e8f0 */
-  --ink-soft: 148 163 184; /* #94a3b8 */
-  --ink-faint: 100 116 139; /* #64748b */
-  --line: 38 50 72; /* #263248 */
-  --page: 11 17 32; /* #0b1120 */
-  --card: 20 28 47; /* #141c2f */
-  --tint: 16%;
+  --brand: 255 90 60; /* #ff5a3c: brighter, so it glows on the dark */
+  --brand-dark: 255 110 83; /* #ff6e53: the hover lifts on the dark */
+  --brand-soft: 62 37 28; /* #3e251c */
+  --brand-accent: 255 90 60;
+  --on-brand: 21 19 15; /* Ink on the bright accent */
+  --ink: 241 236 226; /* #f1ece2: Bone */
+  --ink-soft: 163 157 143; /* #a39d8f */
+  --ink-faint: 111 106 94; /* #6f6a5e */
+  --line: 54 50 42; /* #36322a */
+  --page: 21 19 15; /* #15130f: Ink */
+  --card: 31 28 23; /* #1f1c17 */
+  --well: 39 36 31; /* #27241f */
+  --tint: 10%;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.02);
+  --shadow-pop: 0 16px 40px -12px rgb(0 0 0 / 0.75), 0 4px 12px -4px rgb(0 0 0 / 0.5);
+
+  /* Soft washes of the same hues over the dark card (mixed at ~11%, edges at
+     ~36%), so a row reads as amber or red without turning into a brown or
+     maroon block; the ink is the hue's light end. */
+  --tp-urgent-ink: #fda29b;
+  --tp-urgent-bg: #36201b;
+  --tp-urgent-border: #6a2a23;
+  --tp-urgent-solid: #f04438;
+  --tp-medium-ink: #fec84b;
+  --tp-medium-bg: #372915;
+  --tp-medium-border: #6d4612;
+  --tp-medium-solid: #f79009;
+  --tp-low-ink: #d9d2c3;
+  --tp-low-bg: #2a2621;
+  --tp-low-border: #4f4a42;
+  --tp-low-solid: #a39d8f;
+  --tp-done-ink: #6ce9a6;
+  --tp-done-bg: #1e2d20;
+  --tp-done-border: #1a5435;
+  --tp-done-solid: #12b76a;
+  --tp-cancelled-ink: #a39d8f;
+  --tp-cancelled-bg: #25221d;
+  --tp-cancelled-border: #3c3831;
+  --tp-cancelled-solid: #6f6a5e;
   color-scheme: dark;
 }
 
@@ -45,7 +102,15 @@ html.dark {
     font-feature-settings: 'cv11', 'ss01';
   }
   :focus-visible {
-    @apply outline-none ring-2 ring-brand/40 ring-offset-1;
+    @apply outline-none ring-2 ring-brand/40 ring-offset-1 ring-offset-card;
+  }
+  ::selection {
+    background-color: rgb(var(--brand) / 0.22);
+  }
+  /* Thin scrollbars that sit on either theme. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--slate-300)) transparent;
   }
 }
 
@@ -62,4 +127,921 @@ html.dark {
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Light / dark switch (platform/ThemeToggle.jsx), as in the HRMS: the new look
+   wipes in as a circle from the switch (View Transitions where the browser
+   has them). The default cross-fade is off; the script animates the circle.
+--------------------------------------------------------------------------- */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+/* ---------------------------------------------------------------------------
+   Dialogs (platform/ui Modal / Drawer), as the HRMS's: the backdrop fades in
+   with a light blur, the panel rises and settles; a hairline edge and a deep
+   soft shadow, with a lit top edge in dark.
+--------------------------------------------------------------------------- */
+@keyframes tp-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes tp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+}
+.modal-backdrop {
+  backdrop-filter: blur(3px);
+  animation: tp-fade 0.16s ease-out;
+}
+.modal-panel {
+  border: 1px solid rgb(var(--line));
+  box-shadow: 0 30px 70px -30px rgb(21 19 15 / 0.5), 0 10px 24px -16px rgb(21 19 15 / 0.28);
+  animation: tp-rise 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+html.dark .modal-panel {
+  box-shadow: 0 30px 70px -24px rgb(0 0 0 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.05);
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop,
+  .modal-panel {
+    animation: none;
+  }
+}
+
+/* A segmented switch: the lit option is a raised pill on a sunken track. In
+   dark the track is the page and the pill a step lighter than the card (the
+   other way round, it read as a hole). */
+.seg-track {
+  background-color: rgb(var(--slate-100));
+}
+.seg-on {
+  background-color: rgb(var(--card));
+}
+html.dark .seg-track {
+  background-color: rgb(var(--page));
+  box-shadow: inset 0 0 0 1px rgb(var(--line));
+}
+html.dark .seg-on {
+  background-color: rgb(var(--slate-200));
+}
+
+/* A see-through veil for a chip or link sitting on a tinted row or header:
+   the card colour over the light tints, a faint white lift over the dark ones
+   (a translucent dark card would paint a muddy patch on a warm wash). */
+.veil {
+  background-color: rgb(var(--card) / 0.72);
+}
+html.dark .veil {
+  background-color: rgb(255 255 255 / 0.07);
+}
+.hover-veil:hover {
+  background-color: rgb(var(--card) / 0.6);
+}
+html.dark .hover-veil:hover {
+  background-color: rgb(255 255 255 / 0.06);
+}
+
+/* ---------------------------------------------------------------------------
+   Page header (platform/ui PageHeader), as the HRMS draws it: an icon tile in
+   a brand gradient with a soft glow, a small tracked eyebrow, then the title.
+--------------------------------------------------------------------------- */
+.page-head-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  border-radius: 0.85rem;
+  color: rgb(var(--brand));
+  background-image: linear-gradient(135deg, rgb(var(--brand) / 0.17), rgb(var(--brand) / 0.06));
+  box-shadow:
+    inset 0 0 0 1px rgb(var(--brand) / 0.22),
+    0 6px 16px -8px rgb(var(--brand) / 0.55);
+}
+@media (max-width: 639px) {
+  .page-head-icon {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+}
+.page-eyebrow {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(var(--brand));
+  line-height: 1.2;
+  margin-bottom: 0.1rem;
+}
+
+/* The pile you are on: a soft brand wash and a glow. Paint only — the card
+   keeps its 1px border in both states, so choosing a pile moves nothing. */
+.task-pile.is-active {
+  background-image: linear-gradient(135deg, rgb(var(--brand) / 0.1) 0%, transparent 65%);
+  box-shadow:
+    0 0 0 3px rgb(var(--brand) / 0.16),
+    0 12px 28px -16px rgb(var(--brand) / 0.7);
+}
+@media (prefers-reduced-motion: reduce) {
+  .task-pile,
+  .task-row {
+    transition: none;
+  }
+  .task-pile:hover,
+  .task-row:hover {
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Calendar board (product/pages/CalendarPage.jsx), after the HRMS's
+   (pages/Calendar.jsx there): the month set large, a pill weekday bar, and
+   day cells where a lone entry fills the cell as a solid tile. Theme-aware.
+--------------------------------------------------------------------------- */
+:root {
+  --cal-panel: rgb(var(--card));
+  --cal-cell: #f2eee6;
+  --cal-cell-out: #f7f4ee;
+  --cal-ink: #15130f;
+  --cal-ink-dim: #8a857a;
+}
+html.dark {
+  --cal-panel: #1a1814;
+  --cal-cell: #27231d;
+  --cal-cell-out: #201d18;
+  --cal-ink: #f1ece2;
+  --cal-ink-dim: #8f897c;
+}
+
+.cal-shell {
+  padding: 1.1rem;
+  border-radius: 1.25rem;
+  background-color: var(--cal-panel);
+  border: 1px solid rgb(var(--line));
+  box-shadow: var(--shadow-card);
+}
+.cal-topline {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+.cal-month {
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--cal-ink);
+}
+.cal-year {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--cal-ink-dim);
+}
+.cal-weekbar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  background-color: var(--cal-cell);
+  border-radius: 9999px;
+  padding: 0.38rem 0;
+  margin-bottom: 0.5rem;
+}
+.cal-weekbar span {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--cal-ink);
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+.cal-cell {
+  position: relative;
+  min-height: 5.6rem;
+  border-radius: 0.6rem;
+  background-color: var(--cal-cell);
+  padding: 0.3rem 0.35rem;
+  overflow: hidden;
+  text-align: left;
+  transition: box-shadow 0.15s ease;
+}
+.cal-cell.is-out {
+  background-color: var(--cal-cell-out);
+}
+.cal-cell.is-out .cal-daynum {
+  opacity: 0.4;
+}
+.cal-cell:hover,
+.cal-cell.is-picked {
+  box-shadow: inset 0 0 0 1.5px rgb(var(--brand) / 0.55);
+}
+.cal-daynum {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--cal-ink-dim);
+  line-height: 1.4;
+}
+.cal-daynum.on-fill {
+  color: inherit;
+  opacity: 0.8;
+}
+.cal-cell.is-today .cal-daynum {
+  min-width: 1.35rem;
+  text-align: center;
+  border-radius: 9999px;
+  color: rgb(var(--on-brand));
+  opacity: 1;
+  background-color: rgb(var(--brand));
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+}
+.cal-tile {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border-radius: 0.4rem;
+  padding: 0.16rem 0.35rem;
+  margin-top: 0.2rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: filter 0.15s ease;
+}
+.cal-tile:hover {
+  filter: brightness(1.08);
+}
+.cal-tile-solo {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  border-radius: 0.6rem;
+  padding: 0.3rem 0.4rem;
+  white-space: normal;
+}
+.cal-tile-solo .cal-tile-label {
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cal-tile-done {
+  text-decoration: line-through;
+  opacity: 0.75;
+}
+.cal-more {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--cal-ink-dim);
+  padding: 0.1rem 0.35rem;
+}
+.cal-more:hover {
+  color: rgb(var(--brand));
+}
+.cal-cell-tap {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.cal-add {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.2rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: rgb(var(--brand) / 0.9);
+  color: rgb(var(--on-brand));
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.12s ease;
+  z-index: 2;
+}
+.cal-cell:hover .cal-add,
+.cal-cell:focus-within .cal-add {
+  opacity: 1;
+}
+.cal-add:hover {
+  transform: scale(1.12);
+}
+.cal-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.9fr);
+  gap: 0.85rem;
+  margin-top: 0.85rem;
+}
+.cal-panelbox {
+  background-color: var(--cal-cell);
+  border-radius: 1rem;
+  padding: 0.85rem 1rem;
+}
+.cal-panelbox h3 {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--cal-ink);
+  margin-bottom: 0.55rem;
+}
+.cal-legend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.35rem 0.9rem;
+}
+.cal-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  font-size: 0.75rem;
+  color: var(--cal-ink);
+}
+.cal-swatch {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 0.22rem;
+  flex-shrink: 0;
+}
+.cal-count {
+  margin-left: auto;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--cal-ink-dim);
+}
+@media (max-width: 900px) {
+  .cal-shell {
+    padding: 0.8rem;
+  }
+  .cal-cell {
+    min-height: 4.5rem;
+  }
+  .cal-footer {
+    grid-template-columns: 1fr;
+  }
+}
+/* A phone: the tiles become dots (the colour still says what kind of day it
+   is, the count how much is on) and the whole cell opens the day. */
+@media (max-width: 560px) {
+  .cal-cell {
+    min-height: 3.6rem;
+    padding: 0.2rem 0.22rem;
+  }
+  .cal-month {
+    font-size: 1.25rem;
+  }
+  /* A small dot drawn inside a bigger target (transparent border +
+     content-box background): the thing you tap is twice the thing you see. */
+  .cal-tile:not(.cal-tile-solo) {
+    display: inline-block;
+    width: 0.85rem;
+    height: 0.85rem;
+    padding: 0;
+    margin: 0.1rem 0 0 0;
+    border: 0.22rem solid transparent;
+    background-clip: content-box;
+    border-radius: 9999px;
+    font-size: 0;
+    line-height: 0;
+    vertical-align: middle;
+  }
+  .cal-cell.is-today .cal-daynum {
+    min-width: 1.1rem;
+  }
+  .cal-tile-solo .cal-tile-label {
+    display: none;
+  }
+  .cal-more {
+    font-size: 0.56rem;
+    padding: 0;
+  }
+  .cal-add {
+    display: none;
+  }
+  .cal-cell-tap {
+    display: block;
+  }
+  .cal-cell > :not(.cal-cell-tap) {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The sign-in pages' brand panel (platform/pages/auth.jsx): Ink in both
+   themes, lit softly from the top like the logo's tile, with a low glow of
+   the accent behind the corner.
+--------------------------------------------------------------------------- */
+.auth-hero {
+  color: #f1ece2;
+  background:
+    radial-gradient(38rem 26rem at 105% -10%, rgb(232 71 43 / 0.22), transparent 60%),
+    radial-gradient(30rem 22rem at 10% 0%, rgb(255 255 255 / 0.07), transparent 65%),
+    linear-gradient(170deg, #2b2721 0%, #1a1814 48%, #100e0b 100%);
+  box-shadow: inset -1px 0 0 rgb(255 255 255 / 0.05);
+}
+
+/* ---------------------------------------------------------------------------
+   The desktop sidebar (platform/Sidebar.jsx): a floating panel that folds into
+   a rail. Every icon sits 34px from the panel's left edge in both forms (the
+   rail's middle), so folding only narrows the panel and dissolves the words:
+   nothing slides sideways. The ease is a long, soft settle, not a snap.
+--------------------------------------------------------------------------- */
+:root {
+  --side-w: 248px;
+  --side-rail: 68px;
+  --side-gap: 12px;
+  --side-ease: cubic-bezier(0.32, 0.72, 0, 1);
+}
+@media (min-width: 1024px) {
+  .app-shell {
+    padding-left: calc(var(--side-w) + var(--side-gap) * 2);
+    transition: padding-left 420ms var(--side-ease);
+  }
+  .app-shell.is-rail {
+    padding-left: calc(var(--side-rail) + var(--side-gap) * 2);
+  }
+}
+.side-panel {
+  position: fixed;
+  z-index: 30;
+  top: var(--side-gap);
+  bottom: var(--side-gap);
+  left: var(--side-gap);
+  width: var(--side-w);
+  flex-direction: column;
+  border-radius: 22px;
+  background-color: rgb(var(--card));
+  border: 1px solid rgb(var(--line) / 0.85);
+  box-shadow: 0 1px 2px rgb(21 19 15 / 0.04), 0 22px 44px -26px rgb(21 19 15 / 0.4);
+  transition: width 420ms var(--side-ease);
+}
+html.dark .side-panel {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 26px 50px -24px rgb(0 0 0 / 0.85);
+}
+.side-panel.is-rail {
+  width: var(--side-rail);
+}
+
+/* The mark (36px) centred 34px in: 16px + 18px. */
+.side-brand {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+  height: 60px;
+  padding: 0 12px 0 16px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.side-mark {
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+/* In the rail the mark turns into the panel icon under the pointer. */
+.side-mark-open {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid rgb(var(--line));
+  background-color: rgb(var(--card));
+  color: rgb(var(--ink));
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 180ms ease, transform 260ms var(--side-ease);
+}
+.side-mark:hover .side-mark-open,
+.side-mark:focus-visible .side-mark-open {
+  opacity: 1;
+  transform: scale(1);
+}
+.side-fold {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  color: rgb(var(--ink-faint));
+  transition: background-color 150ms ease, color 150ms ease, opacity 240ms ease 130ms, transform 400ms var(--side-ease) 90ms, filter 240ms ease 130ms;
+}
+.side-fold:hover {
+  background-color: rgb(var(--well));
+  color: rgb(var(--ink));
+}
+
+.side-nav {
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 4px 12px 12px;
+  scrollbar-width: none;
+}
+.side-nav::-webkit-scrollbar {
+  display: none;
+}
+.side-section + .side-section {
+  margin-top: 10px;
+}
+.side-heading {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 20px;
+  padding-left: 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgb(var(--ink-faint));
+}
+/* In the rail a section's name becomes a short hairline, centred. */
+.side-rule {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 20px;
+  height: 1px;
+  background-color: rgb(var(--line));
+  opacity: 0;
+  transform: scaleX(0.2);
+  transition: opacity 220ms ease, transform 420ms var(--side-ease);
+}
+.side-panel.is-rail .side-rule {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+/* A row: a 20px icon 12px in (centred 22px into the rail's 44px button). */
+.side-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 40px;
+  margin-top: 2px;
+  padding: 0 12px;
+  border-radius: 14px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(var(--ink-soft));
+  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+.side-item:hover {
+  background-color: rgb(var(--well));
+  color: rgb(var(--ink));
+}
+.side-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+.side-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* The page you are on: Ink words on a faint wash of the accent, the icon in
+   the accent, and a short glowing bar on the edge. */
+.side-item.is-active {
+  font-weight: 600;
+  color: rgb(var(--ink));
+  background-image: linear-gradient(90deg, rgb(var(--brand) / 0.12), rgb(var(--brand) / 0.035));
+  box-shadow: inset 0 0 0 1px rgb(var(--brand) / 0.16);
+}
+html.dark .side-item.is-active {
+  background-image: linear-gradient(90deg, rgb(var(--brand) / 0.17), rgb(var(--brand) / 0.05));
+  box-shadow: inset 0 0 0 1px rgb(var(--brand) / 0.24);
+}
+.side-item.is-active .side-icon {
+  color: rgb(var(--brand));
+}
+.side-bar {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  border-radius: 0 3px 3px 0;
+  background-color: rgb(var(--brand));
+  transform: translateY(-50%);
+  transition: height 300ms var(--side-ease);
+}
+.side-item.is-active .side-bar {
+  height: 20px;
+  box-shadow: 0 0 12px rgb(var(--brand) / 0.6);
+}
+
+/* Words dissolve as the panel folds (fast) and return once it has room (late). */
+.side-fade {
+  transition: opacity 240ms ease 130ms, transform 400ms var(--side-ease) 90ms, filter 240ms ease 130ms;
+}
+.side-panel.is-rail .side-fade {
+  opacity: 0;
+  transform: translateX(-8px);
+  filter: blur(3px);
+  pointer-events: none;
+  transition: opacity 110ms ease, transform 200ms ease, filter 110ms ease;
+}
+
+.side-count {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 9999px;
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 20px;
+  background-color: rgb(var(--brand));
+  color: rgb(var(--on-brand));
+}
+.side-count-dot {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 9999px;
+  text-align: center;
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 16px;
+  background-color: rgb(var(--brand));
+  color: rgb(var(--on-brand));
+  box-shadow: 0 0 0 2px rgb(var(--card));
+  animation: side-pop 300ms var(--side-ease);
+}
+.side-foot {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px 12px;
+  border-top: 1px solid rgb(var(--line) / 0.8);
+  overflow: hidden;
+}
+/* 1px border + 5px padding + a 32px tile = the rail's 44px, tile centred. */
+.side-app {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 5px;
+  border-radius: 14px;
+  border: 1px dashed rgb(var(--line));
+  overflow: hidden;
+  white-space: nowrap;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.side-app:hover {
+  border-color: rgb(var(--brand) / 0.4);
+  background-color: rgb(var(--brand) / 0.06);
+}
+.side-app-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background-color: rgb(var(--well));
+  color: rgb(var(--ink-soft));
+  transition: color 160ms ease, background-color 160ms ease;
+}
+.side-app:hover .side-app-icon {
+  background-color: rgb(var(--card));
+  color: rgb(var(--brand));
+}
+.side-me {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px;
+  border-radius: 16px;
+  border: 1px solid rgb(var(--line));
+  background-color: rgb(var(--well));
+  overflow: hidden;
+  white-space: nowrap;
+}
+.side-me-avatar {
+  flex-shrink: 0;
+  border-radius: 9999px;
+}
+.side-signout {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  color: rgb(var(--ink-faint));
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.side-signout:hover {
+  background-color: rgb(var(--brand) / 0.1);
+  color: rgb(var(--brand));
+}
+
+/* The handle on the panel's edge: a hairline pill that appears on hover and
+   swells into a tab with a chevron under the pointer. */
+.side-handle {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: -7px;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 56px;
+  border-radius: 9999px;
+  border: 1px solid rgb(var(--line));
+  background-color: rgb(var(--card));
+  color: rgb(var(--ink-faint));
+  box-shadow: 0 4px 14px -6px rgb(21 19 15 / 0.35);
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 200ms ease, width 300ms var(--side-ease), right 300ms var(--side-ease), color 150ms ease, box-shadow 200ms ease;
+}
+.side-panel:hover .side-handle,
+.side-handle:focus-visible {
+  opacity: 1;
+}
+.side-handle:hover,
+.side-handle:focus-visible {
+  width: 26px;
+  right: -13px;
+  color: rgb(var(--brand));
+  box-shadow: 0 8px 20px -8px rgb(var(--brand) / 0.6);
+}
+.side-handle-icon {
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+  transition: opacity 150ms ease, transform 420ms var(--side-ease);
+}
+.side-handle:hover .side-handle-icon,
+.side-handle:focus-visible .side-handle-icon {
+  opacity: 1;
+}
+.side-panel.is-rail .side-handle-icon {
+  transform: rotate(180deg);
+}
+
+/* The rail's tooltip: an Ink bubble (Bone in the dark) beside the row. */
+.side-tip {
+  position: fixed;
+  z-index: 70;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+  font-size: 12.5px;
+  font-weight: 600;
+  background-color: #15130f;
+  color: #f1ece2;
+  box-shadow: 0 12px 28px -12px rgb(0 0 0 / 0.6);
+  pointer-events: none;
+  transform: translateY(-50%);
+  animation: side-tip-in 170ms var(--side-ease);
+}
+.side-tip::before {
+  content: '';
+  position: absolute;
+  left: -3px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background-color: inherit;
+  transform: translateY(-50%) rotate(45deg);
+}
+html.dark .side-tip {
+  background-color: #f1ece2;
+  color: #15130f;
+}
+.side-tip-extra {
+  padding: 2px 6px;
+  border-radius: 6px;
+  font: 600 10.5px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background-color: rgb(255 255 255 / 0.12);
+}
+html.dark .side-tip-extra {
+  background-color: rgb(21 19 15 / 0.08);
+}
+@keyframes side-tip-in {
+  from {
+    opacity: 0;
+    transform: translate(-6px, -50%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, -50%) scale(1);
+  }
+}
+@keyframes side-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell,
+  .side-panel,
+  .side-fade,
+  .side-panel.is-rail .side-fade,
+  .side-rule,
+  .side-bar,
+  .side-handle,
+  .side-handle-icon {
+    transition: none;
+  }
+  .side-tip,
+  .side-count-dot {
+    animation: none;
+  }
+}
+
+/* The chosen pile's name on a phone chip: it eases in as the chip widens. */
+.pile-chip-name {
+  animation: pile-name-in 280ms var(--side-ease);
+}
+@keyframes pile-name-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pile-chip-name {
+    animation: none;
+  }
+}
+
+/* Chrome's autofill paints fields light blue: keep them on the card colour. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: rgb(var(--ink));
+  caret-color: rgb(var(--ink));
+  -webkit-box-shadow: 0 0 0 1000px rgb(var(--card)) inset;
+  transition: background-color 600000s 0s;
 }

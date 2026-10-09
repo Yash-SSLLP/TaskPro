@@ -4,6 +4,7 @@
  * Opening works two ways: with a signed link (what API responses hand out,
  * so <img src> works), or with a normal session, in which case the product
  * decides whether this person may see the record the file is attached to.
+ * Profile photos (ref kind 'avatar') are uploaded through /api/me/photo.
  */
 const express = require('express');
 const multer = require('multer');
@@ -60,7 +61,9 @@ router.get('/:id', async (req, res, next) => {
     'Content-Disposition',
     `${inline ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(meta.filename)}`
   );
-  res.setHeader('Cache-Control', 'private, max-age=3600');
+  // A profile photo's link stays the same for a day and its file never changes.
+  const avatar = meta.metadata?.ref?.kind === 'avatar';
+  res.setHeader('Cache-Control', avatar ? `private, max-age=${files.AVATAR_CACHE_SEC}, immutable` : 'private, max-age=3600');
   const stream = files.openStream(meta._id);
   stream.on('error', next);
   stream.pipe(res);

@@ -5,7 +5,7 @@
  * page cannot grow different ideas of what "overdue" looks like.
  */
 import clsx from 'clsx';
-import { AlertCircle, Clock, CornerUpRight, Eye, GitBranch, MessageSquare, Mic, Paperclip, Repeat } from 'lucide-react';
+import { AlertCircle, Clock, CornerUpRight, Eye, GitBranch, MessageSquare, Mic, Paperclip, Plus, Repeat } from 'lucide-react';
 import { useTz } from '../../platform/session';
 import { Button } from '../../platform/ui';
 import {
@@ -142,24 +142,27 @@ export function TaskMarks({ task }) {
   );
 }
 
-/** Nothing here — said in a way that suggests what to do next. */
+/**
+ * Nothing here — said briefly, as the HRMS does. Total lists open work only,
+ * so a pile of finished tasks opens empty: say where they went.
+ */
 export function EmptyTasks({ scope, onAssign, filtered = false, completedHint = false }) {
-  const done = completedHint ? ' Finished tasks are under Completed.' : '';
+  const done = completedHint ? 'Finished tasks are under Completed, beside Filter.' : '';
   const lines = {
-    mine: [completedHint ? 'Nothing open on your plate' : 'Nothing assigned to you', `Tasks people give you — and the ones you set yourself — land here.${done}`],
-    delegated: ['Nothing you gave is open', `Give someone a task and it shows up here.${done}`],
-    loop: ['Nothing to follow', `When someone keeps you in the loop on a task, it shows up here.${done}`],
-    team: ['No open team tasks', `Tasks filed under your teams show up here.${done}`],
-    all: ['No open tasks', `Nothing is waiting on anybody.${done}`],
+    mine: [completedHint ? 'Nothing open on your plate' : 'Nothing assigned to you', done],
+    delegated: ['Nothing you assigned is open', done],
+    loop: ['Nothing to follow', done],
+    team: ['No open team tasks', done],
+    all: ['No open tasks', done],
   };
-  const [title, body] = filtered ? ['Nothing matches', 'Try a wider due date, another figure, or clear the filters.'] : lines[scope] || lines.all;
+  const [title, body] = filtered ? ['Nothing matches', 'Try clearing the filters.'] : lines[scope] || lines.all;
   return (
     <div className="rounded-2xl border border-dashed border-line bg-card px-6 py-12 text-center">
-      <p className="text-[15px] font-semibold text-ink">{title}</p>
-      <p className="mx-auto mt-1 max-w-sm text-sm text-ink-soft">{body}</p>
+      <p className="text-sm font-medium text-ink">{title}</p>
+      {body && <p className="mt-1 text-xs text-ink-soft">{body}</p>}
       {onAssign && (
-        <Button className="mt-4" size="sm" onClick={onAssign}>
-          Give a task
+        <Button className="mt-4" icon={Plus} onClick={onAssign}>
+          Assign task
         </Button>
       )}
     </div>

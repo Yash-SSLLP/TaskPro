@@ -79,9 +79,9 @@ export function AndroidAppDetails() {
             <a
               href={downloadUrl}
               download={release.fileName}
-              className="inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-xl bg-brand px-4 text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-brand-dark"
+              className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-xl bg-brand px-3.5 text-sm font-semibold text-on-brand shadow-sm transition-colors hover:bg-brand-dark"
             >
-              <Download className="h-[18px] w-[18px]" aria-hidden />
+              <Download className="h-4 w-4" aria-hidden />
               Download APK
             </a>
             <span className="text-sm text-ink-soft">Android only</span>

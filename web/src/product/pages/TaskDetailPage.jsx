@@ -14,8 +14,8 @@ export function TaskDetailPage() {
   const back = admin ? '/tasks?scope=all' : '/tasks';
   return (
     <div>
-      <Link to={back} className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-ink-soft hover:text-brand">
-        <ArrowLeft className="h-4 w-4" /> Back to tasks
+      <Link to={back} className="mb-3 inline-flex min-h-[32px] items-center gap-1.5 text-sm text-ink-soft transition hover:text-brand">
+        <ArrowLeft className="h-3.5 w-3.5" /> Back to tasks
       </Link>
       <TaskDetailBody key={id} taskId={id} onOpenTask={(childId) => navigate(`/tasks/${childId}`)} onGone={() => navigate(back)} />
     </div>

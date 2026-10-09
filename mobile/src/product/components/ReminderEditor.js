@@ -3,11 +3,16 @@
  * rule, every few hours inside a window until the work is done. Rules of
  * other shapes saved earlier ("1 day before", an email one) are kept as they
  * are, listed as chips to be taken off, never dropped by a save.
+ *
+ * Drawn the HRMS app's way (2026-10-08): the rule in a framed card with a
+ * small bold heading and a trash button, the kept rules as square chips, and
+ * a dashed "Add a reminder" button — 40 tall, like the rest of the smaller
+ * buttons.
  */
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { tr } from '../../i18n';
-import { colors, font, radius, space } from '../../platform/theme';
+import { colors, radius, space } from '../../platform/theme';
 import { Plus, Trash, X } from '../icons';
 import { reminderLabel } from '../taskStatus';
 import ReminderPatternPicker, { repeatingRule } from './ReminderPatternPicker';
@@ -30,12 +35,12 @@ export default function ReminderEditor({ value = [], onChange, hourlyOnly = true
             <Text style={styles.label}>{tr('Every few hours until it is done')}</Text>
             <Pressable
               onPress={() => remove(everyAt)}
-              style={styles.trash}
+              style={({ pressed }) => [styles.trash, pressed && styles.pressed]}
               hitSlop={6}
               accessibilityRole="button"
               accessibilityLabel={tr('Remove this reminder')}
             >
-              <Trash size={17} color={colors.danger} />
+              <Trash size={16} color={colors.danger} />
             </Pressable>
           </View>
           <ReminderPatternPicker value={list[everyAt]} allowOff={false} hourlyOnly={hourlyOnly} onChange={(r) => r && replace(everyAt, r)} />
@@ -75,7 +80,7 @@ export default function ReminderEditor({ value = [], onChange, hourlyOnly = true
 }
 
 const styles = StyleSheet.create({
-  empty: { color: colors.textFaint, fontSize: 13, lineHeight: 18, marginBottom: space(2) },
+  empty: { color: colors.textFaint, fontSize: 12, lineHeight: 17, marginBottom: space(2) },
   card: {
     padding: space(3),
     marginBottom: space(2),
@@ -85,42 +90,42 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: space(2.5) },
-  label: { flex: 1, color: colors.textSecondary, fontSize: 13, fontWeight: font.semibold },
+  label: { flex: 1, color: colors.textSecondary, fontSize: 12, fontWeight: '700' },
   trash: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: radius.input,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: colors.border,
   },
-  otherRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.5), marginBottom: space(2) },
+  otherRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: space(2) },
   otherChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space(1),
-    minHeight: 34,
-    paddingLeft: space(2.5),
+    minHeight: 36,
+    paddingLeft: space(3),
     paddingRight: space(1),
     borderRadius: radius.input,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.card,
+    backgroundColor: colors.muted,
   },
-  otherText: { color: colors.textSecondary, fontSize: 12, fontWeight: font.semibold },
+  otherText: { color: colors.textSecondary, fontSize: 12, fontWeight: '700' },
   otherX: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
   addBtn: {
-    minHeight: 44,
+    minHeight: 40,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: space(1.5),
+    gap: 6,
     borderRadius: radius.input,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: colors.borderStrong,
   },
-  addText: { color: colors.textSecondary, fontSize: 14, fontWeight: font.semibold },
+  addText: { color: colors.textSecondary, fontSize: 13.5, fontWeight: '700' },
   pressed: { opacity: 0.8 },
 });

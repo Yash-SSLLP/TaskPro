@@ -8,11 +8,15 @@
  *   reject    send it back (note required)
  *   status    any other move             POST /tasks/:id/status (needs `to`)
  *   comment   a plain remark             POST /tasks/:id/updates
+ *
+ * Laid out as the HRMS app's sheet (2026-10-08): a quiet prompt, a 15pt note
+ * box, the microphone and the paperclip as small square buttons, and one 46
+ * button in the move's own colour.
  */
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { tr } from '../../i18n';
-import { colors, radius, space, type } from '../../platform/theme';
+import { colors, radius, space } from '../../platform/theme';
 import { BottomSheet, Button, Notice, TextField, toast } from '../../platform/ui';
 import { addUpdate, approveTask, changeStatus, rejectTask, submitTask } from '../api';
 import { CheckCheck, MessageSquare, Paperclip, Send, Undo } from '../icons';
@@ -128,7 +132,7 @@ export default function TaskUpdateSheet({ visible, task, onClose, onDone, action
       visible={visible}
       onClose={onClose}
       title={w.title}
-      footer={<Button title={w.button} icon={w.icon} size="lg" color={w.variant === 'success' ? colors.success : undefined} variant={w.variant === 'danger' ? 'danger' : 'primary'} onPress={submit} />}
+      footer={<Button title={w.button} icon={w.icon} size="lg" color={w.variant === 'success' ? colors.successFill : undefined} variant={w.variant === 'danger' ? 'danger' : 'primary'} onPress={submit} />}
     >
       <Text style={styles.prompt}>{w.prompt}</Text>
       <TextField
@@ -142,6 +146,7 @@ export default function TaskUpdateSheet({ visible, task, onClose, onDone, action
         maxLength={5000}
         autoFocus
         accessibilityLabel={w.title}
+        inputStyle={styles.input}
         style={styles.field}
       />
       <View style={styles.iconRow}>
@@ -154,7 +159,7 @@ export default function TaskUpdateSheet({ visible, task, onClose, onDone, action
           accessibilityLabel={tr('Attach a file')}
           disabled={files.length >= MAX_FILES}
         >
-          <Paperclip size={19} color={colors.textSecondary} />
+          <Paperclip size={18} color={colors.primary} />
         </Pressable>
       </View>
       {voice ? <VoiceRecorder value={voice} onChange={setVoice} /> : null}
@@ -173,18 +178,20 @@ export default function TaskUpdateSheet({ visible, task, onClose, onDone, action
 }
 
 const styles = StyleSheet.create({
-  prompt: { ...type.small, lineHeight: 20, marginBottom: space(3) },
+  prompt: { color: colors.textSecondary, fontSize: 13, lineHeight: 19, marginBottom: space(3) },
   field: { marginBottom: space(2) },
+  input: { fontSize: 15, minHeight: 96 },
   iconRow: { flexDirection: 'row', alignItems: 'center', gap: space(2), marginBottom: space(2) },
+  // The HRMS app's attach button: a small square in the brand tint.
   iconBtn: {
-    minHeight: 44,
-    minWidth: 44,
+    minHeight: 42,
+    minWidth: 42,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.input,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.primaryBorder,
+    backgroundColor: colors.primarySoft,
   },
   files: { marginTop: space(2) },
   error: { marginTop: space(3) },

@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "Task Pro",
+    "name": "PinTask",
     "slug": "taskpro",
     "scheme": "taskpro",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -17,10 +17,12 @@
     },
     "android": {
       "package": "in.salestracker.taskpro",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#4f46e5"
+        "backgroundImage": "./assets/adaptive-icon-bg.png",
+        "monochromeImage": "./assets/adaptive-icon-mono.png",
+        "backgroundColor": "#15130F"
       },
       "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "resize",
@@ -48,13 +50,13 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/logo.png",
-          "imageWidth": 160,
+          "image": "./assets/splash-light.png",
+          "imageWidth": 132,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#F1ECE2",
           "dark": {
-            "image": "./assets/logo.png",
-            "backgroundColor": "#0b1120"
+            "image": "./assets/splash-dark.png",
+            "backgroundColor": "#15130F"
           }
         }
       ],
@@ -62,22 +64,22 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#4f46e5",
+          "color": "#D9381E",
           "defaultChannel": "default"
         }
       ],
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Task Pro uses the camera to take photos you attach to a task.",
-          "photosPermission": "Task Pro lets you choose photos from your gallery to attach to a task.",
-          "microphonePermission": "Task Pro uses the microphone to record voice notes on tasks."
+          "cameraPermission": "PinTask uses the camera to take photos you attach to a task, and your profile photo.",
+          "photosPermission": "PinTask lets you choose photos from your gallery to attach to a task, or as your profile photo.",
+          "microphonePermission": "PinTask uses the microphone to record voice notes on tasks."
         }
       ],
       [
         "expo-audio",
         {
-          "microphonePermission": "Task Pro uses the microphone to record voice notes on tasks."
+          "microphonePermission": "PinTask uses the microphone to record voice notes on tasks."
         }
       ],
       "expo-secure-store",

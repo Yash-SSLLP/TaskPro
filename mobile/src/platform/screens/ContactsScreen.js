@@ -20,7 +20,7 @@ import { colors, font, radius, space, type } from '../theme';
 import { Avatar, BottomSheet, Button, Card, EmptyState, ErrorState, Header, IconButton, ListRow, Screen, Section, SkeletonList, confirm, toast } from '../ui';
 
 function PersonRow({ person, sub, right, onPress }) {
-  return <ListRow left={<Avatar name={person?.name} size={40} />} title={person?.name || '—'} subtitle={sub} right={right} onPress={onPress} chevron={false} />;
+  return <ListRow left={<Avatar person={person} size={40} />} title={person?.name || '—'} subtitle={sub} right={right} onPress={onPress} chevron={false} />;
 }
 
 export default function ContactsScreen({ navigation }) {
@@ -170,7 +170,7 @@ export default function ContactsScreen({ navigation }) {
               {contacts.map((c) => (
                 <ListRow
                   key={c.id}
-                  left={<Avatar name={c.person?.name} size={40} />}
+                  left={<Avatar person={c.person} size={40} />}
                   title={c.person?.name}
                   subtitle={[c.person?.title, pinOf(c.person)].filter(Boolean).join(' · ')}
                   onPress={() => setChosen(c)}
@@ -195,7 +195,7 @@ export default function ContactsScreen({ navigation }) {
             <ListRow
               icon={UserPlus}
               iconColor={colors.primary}
-              title={tr('Give a task')}
+              title={tr('Assign task')}
               chevron={false}
               onPress={() => {
                 const id = chosen.person?.id;

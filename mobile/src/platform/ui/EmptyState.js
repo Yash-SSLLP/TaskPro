@@ -1,6 +1,9 @@
 /**
  * EmptyState: an empty screen that teaches in one sentence and offers one
  * button. ErrorState: what went wrong, and "Try again".
+ *
+ * The HRMS look (2026-10-08): the icon in a soft rounded square with a faint
+ * ring, a 16pt title, and the sentence in the quiet label style under it.
  */
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -46,14 +49,16 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 64,
     height: 64,
-    borderRadius: 32,
+    borderRadius: 20,
     backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: `${colors.primary}40`,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: space(4),
+    marginBottom: space(3),
   },
-  iconError: { backgroundColor: colors.dangerSoft },
-  title: { fontSize: 18, fontWeight: font.semibold, color: colors.text, textAlign: 'center' },
-  message: { ...type.small, fontSize: 15, textAlign: 'center', marginTop: space(2), lineHeight: 21 },
+  iconError: { backgroundColor: colors.dangerSoft, borderColor: `${colors.danger}40` },
+  title: { fontSize: 16, fontWeight: font.bold, color: colors.text, textAlign: 'center' },
+  message: { ...type.caption, fontWeight: font.semibold, textAlign: 'center', marginTop: space(1), lineHeight: 19 },
   action: { marginTop: space(5) },
 });

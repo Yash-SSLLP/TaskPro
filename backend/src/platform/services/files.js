@@ -104,6 +104,20 @@ async function deleteFiles(ids) {
   }
 }
 
+/**
+ * Remove every file filed under `ref` (a person's profile photos, say).
+ * @returns {Promise<number>} how many went
+ */
+async function deleteFilesByRef(ref) {
+  const oid = toObjectId(String(ref.id));
+  const docs = await filesCollection()
+    .find({ 'metadata.ref.kind': ref.kind, 'metadata.ref.id': { $in: [oid, String(ref.id)].filter(Boolean) } })
+    .project({ _id: 1 })
+    .toArray();
+  await deleteFiles(docs.map((d) => d._id));
+  return docs.length;
+}
+
 /** Remove uploads that were never attached to anything. */
 async function cleanupOrphans(maxAgeMs = 24 * 3600 * 1000) {
   const cutoff = new Date(Date.now() - maxAgeMs);
@@ -122,13 +136,22 @@ const sign = (id, exp) =>
 
 /**
  * A link that opens the file without a session, valid for at least `ttlSec`.
- * The expiry is rounded up to the hour so the same file keeps the same URL
- * for an hour and clients can cache it.
+ * The expiry is rounded up to `stepSec` (an hour) so the same file keeps the
+ * same URL for that long and clients can cache it.
  */
-function signedPath(id, ttlSec = 12 * 3600) {
-  const exp = Math.ceil((Date.now() / 1000 + ttlSec) / 3600) * 3600;
+function signedPath(id, ttlSec = 12 * 3600, stepSec = 3600) {
+  const exp = Math.ceil((Date.now() / 1000 + ttlSec) / stepSec) * stepSec;
   return `/api/files/${id}?exp=${exp}&sig=${sign(String(id), exp)}`;
 }
+
+/**
+ * Profile photos (ref kind 'avatar') appear in every list, so their links
+ * stay the same for a whole day (each is valid for 12 to 36 hours) and the
+ * apps may cache them that long. A photo file never changes: a new photo is
+ * a new file, so a new link.
+ */
+const AVATAR_CACHE_SEC = 24 * 3600;
+const avatarPath = (id) => signedPath(id, 12 * 3600, AVATAR_CACHE_SEC);
 
 function verifySignature(id, exp, sig) {
   const e = Number(exp);
@@ -148,8 +171,11 @@ module.exports = {
   openStream,
   attachFiles,
   deleteFiles,
+  deleteFilesByRef,
   cleanupOrphans,
   signedPath,
+  avatarPath,
+  AVATAR_CACHE_SEC,
   verifySignature,
   fileView,
   INLINE_TYPES,

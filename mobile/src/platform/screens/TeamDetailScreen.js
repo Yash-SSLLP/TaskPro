@@ -260,7 +260,7 @@ export default function TeamDetailScreen({ navigation, route }) {
           return (
             <ListRow
               key={idOf(m.person)}
-              left={<Avatar name={m.person?.name} size={40} />}
+              left={<Avatar person={m.person} size={40} />}
               title={idOf(m.person) === idOf(me) ? tr('{name} (you)', { name: m.person?.name }) : m.person?.name}
               subtitle={[pinOf(m.person), m.joinedAt ? tr('joined {when}', { when: relativeTime(m.joinedAt) }) : ''].filter(Boolean).join(' · ')}
               right={<Badge label={roleLabel(m.role)} tone={roleTone(m.role)} style={styles.badge} />}
@@ -277,7 +277,7 @@ export default function TeamDetailScreen({ navigation, route }) {
             return (
               <ListRow
                 key={idOf(m.person)}
-                left={<Avatar name={m.person?.name} size={40} dimmed />}
+                left={<Avatar person={m.person} size={40} dimmed />}
                 title={m.person?.name}
                 subtitle={tr('Invited by {name} · {when}', { name: m.invitedBy?.name || '—', when: relativeTime(m.invitedAt) })}
                 right={<Badge label={roleLabel(m.role)} tone="neutral" style={styles.badge} />}

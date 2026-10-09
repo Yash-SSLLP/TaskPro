@@ -5,7 +5,8 @@
  *
  * The tabs and product screens come from src/product/navigation.js; the
  * shared screens (contacts, teams, profile, password, the console's person
- * page) are added here.
+ * page) are added here. The tabs are drawn by CurvedTabBar: the selected
+ * tab's icon rides in a raised bubble that slides to whichever tab is chosen.
  */
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -14,6 +15,10 @@ import { productScreens, tabsFor } from '../../product/navigation';
 import { tr } from '../../i18n';
 import { useContacts, useTeams, useUnreadCount } from '../hooks';
 import AdminPersonScreen from '../screens/AdminPersonScreen';
+import ActivityScreen from '../screens/admin/ActivityScreen';
+import AddPersonScreen from '../screens/admin/AddPersonScreen';
+import AppVersionsScreen from '../screens/admin/AppVersionsScreen';
+import OnlineScreen from '../screens/admin/OnlineScreen';
 import AppUpdateScreen from '../screens/AppUpdateScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import ContactsScreen from '../screens/ContactsScreen';
@@ -31,8 +36,9 @@ import TeamDetailScreen from '../screens/TeamDetailScreen';
 import TeamsScreen from '../screens/TeamsScreen';
 import WelcomePinScreen from '../screens/WelcomePinScreen';
 import { useSession } from '../session';
-import { colors, font } from '../theme';
+import { colors } from '../theme';
 import { useUpdate } from '../updates';
+import CurvedTabBar from './CurvedTabBar';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -46,12 +52,11 @@ function MainTabs() {
   const tabs = tabsFor(user);
   return (
     <Tab.Navigator
+      // The curved bar draws each tab's icon, label and badge from the options
+      // below, in its own colours; it hides itself while the keyboard is up.
+      tabBar={(props) => <CurvedTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        tabBarLabelStyle: { fontSize: 12, fontWeight: font.semibold },
-        tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border },
         tabBarHideOnKeyboard: true,
         sceneStyle: { backgroundColor: colors.bg },
       }}
@@ -68,9 +73,8 @@ function MainTabs() {
             options={{
               tabBarLabel: label,
               tabBarAccessibilityLabel: count > 0 ? tr('{label}, {n} new', { label, n: count }) : label,
-              tabBarIcon: ({ color }) => <t.icon color={color} size={22} strokeWidth={2} />,
+              tabBarIcon: ({ color, size }) => <t.icon color={color} size={size} strokeWidth={2} />,
               tabBarBadge: count > 0 ? (count > 99 ? '99+' : count) : undefined,
-              tabBarBadgeStyle: { backgroundColor: colors.dangerFill, color: colors.white, fontSize: 11 },
             }}
           />
         );
@@ -123,6 +127,10 @@ export default function RootNavigator() {
         <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
         <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
         <Stack.Screen name="AdminPerson" component={AdminPersonScreen} />
+        <Stack.Screen name="AdminOnline" component={OnlineScreen} />
+        <Stack.Screen name="AdminAppVersions" component={AppVersionsScreen} />
+        <Stack.Screen name="AdminActivity" component={ActivityScreen} />
+        <Stack.Screen name="AdminAddPerson" component={AddPersonScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
         <Stack.Screen name="AppUpdate" component={AppUpdateScreen} />

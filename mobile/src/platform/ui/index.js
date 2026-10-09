@@ -2,7 +2,7 @@
  * The shared UI kit. Screens import from here: `import { Screen, Button } from '../ui'`.
  */
 export { Screen } from './Screen';
-export { Header, IconButton } from './Header';
+export { Header, HeaderIcon, IconButton } from './Header';
 export { Button, TextButton, FAB } from './Button';
 export { TextField, FieldLabel, FieldError } from './TextField';
 export { Chip, ChipRow, Segmented } from './Chip';

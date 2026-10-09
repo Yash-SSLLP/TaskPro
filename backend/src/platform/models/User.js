@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const { formatPhone } = require('../identity');
 const { generatePin, formatPin } = require('../pin');
+const { avatarPath } = require('../services/files');
 
 const ROLES = ['user', 'superadmin'];
 
@@ -24,6 +25,11 @@ const userSchema = new mongoose.Schema(
     email: { type: String, lowercase: true, trim: true },
     phone: { type: String, trim: true },
     username: { type: String, lowercase: true, trim: true },
+    // Profile photo: a GridFS file (ref kind 'avatar'), set through /api/me/photo.
+    photo: {
+      type: new mongoose.Schema({ file: mongoose.Schema.Types.ObjectId, updatedAt: Date }, { _id: false }),
+      default: undefined,
+    },
     passwordHash: { type: String, required: true, select: false },
     role: { type: String, enum: ROLES, default: 'user', required: true },
     status: { type: String, enum: ['active', 'disabled'], default: 'active' },
@@ -80,6 +86,12 @@ userSchema.methods.saveWithPin = async function saveWithPin() {
 };
 
 /**
+ * A signed link to someone's profile photo, or null when they have none.
+ * Works on a document, a lean row or a populated person (select `photo`).
+ */
+const photoUrlOf = (u) => (u?.photo?.file ? avatarPath(u.photo.file) : null);
+
+/**
  * The shape every API response uses for a person. `full` adds the logins and
  * account details, for the person themselves and the Super Admin only.
  */
@@ -92,6 +104,7 @@ function publicUser(u, { full = true } = {}) {
     name: u.name,
     title: u.title || '',
     status: u.status,
+    photoUrl: photoUrlOf(u),
   };
   if (!full) return base;
   return {
@@ -110,3 +123,4 @@ function publicUser(u, { full = true } = {}) {
 module.exports = mongoose.model('User', userSchema);
 module.exports.ROLES = ROLES;
 module.exports.publicUser = publicUser;
+module.exports.photoUrlOf = photoUrlOf;

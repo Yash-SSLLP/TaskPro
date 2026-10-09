@@ -41,7 +41,7 @@ export default function MoreScreen({ navigation }) {
   return (
     <Screen inTabs scroll header={<Header large title={tr('More')} />}>
       <Card onPress={() => navigation.navigate('Profile')} style={styles.me} accessibilityLabel={tr('My profile')}>
-        <Avatar name={user?.name} size={52} />
+        <Avatar person={user} size={52} />
         <View style={styles.meText}>
           <Text style={styles.name} numberOfLines={1}>
             {user?.name}

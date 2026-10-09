@@ -21,11 +21,14 @@ const COPY = {
   complete: { title: 'Mark as completed?', body: 'It is finished for everybody on it.', label: 'Remark', placeholder: 'Anything to add? (optional)', defaultNote: 'Marked completed.', confirm: 'Mark completed', icon: Check, tone: 'green' },
 };
 
-const TONES = {
-  green: { chip: 'bg-green-50 text-green-700', button: 'bg-green-600 text-white hover:bg-green-700' },
-  red: { chip: 'bg-red-50 text-red-600', button: 'bg-red-600 text-white hover:bg-red-700' },
-  violet: { chip: 'bg-violet-50 text-violet-700', button: 'bg-violet-600 text-white hover:bg-violet-700' },
+const CHIP_TONES = {
+  green: 'bg-green-50 text-green-700',
+  red: 'bg-red-50 text-red-600',
+  violet: 'bg-violet-50 text-violet-700',
 };
+
+// The confirm button, in the move's colour.
+const VARIANTS = { green: 'success', red: 'danger', violet: 'review' };
 
 /** Whether a key opens this dialog. */
 export const isRemarkAction = (key) => Boolean(COPY[key]);
@@ -52,7 +55,6 @@ export function TaskActionDialog({ action, task, onClose, onConfirm, requireRema
   // Decline takes a typed reason (the server's `reason`); the rest take a voice note too.
   const voiceOk = action !== 'decline' && action !== 'accept';
   const required = requireRemark || !copy.defaultNote;
-  const tone = TONES[copy.tone] || TONES.green;
   const Icon = copy.icon;
   const placeholder = required ? copy.placeholder.replace(/\s*\(optional\)$/i, '') : copy.placeholder;
 
@@ -79,26 +81,25 @@ export function TaskActionDialog({ action, task, onClose, onConfirm, requireRema
       onClose={() => !saving && onClose?.()}
       title={copy.title}
       subtitle={task.title}
-      size="md"
+      size="sm"
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <button type="button" onClick={confirm} disabled={saving} className={clsx('inline-flex h-11 items-center gap-2 rounded-xl px-4 text-[15px] font-semibold shadow-sm disabled:opacity-60', tone.button)}>
-            <Icon className="h-4 w-4" />
+          <Button variant={VARIANTS[copy.tone] || 'success'} icon={Icon} loading={saving} onClick={confirm}>
             {saving ? 'Saving…' : copy.confirm}
-          </button>
+          </Button>
         </>
       }
     >
       <div className="flex items-start gap-3">
-        <span className={clsx('grid h-10 w-10 shrink-0 place-items-center rounded-xl', tone.chip)}>
-          <Icon className="h-5 w-5" />
+        <span className={clsx('grid h-10 w-10 shrink-0 place-items-center rounded-xl', CHIP_TONES[copy.tone] || CHIP_TONES.green)}>
+          <Icon className="h-[18px] w-[18px]" />
         </span>
-        <p className="pt-2 text-sm text-ink-soft">{copy.body}</p>
+        <p className="pt-0.5 text-xs leading-relaxed text-ink-soft">{copy.body}</p>
       </div>
-      <label htmlFor="task-action-note" className="mb-1.5 mt-4 block text-sm font-medium text-ink">
+      <label htmlFor="task-action-note" className="mb-1 mt-4 block text-xs font-medium text-ink-soft">
         {copy.label}
         {required && <span className="text-red-600"> *</span>}
       </label>
@@ -120,14 +121,14 @@ export function TaskActionDialog({ action, task, onClose, onConfirm, requireRema
         rows={3}
         maxLength={1000}
         placeholder={placeholder}
-        className="block w-full resize-y rounded-xl border border-line px-3.5 py-2.5 text-[15px] shadow-sm placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+        className="block w-full resize-y rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
       />
       {voiceOk && (
         <div className="mt-2">
           <VoiceRecorder value={voice} onChange={setVoice} />
         </div>
       )}
-      {error && <p className="mt-2 text-sm font-medium text-red-600">{error}</p>}
+      {error && <p className="mt-1.5 text-xs font-medium text-red-600">{error}</p>}
     </Modal>
   );
 }

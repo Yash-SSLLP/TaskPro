@@ -4,9 +4,8 @@
  * OPEN piece (nobody named) offers Claim when the server says `can.canClaim`.
  */
 import { useState } from 'react';
-import { GitBranch, Hand, User, Users } from 'lucide-react';
+import { GitBranch, User, UserCheck, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '../../platform/ui';
 import * as T from '../api';
 import { accentStyle, personName } from '../lifecycle';
 import { DueChip, OverdueChip, ProgressBar, StatusChip } from './TaskChips';
@@ -30,14 +29,18 @@ export function ChildTaskList({ children = [], onChanged, onOpen }) {
   };
 
   return (
-    <section className="rounded-2xl border border-line bg-card p-4 shadow-card sm:p-5">
-      <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-        <GitBranch className="h-3.5 w-3.5" /> Pieces <span className="font-normal normal-case text-ink-faint">{done} of {children.length} done</span>
+    <section className="rounded-2xl border border-line bg-card px-4 py-4 shadow-card sm:px-5">
+      <h2 className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+        <GitBranch className="h-3 w-3" /> Pieces
+        <span className="font-normal text-ink-faint">
+          {done} of {children.length} done
+        </span>
       </h2>
       <ul className="space-y-2">
         {children.map((piece, i) => {
           const owner = piece.assignees?.[0];
           const ownerName = owner ? owner.name || personName(owner.user) : '';
+          const working = claiming === String(piece._id);
           return (
             <li key={piece._id}>
               <div
@@ -48,6 +51,7 @@ export function ChildTaskList({ children = [], onChanged, onOpen }) {
                   onOpen?.(String(piece._id));
                 }}
                 onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     onOpen?.(String(piece._id));
@@ -56,20 +60,21 @@ export function ChildTaskList({ children = [], onChanged, onOpen }) {
                 style={accentStyle(piece)}
                 className="w-full cursor-pointer rounded-xl px-3 py-2.5 text-left transition hover:brightness-[.98]"
               >
+                {/* Phone: Claim drops to a line of its own, so the title keeps the row's width. */}
                 <div className="flex flex-wrap items-start gap-2 sm:flex-nowrap">
                   <span className="tnum mt-0.5 shrink-0 text-[11px] font-semibold text-ink-soft">{piece.serial || i + 1}.</span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-ink">{piece.title}</p>
+                    <p className="truncate text-sm font-medium text-ink">{piece.title}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <span className="inline-flex items-center gap-1 text-[11px] text-ink-soft">
+                      <span className="inline-flex items-center gap-1 text-[11px] text-slate-600">
                         {ownerName ? (
                           <>
-                            <User className="h-3 w-3" />
+                            <User className="h-2.5 w-2.5 shrink-0" />
                             {ownerName}
                           </>
                         ) : (
                           <>
-                            <Users className="h-3 w-3" />
+                            <Users className="h-2.5 w-2.5 shrink-0" />
                             Open — nobody has taken it
                           </>
                         )}
@@ -78,12 +83,22 @@ export function ChildTaskList({ children = [], onChanged, onOpen }) {
                       <OverdueChip task={piece} />
                       {piece.dueDate && <DueChip task={piece} />}
                     </div>
-                    {Number(piece.progress) > 0 && <ProgressBar task={piece} className="mt-2 w-full max-w-[16rem]" />}
+                    <ProgressBar task={piece} className="mt-2 w-full max-w-[16rem]" />
                   </div>
                   {piece.can?.canClaim && (
-                    <Button size="sm" variant="secondary" icon={Hand} loading={claiming === String(piece._id)} onClick={() => claim(piece)} className="basis-full sm:basis-auto">
-                      Claim
-                    </Button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        claim(piece);
+                      }}
+                      disabled={working}
+                      // `veil`, not a see-through card colour: the row is tinted.
+                      className="veil inline-flex min-h-[36px] shrink-0 basis-full items-center justify-center gap-1.5 rounded-xl border border-slate-300 px-3 text-xs font-medium text-slate-700 transition hover:border-green-500 hover:text-green-700 disabled:opacity-50 sm:basis-auto"
+                    >
+                      <UserCheck className="h-[13px] w-[13px]" />
+                      {working ? 'Taking…' : 'Claim'}
+                    </button>
                   )}
                 </div>
               </div>

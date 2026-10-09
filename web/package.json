@@ -2,7 +2,7 @@
   "name": "taskpro-web",
   "private": true,
   "version": "1.0.0",
-  "description": "Task Pro web app",
+  "description": "PinTask web app",
   "type": "module",
   "scripts": {
     "dev": "vite",

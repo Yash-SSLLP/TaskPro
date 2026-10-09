@@ -1,13 +1,14 @@
 /**
  * Sign in: logo, one line about the product, login + password, and the ways
- * out: forgot password, create an account, and the app's language (top
- * right). The server address is not shown: a long press on the logo opens
+ * out: forgot password, create an account, and the app's look and language
+ * (top right). The server address is not shown: a long press on the logo opens
  * Server settings, for whoever needs to point the app somewhere else.
  */
 import React, { useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import productConfig from '../../product/config';
 import { tr } from '../../i18n';
+import { ThemeButton, ThemeSheet } from '../appearance';
 import { LanguageButton, LanguageSheet } from '../language';
 import { useSession } from '../session';
 import { colors, font, space, type } from '../theme';
@@ -22,6 +23,7 @@ export default function SignInScreen({ navigation }) {
   const [errors, setErrors] = useState({});
   const [error, setError] = useState(null);
   const [langOpen, setLangOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const passwordRef = useRef(null);
 
   const submit = async () => {
@@ -41,7 +43,10 @@ export default function SignInScreen({ navigation }) {
 
   return (
     <Screen scroll keyboard contentStyle={styles.content}>
-      <LanguageButton onPress={() => setLangOpen(true)} />
+      <View style={styles.topRow}>
+        <ThemeButton onPress={() => setThemeOpen(true)} />
+        <LanguageButton onPress={() => setLangOpen(true)} style={styles.topButton} />
+      </View>
       <View style={styles.brand}>
         <Pressable onLongPress={() => navigation.navigate('ServerSettings')} delayLongPress={1500} accessible={false}>
           <Image source={productConfig.logo} style={styles.logo} accessibilityIgnoresInvertColors />
@@ -91,15 +96,19 @@ export default function SignInScreen({ navigation }) {
       </View>
 
       <LanguageSheet visible={langOpen} onClose={() => setLangOpen(false)} />
+      <ThemeSheet visible={themeOpen} onClose={() => setThemeOpen(false)} />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   content: { paddingTop: space(3), flexGrow: 1 },
+  topRow: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: space(2) },
+  topButton: { alignSelf: 'auto' },
   brand: { alignItems: 'center', marginTop: space(4), marginBottom: space(8) },
-  logo: { width: 72, height: 72, borderRadius: 18, marginBottom: space(3) },
-  name: { fontSize: 26, fontWeight: font.bold, color: colors.text },
+  // The tile carries its own squircle and transparent corners: no clipping.
+  logo: { width: 80, height: 80, marginBottom: space(3) },
+  name: { fontSize: 28, fontWeight: font.semibold, letterSpacing: -0.6, color: colors.text },
   tagline: { ...type.small, fontSize: 15, marginTop: space(1), textAlign: 'center' },
   forgot: { marginTop: space(2) },
   newHere: { marginTop: space(8), gap: space(2) },

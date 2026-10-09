@@ -1,6 +1,13 @@
 /**
  * Chips (filters, categories, payment modes) and Segmented, a two-to-four way
  * switch such as Cash In / Cash Out.
+ *
+ * THE HRMS CHIP (2026-10-08): a rounded square, quiet grey words, and a
+ * SELECTED chip FILLED with its colour under white words, so the choice reads
+ * from across the sheet. The border and weight never change with selection,
+ * so picking one cannot resize it. `color` is the fill (a priority's solid,
+ * say); `dot` draws a small dot before the label in that colour (white once
+ * selected). `softColor` is still accepted and no longer used.
  */
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -11,13 +18,13 @@ export function Chip({
   selected = false,
   onPress,
   color = colors.primary,
-  softColor = colors.primarySoft,
   icon: Icon,
   trailingIcon: Trailing,
+  dot,
   style,
   accessibilityLabel,
 }) {
-  const fg = selected ? color : colors.text;
+  const fg = selected ? colors.onPrimary : colors.textSecondary;
   return (
     <Pressable
       onPress={onPress}
@@ -27,16 +34,17 @@ export function Chip({
       hitSlop={{ top: 4, bottom: 4 }}
       style={({ pressed }) => [
         styles.chip,
-        selected ? { backgroundColor: softColor, borderColor: color } : styles.chipIdle,
+        selected ? { backgroundColor: color, borderColor: color } : styles.chipIdle,
         pressed && styles.pressed,
         style,
       ]}
     >
-      {Icon ? <Icon size={16} color={fg} strokeWidth={2} /> : null}
-      <Text style={[styles.chipText, { color: fg }, selected && styles.chipTextSelected]} numberOfLines={1}>
+      {dot ? <View style={[styles.dot, { backgroundColor: selected ? colors.onPrimary : dot }]} /> : null}
+      {Icon ? <Icon size={15} color={fg} strokeWidth={2.25} /> : null}
+      <Text style={[styles.chipText, { color: fg }]} numberOfLines={1} maxFontSizeMultiplier={1.3}>
         {label}
       </Text>
-      {Trailing ? <Trailing size={16} color={fg} strokeWidth={2} /> : null}
+      {Trailing ? <Trailing size={13} color={fg} strokeWidth={2.5} /> : null}
     </Pressable>
   );
 }
@@ -93,18 +101,21 @@ export function Segmented({ options, value, onChange, style, size = 'md' }) {
 }
 
 const styles = StyleSheet.create({
+  // minHeight + padding, never a fixed height: a larger system font grows it.
   chip: {
-    minHeight: 36,
-    paddingHorizontal: space(3.5),
-    borderRadius: radius.chip,
+    minHeight: 38,
+    paddingHorizontal: 13,
+    paddingVertical: 6,
+    borderRadius: radius.md,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space(1.5),
+    justifyContent: 'center',
+    gap: 6,
   },
   chipIdle: { backgroundColor: colors.card, borderColor: colors.border },
-  chipText: { fontSize: 14, fontWeight: font.medium },
-  chipTextSelected: { fontWeight: font.semibold },
+  chipText: { fontSize: 13, fontWeight: font.bold, flexShrink: 1 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
   pressed: { opacity: 0.75 },
   wrapRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(2) },
   scrollRow: { flexDirection: 'row', gap: space(2), paddingHorizontal: space(4) },

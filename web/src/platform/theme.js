@@ -3,8 +3,9 @@
  *
  * The choice is kept on this device (localStorage). index.html applies it
  * before the first paint, so a dark page never flashes white; this module
- * keeps it applied, follows the system while "System" is chosen, and tells
- * React when the look changes (the inline task colours are picked in JS).
+ * keeps it applied and follows the system while "System" is chosen. Every
+ * colour is a CSS variable (src/index.css), so switching only flips the class
+ * on <html>: nothing re-renders and no open form loses what was typed.
  */
 import { create } from 'zustand';
 
@@ -26,15 +27,12 @@ const resolve = (mode) => (mode === 'system' ? (media?.matches ? 'dark' : 'light
 
 function apply(scheme) {
   document.documentElement.classList.toggle('dark', scheme === 'dark');
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', scheme === 'dark' ? '#0b1120' : '#4f46e5');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', scheme === 'dark' ? '#15130f' : '#f1ece2');
 }
 
 const initial = readMode();
 export const useTheme = create(() => ({ mode: initial, scheme: resolve(initial) }));
 apply(useTheme.getState().scheme);
-
-/** Whether the dark look is on, for code that picks colours in JS. */
-export const isDark = () => useTheme.getState().scheme === 'dark';
 
 export function setThemeMode(mode) {
   const next = THEME_MODES.includes(mode) ? mode : 'system';

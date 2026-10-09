@@ -15,6 +15,9 @@
  * is found by pin and sent a contact request. They can be given tasks once
  * they accept; if they had already asked me, they are added at once and
  * picked.
+ *
+ * Drawn as the HRMS app's picker (2026-10-08): a framed list under a muted
+ * search row, 14pt names in semibold over a small grey line.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -144,12 +147,16 @@ export default function TaskPeoplePicker({
                   accessibilityLabel={isMe ? tr('Myself') : p.name}
                   style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
                 >
-                  {isMe ? (
+                  {isMe && p.photoUrl ? (
+                    <View style={styles.meRing}>
+                      <Avatar person={p} size={32} />
+                    </View>
+                  ) : isMe ? (
                     <View style={styles.meAvatar}>
                       <Text style={styles.meText}>{tr('Me')}</Text>
                     </View>
                   ) : (
-                    <Avatar name={p.name} size={36} />
+                    <Avatar person={p} size={36} />
                   )}
                   <View style={styles.texts}>
                     <Text style={styles.name} numberOfLines={1}>
@@ -160,7 +167,7 @@ export default function TaskPeoplePicker({
                     </Text>
                   </View>
                   <View style={[styles.box, max === 1 && styles.boxRound, on && styles.boxOn]}>
-                    {on ? <Check size={14} color={colors.white} strokeWidth={3} /> : null}
+                    {on ? <Check size={14} color={colors.onPrimary} strokeWidth={3} /> : null}
                   </View>
                 </Pressable>
               );
@@ -297,10 +304,12 @@ const styles = StyleSheet.create({
   },
   rowPressed: { backgroundColor: colors.muted },
   meAvatar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
-  meText: { color: colors.white, fontSize: 12, fontWeight: font.bold },
+  // My own photo, ringed in the accent where the "Me" circle would be.
+  meRing: { width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  meText: { color: colors.onPrimary, fontSize: 12, fontWeight: '800' },
   texts: { flex: 1 },
-  name: { color: colors.text, fontSize: 15, fontWeight: font.medium },
-  sub: { color: colors.textFaint, fontSize: 12, marginTop: 2 },
+  name: { color: colors.text, fontSize: 14, fontWeight: font.semibold },
+  sub: { color: colors.textFaint, fontSize: 11.5, marginTop: 2 },
   box: {
     width: 22,
     height: 22,
@@ -312,10 +321,10 @@ const styles = StyleSheet.create({
   },
   boxRound: { borderRadius: 11 },
   boxOn: { backgroundColor: colors.primary, borderColor: colors.primary },
-  empty: { color: colors.textFaint, fontSize: 13, padding: space(4), textAlign: 'center' },
-  more: { color: colors.textFaint, fontSize: 12, paddingHorizontal: space(3), paddingVertical: space(2) },
+  empty: { color: colors.textFaint, fontSize: 12.5, padding: space(4), textAlign: 'center' },
+  more: { color: colors.textFaint, fontSize: 11.5, paddingHorizontal: space(3), paddingVertical: space(2) },
   addWrap: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
-  addRow: { minHeight: 50, flexDirection: 'row', alignItems: 'center', gap: space(3), paddingHorizontal: space(3) },
-  addText: { flex: 1, color: colors.primary, fontSize: 15, fontWeight: font.semibold },
+  addRow: { minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: space(3), paddingHorizontal: space(3) },
+  addText: { flex: 1, color: colors.primary, fontSize: 14, fontWeight: font.bold },
   lookup: { paddingHorizontal: space(3), paddingBottom: space(1) },
 });

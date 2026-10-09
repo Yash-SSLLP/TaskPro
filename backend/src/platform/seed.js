@@ -28,6 +28,8 @@ async function ensureSuperAdmin({ reset = false } = {}) {
   user.status = 'active';
   if (reset) user.tokenVersion = (user.tokenVersion || 0) + 1;
   await user.save();
+  // The new password ends every signed-in device, sessions included.
+  if (reset) await require('./services/sessions').revokeAll(user._id, { reason: 'password_reset' });
   console.log(`[seed] Super Admin "${username}" ${reset ? 'password reset' : 'created'}`);
   return user;
 }

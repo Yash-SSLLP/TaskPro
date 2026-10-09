@@ -2,13 +2,21 @@
  * One task in a list. THE WHOLE CARD IS THE PRIORITY COLOUR (green once
  * done), from the server's palette via accentFor. Overdue adds a solid red
  * chip and a red deadline; it never changes the tint. The only control is
- * the status pill; the card itself opens the task, and it swipes.
+ * the status pill; the card itself opens the task, and it swipes (a screen
+ * reader gets the swipes as actions on the card). `peek` is the first-use
+ * peek (TaskSwipe).
+ *
+ * The HRMS card (2026-10-08): a heavier two-line title, both sides of the
+ * handover and the day it was handed over in small print, pill-shaped tags,
+ * and a "More time" chip that says with an icon where the latest ask stands.
+ * Compact (2026-10-08): tight padding and line gaps, so three or more cards
+ * fit on a phone's screen.
  */
 import React, { memo, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { tr, trParts } from '../../i18n';
-import { colors, font, radius, space } from '../../platform/theme';
-import { Mic, Paperclip, Repeat, SquarePen, Tag, Users } from '../icons';
+import { colors, radius, space } from '../../platform/theme';
+import { CircleCheck, CircleX, Clock, Mic, Paperclip, Repeat, SquarePen, Tag, TriangleAlert, Users } from '../icons';
 import {
   accentFor,
   assigneeNames,
@@ -27,14 +35,17 @@ import {
 } from '../taskStatus';
 import NudgeBell from './NudgeBell';
 import { StatusPill } from './TaskStatusSheets';
-import TaskSwipe from './TaskSwipe';
+import TaskSwipe, { swipeAccessibility } from './TaskSwipe';
 
-function TaskCard({ task, meId, nudgedAt, onNudged, onOpen, onStatus, onSwipe }) {
+const EXT_ICONS = { clock: Clock, check: CircleCheck, x: CircleX };
+
+function TaskCard({ task, meId, nudgedAt, onNudged, onOpen, onStatus, onSwipe, peek = false }) {
   const accent = accentFor(task);
   const late = isOverdue(task);
   const done = isTerminal(task.status);
   const due = dueLabel(task.dueDate, task.status);
   const swipe = useMemo(() => swipeActionsFor(task), [task]);
+  const swipeA11y = useMemo(() => swipeAccessibility(swipe, onSwipe), [swipe, onSwipe]);
   const freq = task.recurringTask && task.repeat?.frequency && task.repeat.frequency !== 'ONCE' ? frequencyLabel(task.repeat.frequency) : '';
 
   const setterId = idOf(task.createdBy);
@@ -46,23 +57,28 @@ function TaskCard({ task, meId, nudgedAt, onNudged, onOpen, onStatus, onSwipe })
   const setFor = task.isOpenPiece ? tr('nobody yet') : assigneeNames(task.assignees);
   const assignedOn = dayLabel(task.assignedAt || task.createdAt);
 
+  // The latest ask for more time (the server's `lastExtension`; an older
+  // server only says one is pending).
   const extStatus = task.lastExtension?.status || (task.pendingExtension ? 'PENDING' : '');
   const ext = extensionLook(extStatus);
   const extInk = ext ? (ext.tone === 'success' ? colors.success : ext.tone === 'danger' ? colors.danger : colors.warning) : null;
   const extBg = ext ? (ext.tone === 'success' ? colors.successSoft : ext.tone === 'danger' ? colors.dangerSoft : colors.warningSoft) : null;
+  const ExtIcon = ext ? EXT_ICONS[ext.icon] || Clock : null;
 
   const progress = Math.max(0, Math.min(100, Number(task.progress) || 0));
   const pieces = Number(task.subtaskCount ?? task.childCount) || 0;
   const piecesDone = Number(task.subtasksDone ?? task.childDoneCount) || 0;
   const showBar = !done && (progress > 0 || pieces > 0);
   const teamName = task.team?.name || task.teamName || '';
+  const category = typeof task.category === 'string' ? task.category : task.category?.name;
 
   return (
-    <TaskSwipe actions={swipe} onAction={onSwipe}>
+    <TaskSwipe actions={swipe} onAction={onSwipe} peek={peek}>
       <Pressable
         onPress={onOpen}
         accessibilityRole="button"
-        accessibilityLabel={`${task.title}. ${due.text}`}
+        accessibilityLabel={[task.title, due.text, late ? tr('Overdue') : '', ext ? ext.label : ''].filter(Boolean).join('. ')}
+        {...swipeA11y}
         style={({ pressed }) => [
           styles.card,
           { backgroundColor: accent.bg, borderColor: accent.border, borderLeftColor: accent.solid },
@@ -79,19 +95,20 @@ function TaskCard({ task, meId, nudgedAt, onNudged, onOpen, onStatus, onSwipe })
             </Text>
           ) : null}
           <View style={styles.codeEnd}>
+            {/* More time asked, and where the latest ask stands; overdue. Icons,
+                not words: a word here was cut short in the longer languages.
+                The card's label reads both out. */}
             {ext ? (
-              <View style={[styles.extChip, { borderColor: extInk, backgroundColor: extBg }]}>
-                <Text style={[styles.extText, { color: extInk }]} numberOfLines={1}>
-                  {ext.label}
-                </Text>
+              <View style={[styles.iconChip, { borderColor: extInk, backgroundColor: extBg }]}>
+                <ExtIcon size={13} color={extInk} strokeWidth={2.5} />
               </View>
             ) : null}
             {late ? (
-              <View style={styles.overdueChip}>
-                <Text style={styles.overdueText}>{tr('Overdue')}</Text>
+              <View style={[styles.iconChip, styles.lateChip]}>
+                <TriangleAlert size={13} color={colors.white} strokeWidth={2.75} />
               </View>
             ) : null}
-            <NudgeBell task={task} override={nudgedAt} onNudged={onNudged} size={34} />
+            <NudgeBell task={task} override={nudgedAt} onNudged={onNudged} size={30} />
           </View>
         </View>
 
@@ -99,6 +116,8 @@ function TaskCard({ task, meId, nudgedAt, onNudged, onOpen, onStatus, onSwipe })
           {task.title}
         </Text>
 
+        {/* Who handed it to whom: two lines at most, so a long list of
+            assignees wraps rather than pushing the deadline off the card. */}
         <Text style={styles.meta} numberOfLines={2}>
           {onlyMe ? (
             tr('Your own task')
@@ -154,14 +173,16 @@ function TaskCard({ task, meId, nudgedAt, onNudged, onOpen, onStatus, onSwipe })
                 </Text>
               </View>
             ) : null}
-            {task.category ? (
+            {category ? (
               <View style={styles.tag}>
                 <Tag size={11} color={colors.textSecondary} />
                 <Text style={styles.tagLabel} numberOfLines={1}>
-                  {typeof task.category === 'string' ? task.category : task.category?.name}
+                  {category}
                 </Text>
               </View>
             ) : null}
+            {/* Changed after it was sent, and nobody has taken it on yet: worth
+                a second read before accepting. */}
             {task.editCount > 0 && task.status === 'PENDING' ? (
               <View style={[styles.tag, styles.editedTag]}>
                 <SquarePen size={11} color={colors.warning} />
@@ -170,7 +191,7 @@ function TaskCard({ task, meId, nudgedAt, onNudged, onOpen, onStatus, onSwipe })
                 </Text>
               </View>
             ) : null}
-            {task.hasVoiceNote ? <Mic size={14} color={accent.ink} /> : null}
+            {task.hasVoiceNote ? <Mic size={13} color={accent.ink} /> : null}
             {task.attachmentCount > 0 ? <Paperclip size={14} color={accent.ink} /> : null}
           </View>
           <StatusPill task={task} onPress={onStatus} />
@@ -183,42 +204,42 @@ function TaskCard({ task, meId, nudgedAt, onNudged, onOpen, onStatus, onSwipe })
 export default memo(TaskCard);
 
 const styles = StyleSheet.create({
-  card: { borderRadius: radius.card, borderWidth: 1, borderLeftWidth: 4, padding: space(3), gap: space(2) },
+  // Compact: 10 px top and bottom, 5 px between lines.
+  card: { borderRadius: radius.card, borderWidth: 1, borderLeftWidth: 4, paddingVertical: space(2.5), paddingHorizontal: space(3.5), gap: 5 },
   faded: { opacity: 0.6 },
   pressed: { opacity: 0.92 },
-  codeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 34 },
+  codeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 30 },
+  // The more-time chip, the overdue chip and the bell, pinned right of the code.
   codeEnd: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: space(2) },
-  serial: { fontSize: 12, fontWeight: font.bold },
-  code: { color: colors.textSecondary, fontSize: 11, letterSpacing: 0.3, flexShrink: 1 },
-  overdueChip: { minHeight: 22, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.sm, backgroundColor: '#D92D20' },
-  overdueText: { color: colors.white, fontSize: 11, fontWeight: font.bold },
-  extChip: { flexDirection: 'row', alignItems: 'center', minHeight: 22, maxWidth: 150, paddingHorizontal: 7, paddingVertical: 2, borderRadius: radius.sm, borderWidth: 1 },
-  extText: { fontSize: 10.5, fontWeight: font.bold, flexShrink: 1 },
-  title: { color: colors.text, fontSize: 16, fontWeight: font.semibold },
+  serial: { fontSize: 11, fontWeight: '800' },
+  code: { color: colors.textSecondary, fontSize: 10, letterSpacing: 0.3, flexShrink: 1 },
+  iconChip: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm, borderWidth: 1 },
+  lateChip: { borderRadius: 12, borderColor: colors.dangerFill, backgroundColor: colors.dangerFill },
+  title: { color: colors.text, fontSize: 15.5, fontWeight: '800', lineHeight: 20 },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', gap: space(2) },
-  meta: { color: colors.textSecondary, fontSize: 13, flexShrink: 1 },
+  meta: { color: colors.textSecondary, fontSize: 12, flexShrink: 1 },
   metaFaint: { color: colors.textFaint },
-  barWrap: { gap: 4 },
-  track: { height: 6, borderRadius: 3, backgroundColor: colors.track, overflow: 'hidden' },
+  barWrap: { gap: 3 },
+  track: { height: 6, borderRadius: 3, backgroundColor: colors.border, overflow: 'hidden' },
   fill: { height: 6, borderRadius: 3 },
   barRow: { flexDirection: 'row', justifyContent: 'space-between', gap: space(2) },
-  barText: { color: colors.textSecondary, fontSize: 11, fontWeight: font.semibold },
-  footRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space(2), marginTop: 2 },
-  tagRow: { flex: 1, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
+  barText: { color: colors.textSecondary, fontSize: 11, fontWeight: '600' },
+  footRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space(2), marginTop: 1 },
+  tagRow: { flex: 1, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 5 },
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    minHeight: 24,
+    minHeight: 22,
     maxWidth: 140,
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: radius.sm,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.card,
   },
   editedTag: { borderColor: colors.warning, backgroundColor: colors.warningSoft },
-  tagLabel: { color: colors.textSecondary, fontSize: 11, fontWeight: font.semibold, flexShrink: 1 },
+  tagLabel: { color: colors.textSecondary, fontSize: 11, fontWeight: '700', flexShrink: 1 },
   dot: { width: 8, height: 8, borderRadius: 4 },
 });

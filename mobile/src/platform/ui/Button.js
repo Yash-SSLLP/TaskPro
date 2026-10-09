@@ -5,10 +5,15 @@
  * while `loading`, and when onPress returns a promise it stays busy until the
  * promise settles, so a double tap never submits twice.
  * TextButton: a small text link. FAB: the floating main action of a list.
+ *
+ * SMALLER SINCE 2026-10-08 ("reduce the size of all the buttons"), on the
+ * HRMS app's scale: sm 32 · md 42 · lg 46, nothing taller. A title too long
+ * for one line wraps to a second rather than being cut ("Send for rev…"); the
+ * line height keeps two lines inside the same height.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, font, radius, shadowRaised, space, TAP } from '../theme';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { colors, font, radius, space, TAP, theme } from '../theme';
 
 function useBusyPress(onPress, blocked) {
   const [busy, setBusy] = useState(false);
@@ -40,9 +45,9 @@ function useBusyPress(onPress, blocked) {
 }
 
 const SIZES = {
-  sm: { height: 36, paddingHorizontal: space(3), fontSize: 14, icon: 16 },
-  md: { height: 48, paddingHorizontal: space(4), fontSize: 16, icon: 20 },
-  lg: { height: 56, paddingHorizontal: space(5), fontSize: 17, icon: 22 },
+  sm: { height: 32, paddingHorizontal: 12, fontSize: 13, lineHeight: 15, icon: 15 },
+  md: { height: 42, paddingHorizontal: 14, fontSize: 15, lineHeight: 18, icon: 17 },
+  lg: { height: 46, paddingHorizontal: 16, fontSize: 15, lineHeight: 18, icon: 18 },
 };
 
 function palette(variant, color) {
@@ -56,7 +61,7 @@ function palette(variant, color) {
     case 'soft':
       return { bg: colors.primarySoft, fg: color || colors.primary, border: 'transparent' };
     default:
-      return { bg: color || colors.primary, fg: colors.white, border: color || colors.primary };
+      return { bg: color || colors.primary, fg: color ? colors.white : colors.onPrimary, border: color || colors.primary };
   }
 }
 
@@ -88,7 +93,8 @@ export function Button({
       style={({ pressed }) => [
         styles.base,
         {
-          height: s.height,
+          // A floor, not a fixed height: a larger system font may still grow it.
+          minHeight: s.height,
           paddingHorizontal: s.paddingHorizontal,
           backgroundColor: p.bg,
           borderColor: p.border,
@@ -100,11 +106,15 @@ export function Button({
       ]}
     >
       {showSpinner ? (
-        <ActivityIndicator color={p.fg} />
+        <ActivityIndicator size="small" color={p.fg} />
       ) : (
         <View style={styles.row}>
           {Icon ? <Icon size={s.icon} color={p.fg} strokeWidth={2.25} /> : null}
-          <Text style={[styles.text, { color: p.fg, fontSize: s.fontSize }, textStyle]} numberOfLines={1}>
+          <Text
+            style={[styles.text, { color: p.fg, fontSize: s.fontSize, lineHeight: s.lineHeight }, textStyle]}
+            numberOfLines={2}
+            maxFontSizeMultiplier={1.3}
+          >
             {title}
           </Text>
         </View>
@@ -136,7 +146,13 @@ export function TextButton({ title, onPress, color = colors.primary, style, icon
   );
 }
 
-export function FAB({ title, icon: Icon, onPress, color = colors.primary, style, bottom = space(4) }) {
+/**
+ * The FAB sits on tab screens, whose curved bottom bar (CurvedTabBar) carries
+ * a bubble that rises 25 over its top edge, so the default `bottom` clears it
+ * with room to spare — at 16 the bubble ate the corner of a wide button above
+ * the middle tab.
+ */
+export function FAB({ title, icon: Icon, onPress, color = colors.primary, style, bottom = space(9) }) {
   return (
     <Pressable
       onPress={onPress}
@@ -144,11 +160,23 @@ export function FAB({ title, icon: Icon, onPress, color = colors.primary, style,
       accessibilityLabel={title}
       style={({ pressed }) => [styles.fab, { backgroundColor: color, bottom }, pressed && styles.pressed, style]}
     >
-      {Icon ? <Icon size={22} color={colors.white} strokeWidth={2.5} /> : null}
-      <Text style={styles.fabText}>{title}</Text>
+      {Icon ? <Icon size={20} color={colors.onPrimary} strokeWidth={2.5} /> : null}
+      <Text style={styles.fabText} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+        {title}
+      </Text>
     </Pressable>
   );
 }
+
+/**
+ * The FAB's lift: iOS only. Android elevation on a fully rounded view renders
+ * blank on some OEM GPUs (the HRMS app's realme/ColorOS finding), so there it
+ * sits flat on its colour.
+ */
+const floating = Platform.select({
+  ios: { shadowColor: '#000000', shadowOpacity: theme.dark ? 0.5 : 0.14, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
+  default: {},
+});
 
 const styles = StyleSheet.create({
   base: {
@@ -159,8 +187,8 @@ const styles = StyleSheet.create({
   },
   full: { alignSelf: 'stretch' },
   auto: { alignSelf: 'flex-start' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
-  text: { fontWeight: font.semibold },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space(2), paddingVertical: 2 },
+  text: { fontWeight: font.bold, textAlign: 'center', flexShrink: 1 },
   pressed: { opacity: 0.85 },
   disabled: { opacity: 0.45 },
   textButton: { minHeight: TAP, flexDirection: 'row', alignItems: 'center', gap: space(1.5), paddingHorizontal: space(1) },
@@ -170,13 +198,13 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: space(4),
-    height: 56,
-    paddingHorizontal: space(5),
-    borderRadius: 28,
+    minHeight: 46,
+    paddingHorizontal: 18,
+    borderRadius: radius.pill,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space(2),
-    ...shadowRaised,
+    gap: 6,
+    ...floating,
   },
-  fabText: { color: colors.white, fontSize: 16, fontWeight: font.bold },
+  fabText: { color: colors.onPrimary, fontSize: 15, fontWeight: '800' },
 });

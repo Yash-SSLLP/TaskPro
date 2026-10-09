@@ -11,7 +11,7 @@ describe('giving tasks', () => {
     const p = await h.signup('Newbie');
     const res = await p.get('/api/tasks?scope=mine');
     assert.equal(res.status, 200);
-    assert.deepEqual(titles(res), ['Welcome to Task Pro: share your Task Pin']);
+    assert.deepEqual(titles(res), ['Welcome to PinTask: share your Task Pin']);
     const t = res.body.tasks[0];
     assert.equal(t.requiresApproval, false);
     assert.equal(t.createdBy.id, p.id);
@@ -44,7 +44,7 @@ describe('giving tasks', () => {
     assert.deepEqual(t.team, { id: team.id, name: team.name });
     assert.deepEqual(t.assignees.map((x) => x.user.id), [a.id, b.id]);
     const person = t.assignees[0].user;
-    assert.deepEqual(Object.keys(person).sort(), ['_id', 'id', 'name', 'pin', 'pinDisplay']);
+    assert.deepEqual(Object.keys(person).sort(), ['_id', 'id', 'name', 'photoUrl', 'pin', 'pinDisplay']);
     assert.equal(person.pinDisplay, `${a.pin.slice(0, 4)}-${a.pin.slice(4)}`);
     assert.equal(t.createdBy.id, boss.id);
     assert.equal(t.accent.key, 'Urgent');

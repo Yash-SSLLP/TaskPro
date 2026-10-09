@@ -9,15 +9,12 @@ import { useTheme } from './platform/theme';
 import { ConfirmProvider } from './platform/ui';
 import './index.css';
 
-/**
- * The CSS re-themes itself; the task colours drawn inline are picked in JS,
- * so the app redraws when the look changes (rare: a setting, or the system).
- */
+/** The CSS re-themes itself (every colour is a variable); only the toasts are told. */
 function Themed() {
   const scheme = useTheme((s) => s.scheme);
   return (
     <>
-      <App key={scheme} />
+      <App />
       <Toaster theme={scheme} position="top-center" richColors closeButton toastOptions={{ style: { fontFamily: 'Inter, system-ui, sans-serif' } }} />
     </>
   );

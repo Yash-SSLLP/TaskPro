@@ -9,11 +9,19 @@
  * new password first") are also passed to one handler the session store
  * registers, so every screen gets the same behaviour for free.
  *
- * Every request carries `X-App-Lang` (the app's language).
+ * Every request carries `X-App-Lang` (the app's language) and says which app
+ * it is, so the Super Admin's console can show who is signed in where, on
+ * which version: X-Platform, X-App-Version, X-App-Build, X-Device-Name,
+ * X-OS-Version and X-Push-Permission (read once at start-up and whenever the
+ * app comes back to the front; never asked for).
  */
+import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+import * as Application from 'expo-application';
+import * as Device from 'expo-device';
 import * as FileSystem from 'expo-file-system/legacy';
+import * as Notifications from 'expo-notifications';
 import productConfig from '../product/config';
 import { currentLanguage, tr } from '../i18n';
 
@@ -158,8 +166,57 @@ function statusMessage(status) {
 
 const networkMessage = () => tr("Can't reach the server. Check your internet connection and try again.");
 
+// ---------------------------------------------------------------- who is asking
+
+/** Printable ASCII only (header values must be), trimmed and short. */
+const headerText = (value, max = 80) =>
+  String(value || '')
+    .replace(/[^\x20-\x7e]/g, '')
+    .trim()
+    .slice(0, max);
+
+/** "Google Pixel 7", "Samsung SM-A515F", "iPhone 15". */
+function deviceLabel() {
+  const make = headerText(Device.manufacturer || Device.brand, 30);
+  const model = headerText(Device.modelName, 50);
+  if (!model) return make;
+  if (!make || model.toLowerCase().startsWith(make.toLowerCase())) return model;
+  return `${make.charAt(0).toUpperCase()}${make.slice(1)} ${model}`;
+}
+
+const CLIENT_HEADERS = Object.fromEntries(
+  Object.entries({
+    'X-Platform': ['android', 'ios', 'web'].includes(Platform.OS) ? Platform.OS : 'other',
+    'X-App-Version': headerText(Application.nativeApplicationVersion, 40),
+    'X-App-Build': headerText(Application.nativeBuildVersion, 20),
+    'X-Device-Name': deviceLabel(),
+    'X-OS-Version': headerText([Device.osName, Device.osVersion].filter(Boolean).join(' '), 40),
+  }).filter(([, v]) => v)
+);
+
+let pushPermission = null;
+
+/** Whether this phone lets the app show notifications ('granted' | 'denied' | 'undetermined'). Never asks. */
+export async function refreshPushPermission() {
+  if (Platform.OS === 'web') return null;
+  try {
+    const { status } = await Notifications.getPermissionsAsync();
+    if (['granted', 'denied', 'undetermined'].includes(status)) pushPermission = status;
+  } catch {
+    /* not known on this device */
+  }
+  return pushPermission;
+}
+
+refreshPushPermission();
+// The person may change it in the phone's settings while the app is in the background.
+AppState.addEventListener('change', (state) => {
+  if (state === 'active') refreshPushPermission();
+});
+
 function baseHeaders(sentToken) {
-  const headers = { Accept: 'application/json', 'X-App-Lang': currentLanguage() };
+  const headers = { Accept: 'application/json', 'X-App-Lang': currentLanguage(), ...CLIENT_HEADERS };
+  if (pushPermission) headers['X-Push-Permission'] = pushPermission;
   if (sentToken) headers.Authorization = `Bearer ${sentToken}`;
   return headers;
 }

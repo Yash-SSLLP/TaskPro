@@ -2,11 +2,15 @@
  * "How far along are you?": the doer's own figure. A drag and four
  * shortcuts; the value is only sent on release or on a shortcut, never per
  * pixel. A failed save puts the bar back.
+ *
+ * The HRMS app's weights (2026-10-08); the shortcut buttons are 36 tall, not
+ * 40 (the user: "reduce the size of all the buttons"), while the drag keeps
+ * its 40px of hittable height around the 8px track.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import { tr } from '../../i18n';
-import { colors, font, radius, space } from '../../platform/theme';
+import { colors, radius, space } from '../../platform/theme';
 import { PROGRESS_STEPS, clampProgress } from '../taskStatus';
 
 const STEP = 5;
@@ -144,8 +148,8 @@ export default function ProgressControl({ value = 0, onCommit, disabled = false,
 const styles = StyleSheet.create({
   wrap: { gap: space(2) },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  label: { color: colors.textSecondary, fontSize: 14, fontWeight: font.semibold },
-  value: { fontSize: 18, fontWeight: font.bold },
+  label: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
+  value: { fontSize: 18, fontWeight: '800' },
   hit: { minHeight: 40, justifyContent: 'center' },
   off: { opacity: 0.5 },
   track: { height: 8, borderRadius: 4, backgroundColor: colors.border, overflow: 'hidden' },
@@ -164,7 +168,7 @@ const styles = StyleSheet.create({
   steps: { flexDirection: 'row', gap: space(2) },
   step: {
     flex: 1,
-    minHeight: 40,
+    minHeight: 36,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.input,
@@ -172,5 +176,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.card,
   },
-  stepText: { color: colors.textSecondary, fontSize: 13, fontWeight: font.semibold },
+  // Weight on the BASE, so picking one cannot resize it.
+  stepText: { color: colors.textSecondary, fontSize: 13, fontWeight: '700' },
 });

@@ -32,7 +32,7 @@ async function exportTasks(req, res) {
   const loopNames = await people.namesOf(rows.flatMap((r) => (r.loopUsers || []).map(idOf)));
 
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'Task Pro';
+  wb.creator = 'PinTask';
   wb.created = new Date();
 
   const ws = wb.addWorksheet('Tasks');

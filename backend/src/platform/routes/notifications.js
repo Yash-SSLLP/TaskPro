@@ -3,6 +3,7 @@
  */
 const express = require('express');
 const Notification = require('../models/Notification');
+const product = require('../../product');
 const { protect } = require('../auth');
 const { z, parse, objectId } = require('../validate');
 
@@ -35,6 +36,9 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/unread-count', async (req, res) => {
+  // Both apps poll this; the product catches up on anything due first (at most
+  // once a minute), so an alert that is due shows in this very count.
+  await Promise.resolve(product.catchUp?.()).catch((err) => console.warn('[catch-up]', err.message));
   res.json({ unread: await Notification.countDocuments({ ...mine(req), readAt: null }) });
 });
 

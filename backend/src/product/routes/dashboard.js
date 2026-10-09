@@ -77,14 +77,14 @@ function scoreRow(r, label, extra = {}) {
 
 /** Person rows, labelled with the people's current names and pins (switched-off people dropped). */
 async function personRows(rows) {
-  const users = await User.find({ _id: { $in: rows.map((r) => r._id) }, status: 'active' }).select('name pin').lean();
+  const users = await User.find({ _id: { $in: rows.map((r) => r._id) }, status: 'active' }).select('name pin photo').lean();
   const byId = new Map(users.map((u) => [String(u._id), u]));
   return rows
     .filter((r) => byId.has(String(r._id)))
     .map((r) => {
       const u = byId.get(String(r._id));
       const id = String(u._id);
-      const person = { _id: id, id, name: u.name, pin: u.pin || '', pinDisplay: formatPin(u.pin) };
+      const person = { _id: id, id, name: u.name, pin: u.pin || '', pinDisplay: formatPin(u.pin), photoUrl: User.photoUrlOf(u) };
       return scoreRow(r, u.name, { key: id, person });
     });
 }

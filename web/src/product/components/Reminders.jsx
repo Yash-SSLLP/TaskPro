@@ -1,6 +1,6 @@
 /**
  * Reminders: the Stepper, the repeating-reminder builder (ReminderPattern) and
- * the per-task rule list (ReminderEditor) — the HRMS components, in Task Pro's
+ * the per-task rule list (ReminderEditor) — the HRMS components, in PinTask's
  * style.
  *
  * A rule is the HRMS reminder shape:
@@ -21,12 +21,17 @@ import {
 
 const field = 'h-9 rounded-lg border border-line bg-card px-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
 
+/** A small choice chip (HRMS 30px): filled once chosen. */
 export function chipCls(on) {
   return clsx(
-    'inline-flex h-8 items-center rounded-lg border px-3 text-xs font-semibold transition-colors',
-    on ? 'border-brand bg-brand text-white' : 'border-line bg-card text-ink-soft hover:border-slate-300 hover:text-ink'
+    'inline-flex min-h-[30px] items-center rounded-lg border px-3 text-xs font-medium transition-colors',
+    on ? 'border-brand bg-brand text-on-brand' : 'border-line bg-card text-ink-soft hover:border-slate-300 hover:text-ink'
   );
 }
+
+/** A segmented track and its options (index.css .seg-track / .seg-on: the lit pill stays raised in dark). */
+export const segTrack = 'seg-track gap-1 rounded-xl p-1'; // add `grid` or `inline-grid` and the columns
+export const segOption = (on) => clsx('h-8 rounded-lg px-3 text-xs font-semibold transition-colors', on ? 'seg-on text-ink shadow-sm' : 'text-ink-soft hover:text-ink');
 
 /** − value + : a number chosen in steps, worded in the middle. */
 export function Stepper({ value, min, max, onChange, format, label }) {
@@ -58,7 +63,7 @@ export function WeekdayPicker({ value = [], onChange }) {
             aria-label={WEEKDAY_NAMES[i]}
             aria-pressed={on}
             onClick={() => onChange(on ? value.filter((x) => x !== i) : [...value, i].sort((a, b) => a - b))}
-            className={clsx('h-8 min-w-0 rounded-lg border text-xs font-semibold sm:min-w-[36px]', on ? 'border-brand bg-brand text-white' : 'border-line bg-card text-ink-soft')}
+            className={clsx('h-8 min-w-0 rounded-lg border text-xs font-medium transition-colors sm:min-w-[36px]', on ? 'border-brand bg-brand text-on-brand' : 'border-line bg-card text-ink-soft hover:border-slate-300')}
           >
             {d}
           </button>
@@ -137,16 +142,9 @@ export function ReminderPattern({ value, onChange, allowOff = true, hints = {}, 
       {allowOff && <Switch checked={Boolean(value)} onChange={toggle} label={title} />}
 
       {value && (
-        <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 min-[380px]:grid-cols-4" role="tablist" aria-label="How often to remind">
+        <div className={clsx(segTrack, 'grid grid-cols-2 min-[380px]:grid-cols-4')} role="tablist" aria-label="How often to remind">
           {REMINDER_PATTERNS.map((s) => (
-            <button
-              key={s.key}
-              type="button"
-              role="tab"
-              aria-selected={pattern === s.key}
-              onClick={() => pick(s.key)}
-              className={clsx('h-8 rounded-lg text-xs font-semibold', pattern === s.key ? 'bg-card text-ink shadow-sm' : 'text-ink-soft hover:text-ink')}
-            >
+            <button key={s.key} type="button" role="tab" aria-selected={pattern === s.key} onClick={() => pick(s.key)} className={segOption(pattern === s.key)}>
               {s.label}
             </button>
           ))}
@@ -199,11 +197,11 @@ export function ReminderPattern({ value, onChange, allowOff = true, hints = {}, 
 
       {pattern === 'MONTHLY' && (
         <>
-          <div className="inline-flex rounded-xl bg-slate-100 p-1">
+          <div className={clsx(segTrack, 'inline-grid grid-cols-2')}>
             {[['DATE', 'On a date'], ['WEEKDAY', 'On a weekday']].map(([k, label]) => {
               const on = (value.monthlyMode === 'WEEKDAY' ? 'WEEKDAY' : 'DATE') === k;
               return (
-                <button key={k} type="button" aria-pressed={on} onClick={() => set({ monthlyMode: k })} className={clsx('h-8 rounded-lg px-3 text-xs font-semibold', on ? 'bg-card text-ink shadow-sm' : 'text-ink-soft')}>
+                <button key={k} type="button" aria-pressed={on} onClick={() => set({ monthlyMode: k })} className={segOption(on)}>
                   {label}
                 </button>
               );
@@ -233,12 +231,12 @@ export function ReminderPattern({ value, onChange, allowOff = true, hints = {}, 
       )}
 
       {value && (
-        <div className="flex items-start gap-3 rounded-xl bg-brand-soft/70 px-3 py-2.5">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand text-white">
-            <Bell className="h-4 w-4" />
+        <div className="flex items-start gap-2.5 rounded-xl bg-brand-soft px-3 py-2.5">
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand text-on-brand">
+            <Bell className="h-3.5 w-3.5" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-ink">{repeatingReminderText(value)}</p>
+            <p className="text-sm font-medium text-ink">{repeatingReminderText(value)}</p>
             <p className="text-xs text-ink-soft">
               {pattern === 'HOURLY' ? `At ${hourlyTimes(value)}. ` : ''}Until it is done — it stops the moment the work is finished.
             </p>
@@ -272,8 +270,8 @@ function OffsetRule({ rule, onChange, onRemove }) {
         <option value="BEFORE">before it is due</option>
         <option value="AFTER">after it is due</option>
       </select>
-      <button type="button" onClick={onRemove} className="ml-auto grid h-9 w-9 place-items-center rounded-lg text-ink-faint hover:bg-red-50 hover:text-red-600" aria-label={`Remove the reminder ${reminderLabel(rule)}`}>
-        <Trash2 className="h-4 w-4" />
+      <button type="button" onClick={onRemove} className="ml-auto grid h-8 w-8 place-items-center rounded-lg text-ink-faint hover:bg-red-50 hover:text-red-600" aria-label={`Remove the reminder ${reminderLabel(rule)}`}>
+        <Trash2 className="h-3.5 w-3.5" />
       </button>
     </div>
   );
@@ -291,7 +289,7 @@ export function ReminderEditor({ value = [], onChange, emptyText = 'No reminders
 
   return (
     <div className="space-y-3">
-      {list.length === 0 && <p className="text-sm text-ink-soft">{emptyText}</p>}
+      {list.length === 0 && <p className="text-xs text-ink-soft">{emptyText}</p>}
 
       {list.map((r, i) =>
         r.when === 'EVERY' ? null : <OffsetRule key={i} rule={r} onChange={(next) => replace(i, next)} onRemove={() => remove(i)} />
@@ -300,13 +298,13 @@ export function ReminderEditor({ value = [], onChange, emptyText = 'No reminders
       {everyAt >= 0 && (
         <div className="space-y-2 rounded-xl border border-line bg-card p-3">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Until it is done</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">Until it is done</span>
             <div className="flex items-center gap-2">
               <select value={list[everyAt].channel || 'APP'} onChange={(e) => replace(everyAt, { ...list[everyAt], channel: e.target.value })} className={field} aria-label="How">
                 {REMINDER_CHANNELS.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
               </select>
-              <button type="button" onClick={() => remove(everyAt)} className="grid h-9 w-9 place-items-center rounded-lg text-ink-faint hover:bg-red-50 hover:text-red-600" aria-label="Remove this reminder">
-                <Trash2 className="h-4 w-4" />
+              <button type="button" onClick={() => remove(everyAt)} className="grid h-8 w-8 place-items-center rounded-lg text-ink-faint hover:bg-red-50 hover:text-red-600" aria-label="Remove this reminder">
+                <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
@@ -318,17 +316,17 @@ export function ReminderEditor({ value = [], onChange, emptyText = 'No reminders
         <button
           type="button"
           onClick={() => onChange?.([...list, { channel: 'APP', when: 'BEFORE', amount: 1, unit: 'HOURS' }])}
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-card px-3 text-sm font-medium text-ink-soft hover:border-slate-300 hover:text-ink"
+          className="inline-flex min-h-[32px] items-center gap-1.5 rounded-lg border border-line bg-card px-3 text-xs font-medium text-ink-soft transition hover:border-slate-300 hover:text-ink"
         >
-          <Plus className="h-4 w-4" /> Before / after the deadline
+          <Plus className="h-3.5 w-3.5" /> Before / after the deadline
         </button>
         {everyAt < 0 && (
           <button
             type="button"
             onClick={() => onChange?.([...list, repeatingRule('HOURLY')])}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-card px-3 text-sm font-medium text-ink-soft hover:border-slate-300 hover:text-ink"
+            className="inline-flex min-h-[32px] items-center gap-1.5 rounded-lg border border-line bg-card px-3 text-xs font-medium text-ink-soft transition hover:border-slate-300 hover:text-ink"
           >
-            <Bell className="h-4 w-4" /> Repeat until done
+            <Bell className="h-3.5 w-3.5" /> Repeat until done
           </button>
         )}
       </div>
