@@ -1,8 +1,8 @@
 {
-  "versionName": "1.0.2",
-  "versionCode": 3,
-  "fileName": "taskpro-1.0.2-3.apk",
-  "size": 43159242,
-  "notes": "Fixes the app closing as soon as it opens.\nNew: light and dark mode (More → Appearance).\nThe app now offers new versions itself (More → App updates).",
-  "publishedAt": "2026-10-08T13:31:50.975Z"
+  "versionName": "1.0.3",
+  "versionCode": 4,
+  "fileName": "taskpro-1.0.3-4.apk",
+  "size": 43688780,
+  "notes": "Now called PinTask, with a new look in light and dark.\nNew: Calendar tab with your tasks and reminders.\nNew: Profile with your photo.\nSwipe a task to accept, finish, reject or ask for more time.\nChanges show up on your other devices within seconds.",
+  "publishedAt": "2026-10-09T08:13:07.736Z"
 }
