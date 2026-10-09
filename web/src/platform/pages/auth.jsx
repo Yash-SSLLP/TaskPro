@@ -22,25 +22,25 @@ const homeFor = (user) => (user?.role === 'superadmin' ? '/console' : HOME);
 function AuthLayout({ title, subtitle, children, footer }) {
   return (
     <div className="flex min-h-screen">
-      {/* Ink in both themes, lit like the logo's tile, with the mark as a watermark. */}
+      {/* Navy in both themes, lit like the logo's tile, with the mark as a watermark. */}
       <aside className="auth-hero relative hidden w-[44%] max-w-xl flex-col justify-between overflow-hidden p-10 lg:flex">
         <img src="/mark.svg" alt="" aria-hidden className="pointer-events-none absolute -bottom-24 -right-28 w-[30rem] max-w-none opacity-[0.06]" />
         <div className="relative flex items-center gap-3">
           <img src="/logo.svg" width={44} height={44} alt="" className="drop-shadow" />
-          <Wordmark className="text-xl text-[#f1ece2]" />
+          <Wordmark className="text-xl text-white" />
         </div>
         <div className="relative">
-          <h2 className="max-w-md text-[2.15rem] font-semibold leading-[1.15] tracking-[-0.02em] text-[#f1ece2]">{product.tagline}</h2>
+          <h2 className="max-w-md text-[2.15rem] font-semibold leading-[1.15] tracking-[-0.02em] text-white">{product.tagline}</h2>
           <ul className="mt-9 space-y-4">
             {(product.pitch || []).map((line) => (
-              <li key={line} className="flex items-start gap-3 text-[16px] leading-snug text-[#f1ece2]/85">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#ff5a3c]" aria-hidden />
+              <li key={line} className="flex items-start gap-3 text-[16px] leading-snug text-white/85">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#78b0fd]" aria-hidden />
                 {line}
               </li>
             ))}
           </ul>
         </div>
-        <p className="relative text-sm text-[#a39d8f]">Works on your phone and computer.</p>
+        <p className="relative text-sm text-[#aacbff]">Works on your phone and computer.</p>
       </aside>
       <main className="relative flex flex-1 flex-col items-center justify-center px-5 py-10">
         {/* Light or dark before signing in, as inside: the top corner, level

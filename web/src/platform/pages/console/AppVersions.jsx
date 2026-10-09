@@ -1,6 +1,6 @@
 /**
  * Which app each person is on, from the devices they are signed in on: the
- * newest phone they use (its PinTask version), else the web, else nothing.
+ * newest phone they use (its KARO version), else the web, else nothing.
  * "Latest" is the newest published Android build (/app/release.json).
  *
  *   On the latest    a phone on that build (or newer)
@@ -75,7 +75,7 @@ export function AppVersions({ filter, onFilter, onOpenPerson }) {
         />
         <p className="text-xs text-ink-soft">
           {latest
-            ? `Latest: PinTask ${latest.versionName} (build ${latest.versionCode})${latest.publishedAt ? `, published ${formatDate(latest.publishedAt, tz)}` : ''}`
+            ? `Latest: KARO ${latest.versionName} (build ${latest.versionCode})${latest.publishedAt ? `, published ${formatDate(latest.publishedAt, tz)}` : ''}`
             : release.isLoading
               ? ' '
               : 'No Android build has been published yet.'}

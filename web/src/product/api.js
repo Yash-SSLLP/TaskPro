@@ -1,6 +1,6 @@
 /**
  * Every call the task module makes, in one place — the HRMS `api/tasks.js`
- * client on PinTask's fetch client. Calls that can carry a voice note and
+ * client on KARO's fetch client. Calls that can carry a voice note and
  * files (create, edit, move, remark, submit/approve/reject, recurring) go
  * through `api.send`, which builds the multipart body the HRMS way.
  */

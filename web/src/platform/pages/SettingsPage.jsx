@@ -158,7 +158,7 @@ function PreferencesSection() {
   };
 
   return (
-    <Section title="Preferences" description="How PinTask works for you. Others don't see these.">
+    <Section title="Preferences" description="How KARO works for you. Others don't see these.">
       {query.isLoading && !query.data ? (
         <div className="space-y-4">
           <Skeleton className="h-11" />
@@ -257,7 +257,7 @@ const THEME_OPTIONS = [
 function AppearanceSection() {
   const mode = useTheme((s) => s.mode);
   return (
-    <Section title="Appearance" description="How PinTask looks on this device. System follows your computer or phone.">
+    <Section title="Appearance" description="How KARO looks on this device. System follows your computer or phone.">
       <div className="seg-track inline-flex rounded-xl p-0.5" role="radiogroup" aria-label="Appearance">
         {THEME_OPTIONS.map((o) => (
           <button
@@ -302,7 +302,7 @@ export function SettingsPage() {
       <PasswordSection />
       <PreferencesSection />
       <AppearanceSection />
-      <Section title="Android app" description="PinTask on your phone, with reminders and alerts.">
+      <Section title="Android app" description="KARO on your phone, with reminders and alerts.">
         <AndroidAppDetails />
       </Section>
       <Section title="Privacy and your account" description="How we handle your information, and how to leave.">

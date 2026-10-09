@@ -1,6 +1,6 @@
 /**
  * Reminders: the Stepper, the repeating-reminder builder (ReminderPattern) and
- * the per-task rule list (ReminderEditor) — the HRMS components, in PinTask's
+ * the per-task rule list (ReminderEditor) — the HRMS components, in KARO's
  * style.
  *
  * A rule is the HRMS reminder shape:

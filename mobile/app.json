@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "PinTask",
+    "name": "KARO",
     "slug": "taskpro",
     "scheme": "taskpro",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -17,12 +17,12 @@
     },
     "android": {
       "package": "in.salestracker.taskpro",
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundImage": "./assets/adaptive-icon-bg.png",
         "monochromeImage": "./assets/adaptive-icon-mono.png",
-        "backgroundColor": "#15130F"
+        "backgroundColor": "#032D60"
       },
       "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "resize",
@@ -53,10 +53,10 @@
           "image": "./assets/splash-light.png",
           "imageWidth": 132,
           "resizeMode": "contain",
-          "backgroundColor": "#F1ECE2",
+          "backgroundColor": "#F3F3F3",
           "dark": {
             "image": "./assets/splash-dark.png",
-            "backgroundColor": "#15130F"
+            "backgroundColor": "#001639"
           }
         }
       ],
@@ -64,22 +64,22 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#D9381E",
+          "color": "#0176D3",
           "defaultChannel": "default"
         }
       ],
       [
         "expo-image-picker",
         {
-          "cameraPermission": "PinTask uses the camera to take photos you attach to a task, and your profile photo.",
-          "photosPermission": "PinTask lets you choose photos from your gallery to attach to a task, or as your profile photo.",
-          "microphonePermission": "PinTask uses the microphone to record voice notes on tasks."
+          "cameraPermission": "KARO uses the camera to take photos you attach to a task, and your profile photo.",
+          "photosPermission": "KARO lets you choose photos from your gallery to attach to a task, or as your profile photo.",
+          "microphonePermission": "KARO uses the microphone to record voice notes on tasks."
         }
       ],
       [
         "expo-audio",
         {
-          "microphonePermission": "PinTask uses the microphone to record voice notes on tasks."
+          "microphonePermission": "KARO uses the microphone to record voice notes on tasks."
         }
       ],
       "expo-secure-store",

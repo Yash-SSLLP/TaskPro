@@ -1,5 +1,5 @@
 /**
- * My profile: my photo on an Ink band (tap it to take one, choose one or
+ * My profile: my photo on a navy band (tap it to take one, choose one or
  * remove it), my name, job title and how long I have been here, my Task Pin,
  * then name, job title, email and mobile. Only what changed is sent.
  *
@@ -28,7 +28,7 @@ import { tr } from '../../i18n';
 const PHOTO_SIZE = 512;
 const PHOTO_QUALITY = 0.85;
 const AVATAR = 108;
-const INK = '#15130f';
+const NAVY = '#032d60';
 // Let the sheet finish closing before the camera, the gallery or a dialog opens over it.
 const SHEET_CLOSE_MS = 320;
 
@@ -72,7 +72,7 @@ async function pickPhoto(source) {
   if (source === 'camera') {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
-      const message = tr('Allow camera access for PinTask in your phone settings to take photos.');
+      const message = tr('Allow camera access for KARO in your phone settings to take photos.');
       if (perm.canAskAgain) {
         toast.error(message);
       } else if (await confirm({ title: tr('Camera access is off'), message, confirmLabel: tr('Open settings') })) {
@@ -87,7 +87,7 @@ async function pickPhoto(source) {
   return res.canceled ? null : res.assets?.[0] || null;
 }
 
-/** The band behind the photo: Ink with a glow of the accent, in both themes. */
+/** The band behind the photo: navy with a glow of the accent, in both themes. */
 function Band() {
   return (
     <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
@@ -97,11 +97,11 @@ function Band() {
           <Stop offset="1" stopColor={colors.primary} stopOpacity={0} />
         </RadialGradient>
         <RadialGradient id="profileSheen" cx="0%" cy="100%" rx="70%" ry="130%" fx="0%" fy="100%">
-          <Stop offset="0" stopColor="#f1ece2" stopOpacity={0.1} />
-          <Stop offset="1" stopColor="#f1ece2" stopOpacity={0} />
+          <Stop offset="0" stopColor="#ffffff" stopOpacity={0.1} />
+          <Stop offset="1" stopColor="#ffffff" stopOpacity={0} />
         </RadialGradient>
       </Defs>
-      <Rect x="0" y="0" width="100%" height="100%" fill={INK} />
+      <Rect x="0" y="0" width="100%" height="100%" fill={NAVY} />
       <Rect x="0" y="0" width="100%" height="100%" fill="url(#profileGlow)" />
       <Rect x="0" y="0" width="100%" height="100%" fill="url(#profileSheen)" />
     </Svg>
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     marginBottom: space(5),
     ...shadow,
   },
-  band: { height: 104, backgroundColor: INK },
+  band: { height: 104, backgroundColor: NAVY },
   heroBody: { alignItems: 'center', paddingHorizontal: space(4), paddingBottom: space(5), marginTop: -(AVATAR / 2 + 4) },
   photoWrap: { borderRadius: AVATAR / 2 + 4 },
   pressed: { opacity: 0.85 },

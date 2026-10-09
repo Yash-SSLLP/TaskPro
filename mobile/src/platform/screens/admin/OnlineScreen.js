@@ -31,7 +31,7 @@ export default function OnlineScreen({ navigation }) {
   const signOut = async (s) => {
     const ok = await confirm({
       title: tr('Sign {name} out on {device}?', { name: s.user.name, device: deviceLine(s) }),
-      message: tr('That device goes back to the sign-in screen the next time it opens PinTask. Their other devices stay signed in.'),
+      message: tr('That device goes back to the sign-in screen the next time it opens KARO. Their other devices stay signed in.'),
       confirmLabel: tr('Sign out'),
       destructive: true,
     });

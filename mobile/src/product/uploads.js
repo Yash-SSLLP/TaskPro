@@ -60,7 +60,7 @@ export async function pickFiles(source, room = MAX_FILES) {
     if (source === 'camera') {
       const perm = await ImagePicker.requestCameraPermissionsAsync();
       if (!perm.granted) {
-        toast.error(tr('Allow camera access for PinTask in your phone settings to take photos.'));
+        toast.error(tr('Allow camera access for KARO in your phone settings to take photos.'));
         return [];
       }
       res = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 });

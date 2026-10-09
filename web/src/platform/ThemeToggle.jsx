@@ -28,7 +28,7 @@ function incomingPage(goingDark) {
   root.classList.toggle('dark', goingDark);
   const page = getComputedStyle(root).getPropertyValue('--page').trim();
   root.classList.toggle('dark', had);
-  return page ? `rgb(${page})` : goingDark ? '#15130f' : '#f1ece2';
+  return page ? `rgb(${page})` : goingDark ? '#001639' : '#f3f3f3';
 }
 
 export function ThemeToggle({ className }) {
@@ -86,20 +86,20 @@ export function ThemeToggle({ className }) {
       title={label}
       aria-label={label}
       aria-pressed={dark}
-      className={clsx('relative h-[28px] w-[58px] shrink-0 rounded-full transition-colors duration-200', dark ? 'bg-[#36322a]' : 'bg-slate-200', className)}
+      className={clsx('relative h-[28px] w-[58px] shrink-0 rounded-full transition-colors duration-200', dark ? 'bg-[#1c3d6b]' : 'bg-slate-200', className)}
       style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,.14)' }}
     >
       <span
         className="absolute left-[3px] top-[3px] h-[22px] w-[22px] rounded-full transition-transform duration-200"
         style={{
-          background: dark ? '#d9d2c3' : '#ffffff',
+          background: dark ? '#c9d4e5' : '#ffffff',
           boxShadow: '0 1px 3px rgba(0,0,0,.28)',
           transform: dark ? 'translateX(30px)' : 'translateX(0)',
         }}
       />
       <span className="relative z-[1] grid h-full grid-cols-2 place-items-center">
-        <Sun className="h-[14px] w-[14px]" strokeWidth={2.4} color={dark ? '#6f6a5e' : '#f59e0b'} />
-        <Moon className="h-[13px] w-[13px]" strokeWidth={2.4} color={dark ? '#ff5a3c' : '#8a857a'} />
+        <Sun className="h-[14px] w-[14px]" strokeWidth={2.4} color={dark ? '#6f84a6' : '#f59e0b'} />
+        <Moon className="h-[13px] w-[13px]" strokeWidth={2.4} color={dark ? '#1b96ff' : '#747474'} />
       </span>
     </button>
   );

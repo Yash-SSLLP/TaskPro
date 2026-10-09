@@ -49,10 +49,10 @@ export function TaskRow({ task, meId = '', onOpen, onAction, onSwipe, nudgedAt =
 
   return (
     <SwipeRow actions={swipe} onAction={(key) => onSwipe?.(key, task)}>
-      <div onClick={openRow} style={accentStyle(task)} className="task-row group cursor-pointer rounded-2xl px-3 py-2.5 shadow-sm transition duration-200 hover:-translate-y-px hover:shadow-md sm:px-4 sm:py-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+      <div onClick={openRow} style={accentStyle(task)} className="task-row group cursor-pointer rounded-2xl px-3 py-3 shadow-sm transition duration-200 hover:-translate-y-px hover:shadow-md sm:px-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="tnum hidden w-8 shrink-0 pt-0.5 text-right font-mono text-[11px] text-ink-faint sm:block">{task.serial ? `#${task.serial}` : ''}</span>
+            <span className="tnum w-8 shrink-0 pt-0.5 text-right font-mono text-[11px] text-ink-faint">{task.serial ? `#${task.serial}` : ''}</span>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                 {task.code && <span className="shrink-0 font-mono text-[11px] text-ink-faint">{task.code}</span>}
@@ -96,9 +96,8 @@ export function TaskRow({ task, meId = '', onOpen, onAction, onSwipe, nudgedAt =
                     </span>
                   </>
                 )}
-                {/* Off a phone: the row keeps to the lines that matter there. */}
                 {assignedOn && (
-                  <span className="hidden items-center gap-1 sm:inline-flex">
+                  <span className="inline-flex items-center gap-1">
                     <CalendarDays className="h-3 w-3 shrink-0 text-ink-faint" />
                     <span className="text-ink-faint">Assigned</span>
                     <span className="font-medium text-ink-soft">{assignedOn}</span>
@@ -138,7 +137,9 @@ export function TaskRow({ task, meId = '', onOpen, onAction, onSwipe, nudgedAt =
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 sm:shrink-0 sm:justify-end">
+          {/* On a phone this is its own line under the title (in line with it),
+              chips left and the dropdown right; from sm up it ends the row. */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pl-11 sm:shrink-0 sm:justify-end sm:pl-0">
             <div className="flex flex-wrap items-center gap-1.5">
               <OverdueChip task={task} />
               <PriorityChip priority={task.priority} />

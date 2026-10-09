@@ -55,7 +55,7 @@ export function Overview({ onTab }) {
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-soft">The app</h2>
-          {release && <p className="text-xs text-ink-soft">Latest release: PinTask {release.versionName} (build {release.versionCode})</p>}
+          {release && <p className="text-xs text-ink-soft">Latest release: KARO {release.versionName} (build {release.versionCode})</p>}
         </div>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Stat label="On the latest" icon={Smartphone} value={latest ?? (data ? app.app : undefined)} tone={latest ? 'text-emerald-700' : undefined} onClick={() => onTab('versions', 'latest')} />

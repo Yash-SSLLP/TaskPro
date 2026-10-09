@@ -40,7 +40,7 @@ function scoreTone(score) {
   return 'bg-slate-100 text-ink-soft';
 }
 
-/** One row, whichever shape the server sends (PinTask or HRMS words). */
+/** One row, whichever shape the server sends (KARO or HRMS words). */
 function normalise(r) {
   const open = r.open ?? num(r.pending) + num(r.inProgress) + num(r.overdue) + num(r.inReview);
   const completed = num(r.completed);

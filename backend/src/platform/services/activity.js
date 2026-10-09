@@ -96,7 +96,7 @@ async function record({ action, req, actor, actorName, system = false, target, m
     const row = {
       at: at || new Date(),
       actor: who?._id || who?.id || null,
-      actorName: actorName || who?.name || (system ? 'PinTask' : undefined),
+      actorName: actorName || who?.name || (system ? 'KARO' : undefined),
       actorRole: role,
       action,
       group: groupOf(action),

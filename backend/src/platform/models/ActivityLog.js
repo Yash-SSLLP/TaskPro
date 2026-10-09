@@ -5,7 +5,7 @@
  *
  *   action   "auth.login", "task.accepted", "admin.user_deleted"… (services/activity.js)
  *   group    auth | tasks | people | admin, from the action, for the filter
- *   actor    who did it; null for the system ("PinTask") or someone unknown
+ *   actor    who did it; null for the system ("KARO") or someone unknown
  *            (a failed sign-in). `actorName` is the name AT THE TIME.
  *   target   what it was done to: { kind: user|task|team|session, id, label }
  *   meta     the details worth keeping (fields changed, the device…). Never a

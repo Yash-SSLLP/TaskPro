@@ -2,7 +2,7 @@
   "name": "taskpro-web",
   "private": true,
   "version": "1.0.0",
-  "description": "PinTask web app",
+  "description": "KARO web app",
   "type": "module",
   "scripts": {
     "dev": "vite",

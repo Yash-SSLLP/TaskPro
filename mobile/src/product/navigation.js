@@ -1,5 +1,5 @@
 /**
- * PinTask's navigation: the bottom tabs (by role) and the product's stack
+ * KARO's navigation: the bottom tabs (by role) and the product's stack
  * screens. The platform's RootNavigator mounts these and adds the shared
  * screens (contacts, teams, profile, password, the console's person page).
  *

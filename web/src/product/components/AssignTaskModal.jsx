@@ -13,7 +13,7 @@
  * differs between tasks (title, details, recording, files).
  *
  * Laid out as the HRMS lays it out: 12px grey labels over 40px fields, in its
- * order — who, priority, review, pieces, then when — with PinTask's team and
+ * order — who, priority, review, pieces, then when — with KARO's team and
  * category before the priority.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

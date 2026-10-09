@@ -1,5 +1,5 @@
 /**
- * PinTask data hooks shared by its pages.
+ * KARO data hooks shared by its pages.
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';

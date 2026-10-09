@@ -527,7 +527,7 @@ export function rangeLabel(key) {
  * dark against the card (the HRMS app's pairs); tileTint() picks.
  */
 export const GRID_TILES = [
-  // Total wears the PinTask accent (no tint: tileTint falls back to the primary), as on the web.
+  // Total wears the KARO accent (no tint: tileTint falls back to the primary), as on the web.
   { key: 'total', icon: 'layers' },
   { key: 'pending', icon: 'hourglass', tint: '#DC6803', tintDark: '#FDB022' },
   { key: 'overdue', icon: 'alert', tint: '#D92D20', tintDark: '#F97066' },

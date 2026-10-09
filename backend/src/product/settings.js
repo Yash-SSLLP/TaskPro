@@ -1,5 +1,5 @@
 /**
- * Personal settings for PinTask, stored on User.settings.
+ * Personal settings for KARO, stored on User.settings.
  * Always read through read(), so settings added later get their defaults.
  */
 const { IANAZone } = require('luxon');

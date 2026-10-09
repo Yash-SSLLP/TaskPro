@@ -228,7 +228,7 @@ export function PersonDrawer({ id, onClose, onSeeActivity }) {
   const signOutDevice = async (s) => {
     const ok = await confirm({
       title: `Sign ${user.name} out on ${deviceLine(s)}?`,
-      text: 'That device goes back to the sign-in screen the next time it talks to PinTask. Their other devices stay signed in.',
+      text: 'That device goes back to the sign-in screen the next time it talks to KARO. Their other devices stay signed in.',
       confirmLabel: 'Sign out',
       tone: 'warning',
     });

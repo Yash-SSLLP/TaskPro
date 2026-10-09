@@ -11,7 +11,7 @@ describe('giving tasks', () => {
     const p = await h.signup('Newbie');
     const res = await p.get('/api/tasks?scope=mine');
     assert.equal(res.status, 200);
-    assert.deepEqual(titles(res), ['Welcome to PinTask: share your Task Pin']);
+    assert.deepEqual(titles(res), ['Welcome to KARO: share your Task Pin']);
     const t = res.body.tasks[0];
     assert.equal(t.requiresApproval, false);
     assert.equal(t.createdBy.id, p.id);

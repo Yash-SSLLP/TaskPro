@@ -2,94 +2,94 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Colours as "r g b" so Tailwind can add opacity. PinTask's palette: Bone and
-   Ink with one red accent (Seq Book: emerald). html.dark (set by
-   src/platform/theme.js) swaps them; the slate and hue scales are swapped by
-   the plugin in tailwind.config.js, and slate is warmed to match. */
+/* Colours as "r g b" so Tailwind can add opacity. KARO's palette: Salesforce's
+   (salesforce.com): its brand blue on white and a neutral grey page, navy in
+   the dark. html.dark (set by src/platform/theme.js) swaps them; the slate and
+   hue scales are swapped by the plugin in tailwind.config.js. */
 :root {
-  --brand: 217 56 30; /* #d9381e: buttons, links, done checks */
-  --brand-dark: 182 47 25; /* #b62f19: the accent's hover */
-  --brand-soft: 247 228 220; /* #f7e4dc: the accent as a wash on the surface */
-  --brand-accent: 232 71 43; /* #e8472b: the logo's check, large graphics only */
-  --on-brand: 255 255 255; /* text and icons on the accent */
-  --ink: 21 19 15; /* #15130f: Ink */
-  --ink-soft: 107 102 91; /* #6b665b */
-  --ink-faint: 138 133 122; /* #8a857a: Stone */
-  --line: 217 210 195; /* #d9d2c3: Sand */
-  --page: 241 236 226; /* #f1ece2: Bone */
-  --card: 250 247 241; /* #faf7f1: cards, inputs, sheets */
-  --well: 246 242 234; /* #f6f2ea: a step between the card and the page */
+  --brand: 1 118 211; /* #0176d3: Salesforce blue. Buttons, links, done checks */
+  --brand-dark: 1 68 134; /* #014486: the hover */
+  --brand-soft: 234 245 254; /* #eaf5fe: the blue as a wash on the surface */
+  --brand-accent: 6 106 254; /* #066afe: the logo's check, large graphics only */
+  --on-brand: 255 255 255; /* text and icons on the blue */
+  --ink: 24 24 24; /* #181818 */
+  --ink-soft: 92 92 92; /* #5c5c5c */
+  --ink-faint: 116 116 116; /* #747474 */
+  --line: 229 229 229; /* #e5e5e5 */
+  --page: 243 243 243; /* #f3f3f3 */
+  --card: 255 255 255; /* cards, inputs, sheets */
+  --well: 248 249 251; /* #f8f9fb: a step between the card and the page */
   /* How much of a colour tints a selected tile. */
   --tint: 7%;
-  --shadow-card: 0 1px 2px rgb(21 19 15 / 0.05), 0 2px 8px rgb(21 19 15 / 0.05);
-  --shadow-pop: 0 10px 30px -10px rgb(21 19 15 / 0.25), 0 4px 10px -4px rgb(21 19 15 / 0.1);
+  --shadow-card: 0 1px 2px rgb(3 45 96 / 0.05), 0 2px 8px rgb(3 45 96 / 0.05);
+  --shadow-pop: 0 10px 30px -10px rgb(3 45 96 / 0.25), 0 4px 10px -4px rgb(3 45 96 / 0.1);
 
   /* A task's wash, by priority (and green once done, grey once cancelled):
      background, its edge, the ink on it, and the solid rail / dot. The server
      may send its own light palette, which lifecycle.js writes over these. */
   --tp-urgent-ink: #b42318;
-  --tp-urgent-bg: #f8e8e1;
-  --tp-urgent-border: #eca299;
+  --tp-urgent-bg: #fef3f2;
+  --tp-urgent-border: #fda29b;
   --tp-urgent-solid: #d92d20;
   --tp-medium-ink: #b54708;
-  --tp-medium-bg: #faefe0;
-  --tp-medium-border: #f9cc90;
+  --tp-medium-bg: #fffaeb;
+  --tp-medium-border: #fec84b;
   --tp-medium-solid: #f79009;
-  --tp-low-ink: #57524a;
-  --tp-low-bg: #f1eee7;
-  --tp-low-border: #d9d5cc;
-  --tp-low-solid: #a39d8f;
+  --tp-low-ink: #444444;
+  --tp-low-bg: #f4f4f4;
+  --tp-low-border: #dedede;
+  --tp-low-solid: #a0a0a0;
   --tp-done-ink: #027a48;
-  --tp-done-bg: #e9f2e7;
-  --tp-done-border: #99dcb8;
+  --tp-done-bg: #ecfdf3;
+  --tp-done-border: #6ce9a6;
   --tp-done-solid: #12b76a;
-  --tp-cancelled-ink: #6b665b;
-  --tp-cancelled-bg: #f2efe8;
-  --tp-cancelled-border: #dbd7ce;
-  --tp-cancelled-solid: #a8a294;
+  --tp-cancelled-ink: #5c5c5c;
+  --tp-cancelled-bg: #f7f7f7;
+  --tp-cancelled-border: #e5e5e5;
+  --tp-cancelled-solid: #aeaeae;
   color-scheme: light;
 }
 
 html.dark {
-  --brand: 255 90 60; /* #ff5a3c: brighter, so it glows on the dark */
-  --brand-dark: 255 110 83; /* #ff6e53: the hover lifts on the dark */
-  --brand-soft: 62 37 28; /* #3e251c */
-  --brand-accent: 255 90 60;
-  --on-brand: 21 19 15; /* Ink on the bright accent */
-  --ink: 241 236 226; /* #f1ece2: Bone */
-  --ink-soft: 163 157 143; /* #a39d8f */
-  --ink-faint: 111 106 94; /* #6f6a5e */
-  --line: 54 50 42; /* #36322a */
-  --page: 21 19 15; /* #15130f: Ink */
-  --card: 31 28 23; /* #1f1c17 */
-  --well: 39 36 31; /* #27241f */
+  --brand: 27 150 255; /* #1b96ff: Salesforce's lighter blue, bright on navy */
+  --brand-dark: 120 176 253; /* #78b0fd: the hover lifts on the dark */
+  --brand-soft: 9 57 112; /* #093970 */
+  --brand-accent: 27 150 255;
+  --on-brand: 0 22 57; /* navy on the bright blue */
+  --ink: 238 244 255; /* #eef4ff */
+  --ink-soft: 168 184 208; /* #a8b8d0 */
+  --ink-faint: 111 132 166; /* #6f84a6 */
+  --line: 28 61 107; /* #1c3d6b */
+  --page: 0 22 57; /* #001639: navy */
+  --card: 4 34 76; /* #04224c */
+  --well: 10 42 87; /* #0a2a57 */
   --tint: 10%;
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.02);
   --shadow-pop: 0 16px 40px -12px rgb(0 0 0 / 0.75), 0 4px 12px -4px rgb(0 0 0 / 0.5);
 
-  /* Soft washes of the same hues over the dark card (mixed at ~11%, edges at
-     ~36%), so a row reads as amber or red without turning into a brown or
-     maroon block; the ink is the hue's light end. */
+  /* Soft washes of the same hues over the navy card (mixed at ~16%, edges at
+     ~42%), so a row reads as amber or red without turning into a block; the
+     ink is the hue's light end. */
   --tp-urgent-ink: #fda29b;
-  --tp-urgent-bg: #36201b;
-  --tp-urgent-border: #6a2a23;
+  --tp-urgent-bg: #2a2749;
+  --tp-urgent-border: #673044;
   --tp-urgent-solid: #f04438;
   --tp-medium-ink: #fec84b;
-  --tp-medium-bg: #372915;
-  --tp-medium-border: #6d4612;
+  --tp-medium-bg: #2b3441;
+  --tp-medium-border: #6a5030;
   --tp-medium-solid: #f79009;
-  --tp-low-ink: #d9d2c3;
-  --tp-low-bg: #2a2621;
-  --tp-low-border: #4f4a42;
-  --tp-low-solid: #a39d8f;
+  --tp-low-ink: #c9d4e5;
+  --tp-low-bg: #0c2a55;
+  --tp-low-border: #2b4f80;
+  --tp-low-solid: #a8b8d0;
   --tp-done-ink: #6ce9a6;
-  --tp-done-bg: #1e2d20;
-  --tp-done-border: #1a5435;
+  --tp-done-bg: #063a51;
+  --tp-done-border: #0a6159;
   --tp-done-solid: #12b76a;
-  --tp-cancelled-ink: #a39d8f;
-  --tp-cancelled-bg: #25221d;
-  --tp-cancelled-border: #3c3831;
-  --tp-cancelled-solid: #6f6a5e;
+  --tp-cancelled-ink: #a8b8d0;
+  --tp-cancelled-bg: #0a2650;
+  --tp-cancelled-border: #1c3d6b;
+  --tp-cancelled-solid: #6f84a6;
   color-scheme: dark;
 }
 
@@ -168,7 +168,7 @@ html.dark {
 }
 .modal-panel {
   border: 1px solid rgb(var(--line));
-  box-shadow: 0 30px 70px -30px rgb(21 19 15 / 0.5), 0 10px 24px -16px rgb(21 19 15 / 0.28);
+  box-shadow: 0 30px 70px -30px rgb(3 45 96 / 0.5), 0 10px 24px -16px rgb(3 45 96 / 0.28);
   animation: tp-rise 0.2s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 html.dark .modal-panel {
@@ -273,17 +273,17 @@ html.dark .hover-veil:hover {
 --------------------------------------------------------------------------- */
 :root {
   --cal-panel: rgb(var(--card));
-  --cal-cell: #f2eee6;
-  --cal-cell-out: #f7f4ee;
-  --cal-ink: #15130f;
-  --cal-ink-dim: #8a857a;
+  --cal-cell: #f3f6fa;
+  --cal-cell-out: #f8f9fb;
+  --cal-ink: #181818;
+  --cal-ink-dim: #747474;
 }
 html.dark {
-  --cal-panel: #1a1814;
-  --cal-cell: #27231d;
-  --cal-cell-out: #201d18;
-  --cal-ink: #f1ece2;
-  --cal-ink-dim: #8f897c;
+  --cal-panel: #031d42;
+  --cal-cell: #0a2a57;
+  --cal-cell-out: #06234b;
+  --cal-ink: #eef4ff;
+  --cal-ink-dim: #7a8fb0;
 }
 
 .cal-shell {
@@ -559,16 +559,16 @@ html.dark {
 }
 
 /* ---------------------------------------------------------------------------
-   The sign-in pages' brand panel (platform/pages/auth.jsx): Ink in both
-   themes, lit softly from the top like the logo's tile, with a low glow of
-   the accent behind the corner.
+   The sign-in pages' brand panel (platform/pages/auth.jsx): Salesforce's navy
+   in both themes, lit softly from the top like the logo's tile, with a glow of
+   its bright blue behind the corner.
 --------------------------------------------------------------------------- */
 .auth-hero {
-  color: #f1ece2;
+  color: #ffffff;
   background:
-    radial-gradient(38rem 26rem at 105% -10%, rgb(232 71 43 / 0.22), transparent 60%),
-    radial-gradient(30rem 22rem at 10% 0%, rgb(255 255 255 / 0.07), transparent 65%),
-    linear-gradient(170deg, #2b2721 0%, #1a1814 48%, #100e0b 100%);
+    radial-gradient(38rem 26rem at 105% -10%, rgb(6 106 254 / 0.45), transparent 60%),
+    radial-gradient(30rem 22rem at 10% 0%, rgb(255 255 255 / 0.08), transparent 65%),
+    linear-gradient(170deg, #0b5cab 0%, #032d60 48%, #001639 100%);
   box-shadow: inset -1px 0 0 rgb(255 255 255 / 0.05);
 }
 
@@ -604,7 +604,7 @@ html.dark {
   border-radius: 22px;
   background-color: rgb(var(--card));
   border: 1px solid rgb(var(--line) / 0.85);
-  box-shadow: 0 1px 2px rgb(21 19 15 / 0.04), 0 22px 44px -26px rgb(21 19 15 / 0.4);
+  box-shadow: 0 1px 2px rgb(3 45 96 / 0.04), 0 22px 44px -26px rgb(3 45 96 / 0.4);
   transition: width 420ms var(--side-ease);
 }
 html.dark .side-panel {
@@ -906,7 +906,7 @@ html.dark .side-item.is-active {
   border: 1px solid rgb(var(--line));
   background-color: rgb(var(--card));
   color: rgb(var(--ink-faint));
-  box-shadow: 0 4px 14px -6px rgb(21 19 15 / 0.35);
+  box-shadow: 0 4px 14px -6px rgb(3 45 96 / 0.35);
   opacity: 0;
   transform: translateY(-50%);
   transition: opacity 200ms ease, width 300ms var(--side-ease), right 300ms var(--side-ease), color 150ms ease, box-shadow 200ms ease;
@@ -948,8 +948,8 @@ html.dark .side-item.is-active {
   white-space: nowrap;
   font-size: 12.5px;
   font-weight: 600;
-  background-color: #15130f;
-  color: #f1ece2;
+  background-color: #032d60;
+  color: #ffffff;
   box-shadow: 0 12px 28px -12px rgb(0 0 0 / 0.6);
   pointer-events: none;
   transform: translateY(-50%);
@@ -967,8 +967,8 @@ html.dark .side-item.is-active {
   transform: translateY(-50%) rotate(45deg);
 }
 html.dark .side-tip {
-  background-color: #f1ece2;
-  color: #15130f;
+  background-color: #eef4ff;
+  color: #001639;
 }
 .side-tip-extra {
   padding: 2px 6px;
@@ -977,7 +977,7 @@ html.dark .side-tip {
   background-color: rgb(255 255 255 / 0.12);
 }
 html.dark .side-tip-extra {
-  background-color: rgb(21 19 15 / 0.08);
+  background-color: rgb(0 22 57 / 0.08);
 }
 @keyframes side-tip-in {
   from {
@@ -1012,26 +1012,6 @@ html.dark .side-tip-extra {
   }
   .side-tip,
   .side-count-dot {
-    animation: none;
-  }
-}
-
-/* The chosen pile's name on a phone chip: it eases in as the chip widens. */
-.pile-chip-name {
-  animation: pile-name-in 280ms var(--side-ease);
-}
-@keyframes pile-name-in {
-  from {
-    opacity: 0;
-    transform: translateX(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .pile-chip-name {
     animation: none;
   }
 }

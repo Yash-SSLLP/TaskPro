@@ -1,8 +1,8 @@
 /**
  * Colours, type, spacing and shadows shared by every screen.
  *
- * `brand` is the only part a sibling product needs to swap (PinTask: Bone and
- * Ink with a red accent):
+ * `brand` is the only part a sibling product needs to swap (KARO:
+ * Salesforce's blues, navy in the dark):
  * everything else is the neutral design language from the design brief.
  *
  * LIGHT AND DARK. The person picks System / Light / Dark (More → Appearance).
@@ -20,49 +20,50 @@ export const THEME_MODES = ['system', 'light', 'dark'];
 
 const palettes = {
   light: {
-    // PinTask: Bone and Ink, one red accent. The check in the logo is #e8472b.
+    // KARO: Salesforce's blues. #0176d3 is its brand blue, #066afe the bright
+    // blue of its hero panels (the check in the logo).
     brand: {
-      primary: '#d9381e',
-      primaryPressed: '#b62f19',
-      primarySoft: '#f7e4dc',
-      accent: '#e8472b',
+      primary: '#0176d3',
+      primaryPressed: '#014486',
+      primarySoft: '#eaf5fe',
+      accent: '#066afe',
       onPrimary: '#ffffff',
     },
     colors: {
-      bg: '#f1ece2', // Bone
-      card: '#faf7f1', // cards, inputs, sheets
-      border: '#d9d2c3', // Sand
-      borderStrong: '#aea89b',
-      muted: '#ece6da',
+      bg: '#f3f3f3', // Salesforce's neutral page
+      card: '#ffffff', // cards, inputs, sheets
+      border: '#e5e5e5',
+      borderStrong: '#c9c9c9',
+      muted: '#eef1f6',
 
-      text: '#15130f', // Ink
-      textSecondary: '#6b665b',
-      textFaint: '#8a857a', // Stone
+      text: '#181818',
+      textSecondary: '#5c5c5c',
+      textFaint: '#747474',
 
-      danger: '#dc2626',
-      dangerPressed: '#b91c1c',
-      dangerSoft: '#fbe9e4',
-      success: '#15803d',
-      successSoft: '#ecf3e6',
-      warning: '#b45309',
-      warningSoft: '#faf0dc',
-      info: '#2563eb',
-      infoSoft: '#e9eef8',
+      danger: '#ea001e',
+      dangerPressed: '#ba0517',
+      dangerSoft: '#fef1ee',
+      success: '#2e844a',
+      successSoft: '#ebf7e6',
+      warning: '#a86403',
+      warningSoft: '#fbf3e0',
+      info: '#0b5cab',
+      infoSoft: '#eef4ff',
       // Fills under a WHITE label (a red Delete button, a count badge, a swipe
       // pane). The same in both themes: the colours above are lightened in dark
       // mode to read as text on a dark surface, and white on them would sink.
-      dangerFill: '#dc2626',
-      successFill: '#16a34a',
-      warningFill: '#b54708',
+      dangerFill: '#ea001e',
+      successFill: '#2e844a',
+      warningFill: '#a86403',
 
-      // A dark surface that always carries white text (toasts).
-      inverse: '#15130f',
+      // A dark surface that always carries white text (toasts): the navy.
+      inverse: '#032d60',
       // The empty part of a progress bar; the edge of a primary-soft card.
-      track: 'rgba(21, 19, 15, 0.08)',
-      primaryBorder: '#f0beb2',
-      dangerBorder: '#f3c4bb',
+      track: 'rgba(3, 45, 96, 0.08)',
+      primaryBorder: '#aacbff',
+      dangerBorder: '#feb8ab',
 
-      overlay: 'rgba(21, 19, 15, 0.45)',
+      overlay: 'rgba(0, 22, 57, 0.45)',
       white: '#ffffff',
     },
     // Soft avatar palette: [background, text].
@@ -73,64 +74,65 @@ const palettes = {
       ['#f7e6ee', '#be185d'],
       ['#ece8f6', '#6d28d9'],
       ['#e2eff6', '#0369a1'],
-      ['#f7e4dc', '#b62f19'],
-      ['#ece6da', '#444139'],
+      ['#eaf5fe', '#014486'],
+      ['#eef1f6', '#444444'],
       ['#e4f1e4', '#15803d'],
       ['#f8e9da', '#c2410c'],
     ],
   },
   dark: {
-    // The accent brighter, so it glows on the dark; Ink, not white, on it.
+    // Salesforce's navy, with its lighter "cloud" blue as the accent and the
+    // navy, not white, on it.
     brand: {
-      primary: '#ff5a3c',
-      primaryPressed: '#e54e32',
-      primarySoft: '#3e251c',
-      accent: '#ff5a3c',
-      onPrimary: '#15130f',
+      primary: '#1b96ff',
+      primaryPressed: '#0176d3',
+      primarySoft: '#093970',
+      accent: '#1b96ff',
+      onPrimary: '#001639',
     },
     colors: {
-      bg: '#15130f', // Ink
-      card: '#1f1c17',
-      border: '#36322a',
-      borderStrong: '#464239',
-      muted: '#2c2821',
+      bg: '#001639', // navy
+      card: '#04224c',
+      border: '#1c3d6b',
+      borderStrong: '#2b4f80',
+      muted: '#0d2b55',
 
-      text: '#f1ece2', // Bone
-      textSecondary: '#a39d8f',
-      textFaint: '#6f6a5e',
+      text: '#eef4ff',
+      textSecondary: '#a8b8d0',
+      textFaint: '#6f84a6',
 
-      danger: '#f87171',
-      dangerPressed: '#ef4444',
-      dangerSoft: '#3a1c17',
-      success: '#4ade80',
-      successSoft: '#162a1b',
-      warning: '#fbbf24',
-      warningSoft: '#352813',
-      info: '#60a5fa',
-      infoSoft: '#17233a',
-      dangerFill: '#dc2626',
-      successFill: '#16a34a',
-      warningFill: '#b54708',
+      danger: '#fe8f7d',
+      dangerPressed: '#fe5c4c',
+      dangerSoft: '#321b43',
+      success: '#91db8b',
+      successSoft: '#0f3b4c',
+      warning: '#fcc003',
+      warningSoft: '#2d333a',
+      info: '#78b0fd',
+      infoSoft: '#033b75',
+      dangerFill: '#ea001e',
+      successFill: '#2e844a',
+      warningFill: '#a86403',
 
-      inverse: '#36322a',
+      inverse: '#1c3d6b',
       track: 'rgba(255, 255, 255, 0.1)',
-      primaryBorder: '#6d3224',
-      dangerBorder: '#7f1d1d',
+      primaryBorder: '#0d5094',
+      dangerBorder: '#60143a',
 
-      overlay: 'rgba(0, 0, 0, 0.6)',
+      overlay: 'rgba(0, 8, 24, 0.6)',
       white: '#ffffff',
     },
     avatars: [
-      ['#16291f', '#6ee7b7'],
-      ['#17233a', '#93c5fd'],
-      ['#352813', '#fcd34d'],
-      ['#36192a', '#f9a8d4'],
-      ['#2a2140', '#c4b5fd'],
-      ['#13283a', '#7dd3fc'],
-      ['#3e251c', '#ff9b85'],
-      ['#2c2821', '#d9d2c3'],
-      ['#162a1b', '#86efac'],
-      ['#3a2414', '#fdba74'],
+      ['#0d3436', '#6ee7b7'],
+      ['#0b2f5e', '#93c5fd'],
+      ['#2c3030', '#fcd34d'],
+      ['#2e2347', '#f9a8d4'],
+      ['#1f2a5e', '#c4b5fd'],
+      ['#08345a', '#7dd3fc'],
+      ['#0b2f5e', '#78b0fd'],
+      ['#0d2b55', '#c9d4e5'],
+      ['#0e3a35', '#86efac'],
+      ['#33302a', '#fdba74'],
     ],
   },
 };
@@ -199,7 +201,7 @@ export function initTheme(mode = 'system') {
   Object.assign(
     shadow,
     Platform.select({
-      ios: { shadowColor: '#15130f', shadowOpacity: theme.dark ? 0.4 : 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } },
+      ios: { shadowColor: '#032d60', shadowOpacity: theme.dark ? 0.4 : 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } },
       default: { elevation: 1 },
     })
   );

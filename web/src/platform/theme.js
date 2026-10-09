@@ -27,7 +27,7 @@ const resolve = (mode) => (mode === 'system' ? (media?.matches ? 'dark' : 'light
 
 function apply(scheme) {
   document.documentElement.classList.toggle('dark', scheme === 'dark');
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', scheme === 'dark' ? '#15130f' : '#f1ece2');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', scheme === 'dark' ? '#001639' : '#f3f3f3');
 }
 
 const initial = readMode();

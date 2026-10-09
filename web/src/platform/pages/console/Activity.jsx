@@ -51,7 +51,7 @@ export function ActivityDetail({ id, onClose, onOpenPerson }) {
   const m = e?.meta || {};
   const changes = Array.isArray(m.changes) ? m.changes.filter((c) => c && typeof c === 'object') : [];
   const taskChanges = Array.isArray(m.changes) ? m.changes.filter((c) => typeof c === 'string') : [];
-  const device = [m.deviceName, m.appVersion && `PinTask ${m.appVersion}${m.appBuild ? ` (${m.appBuild})` : ''}`, m.osVersion].filter(Boolean).join(' · ');
+  const device = [m.deviceName, m.appVersion && `KARO ${m.appVersion}${m.appBuild ? ` (${m.appBuild})` : ''}`, m.osVersion].filter(Boolean).join(' · ');
   const canOpen = (p) => p && p.role === 'user' && !p.deleted && onOpenPerson;
 
   return (

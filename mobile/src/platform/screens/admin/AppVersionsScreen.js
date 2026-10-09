@@ -1,5 +1,5 @@
 /**
- * Which PinTask each person is on, from the devices they are signed in on:
+ * Which KARO each person is on, from the devices they are signed in on:
  * their newest phone (its app version), else the web, else nothing. "Latest"
  * is the newest published Android build (<server>/app/release.json).
  *
@@ -92,7 +92,7 @@ export default function AppVersionsScreen({ navigation, route }) {
             </View>
             <Text style={styles.release}>
               {latest
-                ? tr('Latest: PinTask {version} (build {build}), published {date}', {
+                ? tr('Latest: KARO {version} (build {build}), published {date}', {
                     version: latest.versionName,
                     build: latest.versionCode,
                     date: latest.publishedAt ? formatDate(latest.publishedAt) : '—',

@@ -1,31 +1,13 @@
 /**
- * The product mark (the tile in /public/logo.svg) and wordmark. PinTask's
- * wordmark carries one touch of the accent: the dot of its "i" is the red of
- * the check in the mark.
+ * The product mark (the tile in /public/logo.svg) and wordmark. KARO's
+ * wordmark is set in capitals with a little air between them.
  */
 import clsx from 'clsx';
 import { product } from '../product/config';
 
-/** The name, set as a wordmark. Falls back to plain text for other products. */
+/** The name, set as a wordmark. */
 export function Wordmark({ className }) {
-  const name = product.name || '';
-  const at = name === 'PinTask' ? 1 : -1;
-  if (at < 0) return <span className={clsx('font-bold tracking-tight', className)}>{name}</span>;
-  return (
-    <span className={clsx('font-semibold tracking-[-0.02em]', className)} aria-label={name}>
-      <span aria-hidden>
-        {name.slice(0, at)}
-        <span className="relative inline-block leading-none">
-          {/* A dotless i, with the dot laid on in the accent where Inter puts
-              its own (centred 0.69em above the baseline, measured against Inter
-              with line-height 1 on this box). */}
-          {'ı'}
-          <span className="absolute left-1/2 top-[0.056em] h-[0.17em] w-[0.17em] -translate-x-1/2 rounded-full bg-brand-accent" />
-        </span>
-        {name.slice(at + 1)}
-      </span>
-    </span>
-  );
+  return <span className={clsx('font-bold tracking-[0.06em]', className)}>{product.name || ''}</span>;
 }
 
 export function Logo({ size = 32, withName = true, className, nameClassName }) {

@@ -41,9 +41,8 @@ import { useTaskActions } from '../components/TaskActions';
 const PAGE_SIZE = 50;
 /** Completed's colour, for the button beside Filter. */
 const COMPLETED = STAT_BAR.find((s) => s.key === 'completed');
-/** The header's outline buttons, as the HRMS's. */
-// Icon squares on a phone (the header keeps to one line), labelled buttons from sm up.
-const HEAD_BTN = 'inline-flex h-8 w-8 items-center justify-center gap-2 rounded-lg border border-line bg-card text-sm font-medium text-ink-soft shadow-sm transition hover:border-slate-300 hover:text-brand sm:h-9 sm:w-auto sm:rounded-xl sm:px-3';
+/** The header's outline buttons, as the HRMS's: the icon on a phone, the label too from sm up. */
+const HEAD_BTN = 'inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-line bg-card px-3.5 text-sm font-medium text-ink-soft transition hover:border-slate-300 hover:text-brand';
 
 function useDebouncedText(value, ms = 300) {
   const [v, setV] = useState(value);
@@ -225,7 +224,6 @@ export function TasksPage() {
   return (
     <div className="pb-20">
       <PageHeader
-        compact
         title={superAdmin ? 'All tasks' : 'Tasks'}
         actions={
           <>
@@ -242,7 +240,7 @@ export function TasksPage() {
         }
       />
 
-      <div className="space-y-3 sm:space-y-4">
+      <div className="space-y-4">
         {piles.length > 1 && <TaskPileCards piles={piles} active={pile} onPick={pickPile} scopes={scopes} />}
 
         {pile === 'team' && (
@@ -264,9 +262,9 @@ export function TasksPage() {
 
         {/* ── Search · Filter · Completed ───────────────────────── */}
         <div className="flex items-center gap-2">
-          <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-card px-3 shadow-sm sm:h-10 transition focus-within:border-slate-300 sm:max-w-md">
+          <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-card px-3 shadow-sm transition focus-within:border-slate-300 sm:max-w-md">
             <Search className="h-[15px] w-[15px] shrink-0 text-ink-faint" />
-            <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Search tasks" aria-label="Search tasks or people" className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-ink-faint" />
+            <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Search task or person…"aria-label="Search tasks or people" className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-ink-faint" />
             {text && (
               <button type="button" onClick={() => setText('')} className="shrink-0 text-ink-faint transition-colors hover:text-ink" aria-label="Clear the search">
                 <X className="h-[15px] w-[15px]" />
@@ -276,7 +274,7 @@ export function TasksPage() {
           <button
             type="button"
             onClick={() => setFiltersOpen(true)}
-            className={clsx('ml-auto inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border bg-card px-3 text-sm font-semibold shadow-sm transition sm:h-10 sm:px-3.5', filterCount ? 'border-brand text-brand' : 'border-line text-ink-soft hover:border-slate-300')}
+            className={clsx('ml-auto inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border bg-card px-4 text-sm font-semibold shadow-sm transition', filterCount ? 'border-brand text-brand' : 'border-line text-ink-soft hover:border-slate-300')}
           >
             <Filter className="h-[15px] w-[15px]" /> Filter
             {filterCount > 0 && <span className="tnum grid h-5 min-w-[20px] place-items-center rounded-full bg-brand px-1.5 text-[11px] font-bold text-on-brand">{filterCount}</span>}
@@ -289,7 +287,7 @@ export function TasksPage() {
             title="Show completed tasks only"
             aria-label={`Completed: ${list.isLoading ? 'loading' : statValue(counters, 'completed')}`}
             style={completedOn ? { borderColor: COMPLETED.colour, color: COMPLETED.colour, backgroundColor: `color-mix(in srgb, ${COMPLETED.colour} 8%, rgb(var(--card)))` } : undefined}
-            className="inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border border-line bg-card px-3 text-sm font-semibold text-ink-soft shadow-sm transition hover:border-slate-300 sm:h-10"
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border border-line bg-card px-3.5 text-sm font-semibold text-ink-soft shadow-sm transition hover:border-slate-300"
           >
             <CheckCircle2 className="h-[15px] w-[15px]" style={{ color: COMPLETED.colour }} />
             <span className="hidden sm:inline">Completed</span>

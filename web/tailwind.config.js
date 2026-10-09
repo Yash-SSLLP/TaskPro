@@ -1,11 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 // Brand colours come from CSS variables (src/index.css), so the same UI kit
-// serves both Seq Book (emerald) and PinTask (Bone and Ink, a red accent).
+// serves both Seq Book (emerald) and KARO (Salesforce's blues).
 //
 // LIGHT AND DARK: every colour the pages use is a CSS variable, so one class
 // on <html> (`dark`, set by src/platform/theme.js) re-themes the whole app
-// without a `dark:` variant on each element. The neutrals (slate) are warmed
-// to PinTask's Bone, Sand and Stone, with a dark scale of their own. On the other hues the dark theme works the way the HRMS
+// without a `dark:` variant on each element. The neutrals (slate) are
+// Salesforce's greys, with a navy dark scale of their own. On the other hues the dark theme works the way the HRMS
 // web app does (its index.css "Dark mode COLOUR accuracy"): the pale tints
 // (50-300, the washes behind chips, banners and selected tiles) become a soft
 // wash of the hue over the dark card instead of a deep, muddy block; the inks
@@ -27,37 +27,39 @@ const mix = (a, b, t) => {
 };
 
 // The dark card (src/index.css --card): the surface the washes are mixed into.
-const DARK_CARD = '#1f1c17';
+const DARK_CARD = '#04224c';
 
 const SHADES = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900', '950'];
 const HUES = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'pink', 'rose'];
-// Warm neutrals in place of the cool slate: Bone #f1ece2, Sand #d9d2c3, Stone
-// #8a857a, the muted text #6b665b and Ink #15130f, with steps mixed between.
+// Salesforce's neutral greys (its design system's neutral palette) in place of
+// the cool slate: #f3f3f3 page, #e5e5e5 lines, #747474 / #5c5c5c muted text,
+// #181818 ink.
 const LIGHT_SLATE = {
-  50: '#f5f1e9',
-  100: '#f1ece2',
-  200: '#e4ded1',
-  300: '#d9d2c3',
-  400: '#aea89b',
-  500: '#8a857a',
-  600: '#6b665b',
-  700: '#444139',
-  800: '#2b2822',
-  900: '#1f1c17',
-  950: '#15130f',
+  50: '#f8f8f8',
+  100: '#f3f3f3',
+  200: '#e5e5e5',
+  300: '#c9c9c9',
+  400: '#aeaeae',
+  500: '#747474',
+  600: '#5c5c5c',
+  700: '#444444',
+  800: '#2e2e2e',
+  900: '#242424',
+  950: '#181818',
 };
+// The navy of Salesforce's dark panels, stepping up to its pale blue.
 const DARK_SLATE = {
-  50: '#26231e',
-  100: '#2c2821',
-  200: '#36322a',
-  300: '#464239',
-  400: '#585449',
-  500: '#6f6a5e',
-  600: '#a39d8f',
-  700: '#cec8bd',
-  800: '#e1dcd1',
-  900: '#f1ece2',
-  950: '#faf7f1',
+  50: '#0a2a57',
+  100: '#0d2f5e',
+  200: '#1c3d6b',
+  300: '#2b4f80',
+  400: '#3e6194',
+  500: '#6f84a6',
+  600: '#a8b8d0',
+  700: '#c9d4e5',
+  800: '#dfe6f1',
+  900: '#eef4ff',
+  950: '#f7faff',
 };
 
 /** One hue's dark scale. */

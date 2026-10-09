@@ -17,18 +17,17 @@
  * (pile counters too, via `withScopes`), so a change is one request. Pages of
  * 25 load as the list scrolls; nothing collapses on a refetch.
  *
- * THE HRMS SCREEN (2026-10-08, "check the UI of HRMS task, need same as
- * that"):
+ * AS HRMS's TASKS SCREEN (2026-10-09; the compact chips and figure strip of
+ * the day before are gone):
  *   HEADER TOOLS   Search and Filter are icons in the bar; Search turns the
  *                  title into a search box with the keyboard already up. The
  *                  row of search box · Filter · Completed under the piles is
  *                  gone, and so is the always-on swipe hint.
- *   COMPACT        the piles are ONE ROW OF SLIM CHIPS (an icon and the open
- *                  count, a red dot when some are late, and the chosen one's
- *                  name) and the figures ONE STRIP OF PILLS that scrolls
- *                  sideways, so three or more cards show without scrolling
- *                  (as the web on a phone). No word on them is ever cut: what
- *                  would not fit is an icon, and a screen reader hears it all.
+ *   PILES          a paged strip, two cards to a page (icon tile, full name,
+ *                  the open count and how many are late or waiting on a
+ *                  review), with page dots when there are more than two.
+ *   FIGURES        six cards, three to a row: an icon chip and the count,
+ *                  the full name underneath.
  *   COMPLETED      Filter → "Completed tasks" (Hide · Show in Total · Only
  *                  completed) instead of a button beside Filter.
  *   ASSIGNED TO    in the Filter on every pile, Assigned to me included (the
@@ -55,6 +54,7 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useInfiniteQuery } from '@tanstack/react-query';
@@ -83,7 +83,25 @@ import TaskCard from '../components/TaskCard';
 import TaskPeoplePicker from '../components/TaskPeoplePicker';
 import TaskStatusSheets from '../components/TaskStatusSheets';
 import { SwipeHint, useSwipeHint } from '../components/TaskSwipe';
-import { ArrowDown, ArrowUp, CheckCheck, ChevronDown, Eye, Inbox, Layers, Plus, Search, Send, SlidersHorizontal, Users, X } from '../icons';
+import {
+  ArrowDown,
+  ArrowUp,
+  CheckCheck,
+  ChevronDown,
+  CircleAlert,
+  CirclePlay,
+  Clock,
+  Eye,
+  Hourglass,
+  Inbox,
+  Layers,
+  Plus,
+  Search,
+  Send,
+  SlidersHorizontal,
+  Users,
+  X,
+} from '../icons';
 import {
   CLOSED_KEYS,
   GRID_TILES,
@@ -112,12 +130,12 @@ import {
 const PAGE_SIZE = 25;
 /** Each pile's icon: work coming in, work sent out, watching, a team, everything. */
 const PILE_ICONS = { mine: Inbox, delegated: Send, loop: Eye, team: Users, all: Layers };
-/** The list's gutter; the figure strip (and a pile row too long for the screen) bleeds through it to the edges. */
+/** Each figure's icon (GRID_TILES names them). */
+const TILE_ICONS = { layers: Layers, hourglass: Hourglass, alert: CircleAlert, play: CirclePlay, eye: Eye, clock: Clock };
+/** The list's gutter; the pile strip bleeds through it to the screen's edges. */
 const STRIP_PAD = space(3);
 /** The space between the rows above the cards. */
-const HEAD_GAP = 10;
-/** Up to this many piles share the row; more scroll sideways. */
-const PILES_IN_A_ROW = 3;
+const HEAD_GAP = space(2.5);
 /** The first-use peek goes to a card near the top: one of this many. */
 const PEEK_WITHIN = 6;
 
@@ -151,33 +169,6 @@ function pileLabel(key) {
       team: tr('Team'),
       all: tr('All tasks'),
     }[key] || key
-  );
-}
-
-/** A pile's name on its chip (the full name is what a screen reader hears). */
-function pileShort(key) {
-  return (
-    {
-      mine: tr('To me'),
-      delegated: tr('By me'),
-      loop: tr('In loop'),
-      team: tr('Team'),
-      all: tr('All'),
-    }[key] || pileLabel(key)
-  );
-}
-
-/** A figure's name on its pill (the full name is what a screen reader hears). */
-function figureShort(key) {
-  return (
-    {
-      total: tr('Total'),
-      pending: tr('Not accepted'),
-      overdue: tr('Overdue'),
-      inProgress: tr('In progress'),
-      inReview: tr('In review'),
-      moreTime: tr('More time'),
-    }[key] || tileLabel(key)
   );
 }
 
@@ -454,7 +445,7 @@ export default function TasksScreen() {
   // ── Piles · chips · figures (· the first-use tip), scrolling WITH the rows ──
   const listHeader = (
     <View style={styles.headerWrap}>
-      <PileChips piles={piles} pile={pile} scopes={scopes} onPile={pickPile} />
+      <PileStrip piles={piles} pile={pile} scopes={scopes} onPile={pickPile} />
 
       {chips.length > 0 ? (
         <View style={styles.chipsRow}>
@@ -486,41 +477,45 @@ export default function TasksScreen() {
         </View>
       ) : null}
 
-      {/* The six figures, one strip of pills that scrolls sideways, edge to
-          edge; each is a filter. Selecting one only changes colours: the
-          border's width is on the base style. */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.bleed}
-        contentContainerStyle={styles.figureStrip}
-        keyboardShouldPersistTaps="handled"
-      >
+      {/* The six figures, three to a row; each is a filter. The icon chip
+          and the figure on top, the full name under both. Selecting one only
+          changes colours: the border's width is on the base style. */}
+      <View style={styles.statGrid}>
         {GRID_TILES.map((t) => {
           const on = tile === t.key || (!tile && t.key === 'total');
           const tint = tileTint(t);
+          // Total wears the primary, so its filled chip takes the primary's ink.
+          const ink = t.key === 'total' ? colors.onPrimary : colors.white;
+          const Icon = TILE_ICONS[t.icon] || Layers;
           const value = t.key === 'total' ? totalValue(counters, filters.closed) : statValue(counters, t.key);
           return (
             <Pressable
               key={t.key}
               onPress={() => pickTile(t.key)}
-              style={({ pressed }) => [styles.figure, on && { backgroundColor: `${tint}1A`, borderColor: tint }, pressed && !on && styles.figurePressed]}
+              style={({ pressed }) => [styles.statCard, on && { backgroundColor: `${tint}1A`, borderColor: tint }, pressed && !on && styles.statCardPressed]}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
               accessibilityLabel={`${tileLabel(t.key)}: ${loading ? '' : value}`}
             >
-              <View style={[styles.figureDot, { backgroundColor: tint }]} />
-              <Text style={[styles.figureCount, { color: on ? tint : value || loading ? colors.text : colors.textFaint }]} maxFontSizeMultiplier={1.2}>
-                {loading ? '·' : value}
-              </Text>
-              {/* Never cut: the pill is as wide as its words. */}
-              <Text style={[styles.figureName, on && { color: tint }]} maxFontSizeMultiplier={1.2}>
-                {figureShort(t.key)}
+              <View style={styles.statTop}>
+                <View style={[styles.statChip, { backgroundColor: on ? tint : `${tint}1F` }]}>
+                  <Icon size={14} color={on ? ink : tint} strokeWidth={2.5} />
+                </View>
+                <Text
+                  style={[styles.statCount, { color: on ? tint : value || loading ? colors.text : colors.textFaint }]}
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={1.2}
+                >
+                  {loading ? '·' : value}
+                </Text>
+              </View>
+              <Text style={[styles.statName, on && { color: tint }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} maxFontSizeMultiplier={1.15}>
+                {tileLabel(t.key)}
               </Text>
             </Pressable>
           );
         })}
-      </ScrollView>
+      </View>
 
       {hint.visible && swipeable?.any ? <SwipeHint gap={HEAD_GAP} /> : null}
     </View>
@@ -638,91 +633,98 @@ function NavSearch({ initial, onChange, onClose }) {
 }
 
 /**
- * The piles, ONE ROW OF SLIM CHIPS (as the web on a phone): up to three
- * share the row; more scroll sideways, edge to edge, with the chosen one
- * brought into view (opened on All tasks, or sent to a pile by a link), at
- * once the first time and smoothly after that.
+ * The piles, one row (as HRMS): each card half the strip less the gap, so
+ * exactly two show, and a swipe turns a whole PAGE (the next two). Each page
+ * is exactly the strip's width and the ScrollView pages natively, so an odd
+ * last pile sits alone on its page. Dots under the row say there is more.
+ * Opened on a pile on a later page (a `pile` param), that page is brought in.
  */
-function PileChips({ piles, pile, scopes, onPile }) {
-  const fit = piles.length <= PILES_IN_A_ROW;
+function PileStrip({ piles, pile, scopes, onPile }) {
+  const { width } = useWindowDimensions();
+  const pad = STRIP_PAD;
+  const gap = 8;
+  // The strip bleeds to the screen edges (marginHorizontal: -pad); measure it
+  // rather than trust the window, so a page is exactly one swipe wide.
+  const [pageW, setPageW] = useState(width);
+  const cardW = Math.floor((pageW - pad * 2 - gap) / 2);
+  const [page, setPage] = useState(0);
+  const groups = useMemo(() => {
+    const out = [];
+    for (let i = 0; i < piles.length; i += 2) out.push(piles.slice(i, i + 2));
+    return out;
+  }, [piles]);
+  const pages = Math.max(1, groups.length);
   const ref = useRef(null);
-  // Where each chip sits in the scrolling row, how much of it shows, where
-  // it is scrolled to, and whether the chosen chip has been brought in yet.
-  const spots = useRef({});
-  const viewW = useRef(0);
-  const offset = useRef(0);
+  // The chosen pile's page is kept in view: on opening (a `pile` param, which
+  // can name Team or All tasks before the person's details have loaded and
+  // the pile exists), and when a link moves the screen to another pile. A
+  // tap never moves it: the tapped pile is on the page already.
+  const at = piles.indexOf(pile);
+  const shown = useRef(0);
+  shown.current = page;
   const placed = useRef(false);
-
-  const bringIn = useCallback(
-    (animated) => {
-      const spot = spots.current[pile];
-      if (fit || !spot || !viewW.current) return;
-      placed.current = true;
-      const from = spot.x - STRIP_PAD;
-      const to = spot.x + spot.w + STRIP_PAD - viewW.current;
-      if (from < offset.current) ref.current?.scrollTo({ x: Math.max(0, from), animated });
-      else if (to > offset.current) ref.current?.scrollTo({ x: to, animated });
-    },
-    [fit, pile]
-  );
-
   useEffect(() => {
-    if (placed.current) bringIn(true);
-  }, [bringIn]);
+    if (at < 0) return undefined;
+    const target = Math.floor(at / 2);
+    const animated = placed.current;
+    placed.current = true;
+    if (target === shown.current) return undefined;
+    const t = setTimeout(() => {
+      ref.current?.scrollTo({ x: pageW * target, animated });
+      setPage(target);
+    }, 0);
+    return () => clearTimeout(t);
+  }, [at, pageW]);
 
-  const chips = piles.map((key) => (
-    <PileChip
-      key={key}
-      pileKey={key}
-      on={pile === key}
-      c={scopes?.[key]}
-      fill={fit}
-      onPress={() => onPile(key)}
-      onLayout={
-        fit
-          ? undefined
-          : (e) => {
-              spots.current[key] = { x: e.nativeEvent.layout.x, w: e.nativeEvent.layout.width };
-              if (key === pile && !placed.current) bringIn(false);
-            }
-      }
-    />
-  ));
-
-  if (fit) return <View style={styles.pileRow}>{chips}</View>;
   return (
-    <ScrollView
-      ref={ref}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={styles.bleed}
-      contentContainerStyle={styles.pileScroll}
-      onLayout={(e) => {
-        viewW.current = e.nativeEvent.layout.width;
-        if (!placed.current) bringIn(false);
-      }}
-      scrollEventThrottle={32}
-      onScroll={(e) => {
-        offset.current = e.nativeEvent.contentOffset.x;
-      }}
-      keyboardShouldPersistTaps="handled"
-    >
-      {chips}
-    </ScrollView>
+    <View>
+      <ScrollView
+        ref={ref}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        style={styles.pileStrip}
+        onLayout={(e) => {
+          const w = Math.round(e.nativeEvent.layout.width);
+          if (w && w !== pageW) setPageW(w);
+        }}
+        decelerationRate="fast"
+        scrollEventThrottle={32}
+        onScroll={(e) => {
+          const p = Math.round(e.nativeEvent.contentOffset.x / pageW);
+          if (p !== page) setPage(Math.min(pages - 1, Math.max(0, p)));
+        }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {groups.map((g) => (
+          <View key={g[0]} style={[styles.pilePage, { width: pageW, paddingHorizontal: pad, gap }]}>
+            {g.map((key) => (
+              <View key={key} style={{ width: cardW }}>
+                <PileCard pileKey={key} on={pile === key} c={scopes?.[key]} onPress={() => onPile(key)} />
+              </View>
+            ))}
+          </View>
+        ))}
+      </ScrollView>
+      {pages > 1 ? (
+        <View style={styles.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          {groups.map((g, i) => (
+            <View key={g[0]} style={[styles.dot, i === page && styles.dotOn]} />
+          ))}
+        </View>
+      ) : null}
+    </View>
   );
 }
 
 /**
- * One pile: its icon and a bubble with how many are open, and a red dot at
- * the corner while some are late. Only the chosen pile also shows its name,
- * and always whole: its chip takes the room the name needs and a larger
- * share of what is left (1.8 to the others' 1). No name is ever cut. The
- * same border in both states. A screen reader hears the full name and both
- * figures.
+ * One pile: the icon on the left, the full name and the figures on the
+ * right, one line each. Same border in both states; selection is colour.
  */
-function PileChip({ pileKey, on, c, fill, onPress, onLayout }) {
+function PileCard({ pileKey, on, c, onPress }) {
   const Icon = PILE_ICONS[pileKey] || Layers;
   const overdue = Number(c?.overdue) || 0;
+  const review = Number(c?.inReview) || 0;
   const n = c ? openCount(c) : null;
   let a11y = pileLabel(pileKey);
   if (n !== null) a11y += `, ${tr('{n} open', { n })}`;
@@ -730,29 +732,32 @@ function PileChip({ pileKey, on, c, fill, onPress, onLayout }) {
   return (
     <Pressable
       onPress={onPress}
-      onLayout={onLayout}
-      style={({ pressed }) => [
-        styles.pile,
-        on ? styles.pileOn : styles.pileOff,
-        fill ? (on ? styles.pileGrowOn : styles.pileGrow) : styles.pileLoose,
-        pressed && !on && styles.pilePressed,
-      ]}
+      style={({ pressed }) => [styles.pile, on && styles.pileOn, pressed && !on && styles.pilePressed]}
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
       accessibilityLabel={a11y}
     >
-      <Icon size={16} color={on ? colors.primary : colors.textSecondary} strokeWidth={2.25} />
-      {on ? (
-        <Text style={styles.pileLabel} maxFontSizeMultiplier={1.2}>
-          {pileShort(pileKey)}
-        </Text>
-      ) : null}
-      <View style={[styles.pileCount, on && styles.pileCountOn]}>
-        <Text style={[styles.pileCountText, on && styles.pileCountTextOn]} maxFontSizeMultiplier={1.2}>
-          {n ?? '–'}
-        </Text>
+      <View style={[styles.pileIcon, on && styles.pileIconOn]}>
+        <Icon size={17} color={on ? colors.onPrimary : colors.textSecondary} strokeWidth={2.25} />
       </View>
-      {overdue > 0 ? <View style={styles.pileLate} /> : null}
+      <View style={styles.pileText}>
+        <Text style={styles.pileLabel} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+          {pileLabel(pileKey)}
+        </Text>
+        <View style={styles.pileLine}>
+          <Text style={styles.pileCount} maxFontSizeMultiplier={1.2}>
+            {n ?? '–'}
+          </Text>
+          <Text style={styles.pileOpen} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+            {` ${tr('open')}`}
+            {overdue > 0 ? (
+              <Text style={styles.pileLate}>{` · ${tr('{n} late', { n: overdue })}`}</Text>
+            ) : review > 0 ? (
+              <Text>{` · ${pileKey === 'mine' ? tr('{n} in review', { n: review }) : tr('{n} to review', { n: review })}`}</Text>
+            ) : null}
+          </Text>
+        </View>
+      </View>
     </Pressable>
   );
 }
@@ -954,48 +959,49 @@ const styles = StyleSheet.create({
 
   list: { padding: STRIP_PAD, paddingBottom: 110, gap: 10 },
   more: { alignItems: 'center', justifyContent: 'center', padding: space(6) },
-  headerWrap: { gap: HEAD_GAP },
-  // A sideways strip that runs to the screen's edges through the list's gutter.
-  bleed: { marginHorizontal: -STRIP_PAD, flexGrow: 0 },
+  headerWrap: { gap: HEAD_GAP, marginBottom: space(1) },
 
-  // ── Piles: one row of slim chips ──
-  pileRow: { flexDirection: 'row', gap: 8 },
-  pileScroll: { paddingHorizontal: STRIP_PAD, gap: 8 },
+  // ── Piles: a paged strip, two cards to a page ──
+  // Runs to the screen's edges through the list's gutter; each page pads itself back in.
+  pileStrip: { marginHorizontal: -STRIP_PAD },
+  pilePage: { flexDirection: 'row' },
+  // The same 1.5px border in both states: selection changes its colour only.
   pile: {
-    height: 36,
+    flex: 1,
+    minHeight: 60,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    borderRadius: 12,
+    gap: 10,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+    borderRadius: 16,
     borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.card,
   },
-  // The chosen chip: icon · name · count, the count at the right end.
-  pileOn: { paddingLeft: 10, paddingRight: 6, borderColor: colors.primary, backgroundColor: colors.primarySoft },
-  // The others: icon · count, in the middle.
-  pileOff: { justifyContent: 'center', paddingHorizontal: 8 },
-  // Sharing the row (three or fewer): each from the room it needs, the chosen one growing most.
-  pileGrow: { flexGrow: 1 },
-  pileGrowOn: { flexGrow: 1.8 },
-  // Scrolling (more than three): each as wide as it needs, never thinner than this.
-  pileLoose: { minWidth: 64 },
-  pilePressed: { opacity: 0.85 },
-  // Never cut: the name sets the chip's width, not the other way round.
-  pileLabel: { flexGrow: 1, color: colors.text, fontSize: 13, fontWeight: '700' },
-  pileCount: {
-    minWidth: 22,
-    height: 20,
-    paddingHorizontal: 6,
-    borderRadius: radius.pill,
+  pileOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  pilePressed: { backgroundColor: colors.muted },
+  pileIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.muted,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  pileCountOn: { backgroundColor: colors.primary },
-  pileCountText: { color: colors.text, fontSize: 11, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  pileCountTextOn: { color: colors.onPrimary },
-  pileLate: { position: 'absolute', top: 4, right: 4, width: 6, height: 6, borderRadius: 3, backgroundColor: colors.dangerFill },
+  pileIconOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  pileText: { flex: 1, minWidth: 0 },
+  pileLabel: { color: colors.text, fontSize: 13, fontWeight: '700' },
+  pileLine: { flexDirection: 'row', alignItems: 'baseline', marginTop: 1 },
+  pileCount: { color: colors.text, fontSize: 17, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  pileOpen: { flexShrink: 1, color: colors.textSecondary, fontSize: 11.5, fontWeight: '600' },
+  pileLate: { color: colors.danger, fontWeight: '800' },
+  // The strip's page dots.
+  dots: { flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 7 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.border },
+  dotOn: { width: 16, backgroundColor: colors.primary },
 
   // ── What is narrowing the list ──
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
@@ -1017,23 +1023,26 @@ const styles = StyleSheet.create({
   clearAll: { minHeight: 34, justifyContent: 'center', paddingHorizontal: space(2) },
   clearAllText: { color: colors.primary, fontSize: 12, fontWeight: '800' },
 
-  // ── Figures: one strip of pills ──
-  figureStrip: { paddingHorizontal: STRIP_PAD, gap: 6 },
-  figure: {
-    height: 32,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    borderRadius: radius.pill,
-    borderWidth: 1,
+  // ── Figures: three to a row ──
+  // Each card grows from a 30% basis, so three share the width after the gaps
+  // and a fourth never fits.
+  statGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  statCard: {
+    flexGrow: 1,
+    flexBasis: '30%',
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    gap: 4,
+    borderRadius: 14,
+    borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.card,
   },
-  figurePressed: { backgroundColor: colors.muted },
-  figureDot: { width: 6, height: 6, borderRadius: 3 },
-  figureCount: { fontSize: 13, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  figureName: { color: colors.textSecondary, fontSize: 12, fontWeight: '700' },
+  statCardPressed: { backgroundColor: colors.muted },
+  statTop: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  statChip: { width: 26, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  statCount: { flexShrink: 1, fontSize: 18, lineHeight: 22, fontWeight: '800', fontVariant: ['tabular-nums'], letterSpacing: -0.3 },
+  statName: { fontSize: 11, lineHeight: 14, fontWeight: '700', color: colors.textSecondary },
 
   // ── Filter sheet ──
   footer: { flexDirection: 'row', gap: 10 },

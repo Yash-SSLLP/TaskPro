@@ -237,7 +237,7 @@ export function PhotoCropDialog({ image, onCancel, onSave }) {
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
           onKeyDown={onKeyDown}
-          className={`relative aspect-square w-full touch-none select-none overflow-hidden rounded-2xl bg-[#15130f] outline-none focus-visible:ring-2 focus-visible:ring-brand/50 ${dragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+          className={`relative aspect-square w-full touch-none select-none overflow-hidden rounded-2xl bg-[#001639] outline-none focus-visible:ring-2 focus-visible:ring-brand/50 ${dragging ? 'cursor-grabbing' : 'cursor-grab'}`}
         >
           <img
             src={image.url}

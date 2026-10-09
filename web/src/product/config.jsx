@@ -1,5 +1,5 @@
 /**
- * PinTask, as the shared web shell sees it: its name, pitch, navigation and
+ * KARO, as the shared web shell sees it: its name, pitch, navigation and
  * routes.
  */
 import { BarChart3, CalendarDays, CheckSquare, Repeat } from 'lucide-react';
@@ -11,7 +11,7 @@ import { CalendarPage } from './pages/CalendarPage';
 
 export const product = {
   key: 'taskpro',
-  name: 'PinTask',
+  name: 'KARO',
   tagline: 'Give tasks to anyone — by their Task Pin.',
   pitch: [
     'Your own Task Pin — share it, and people add you in a tap',

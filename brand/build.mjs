@@ -1,10 +1,12 @@
-// PinTask's mark, and every icon file the apps ship, from one place.
+// KARO's mark, and every icon file the apps ship, from one place.
 //
 //   node brand/build.mjs
 //
-// The mark: a T and a P fused (one bar, one stem that tapers to a pin's point)
-// with a brush-stroke check laid over the bowl, a clean gap cut around it. Bone
-// on an Ink tile lit softly from the top; the check in the accent red.
+// The mark: a K whose lower leg is a tick. The stem and the arm are one
+// colour; the leg grows out of the stem's edge in red, dips into the tick's
+// vertex and sweeps up parallel to the arm, thinning to a point. A clean gap
+// is cut where the tick passes under the arm. White on a Salesforce-navy tile;
+// navy on the light splash.
 //
 // SVGs are written straight into the apps. PNGs are rendered by a headless
 // Edge or Chrome (a throwaway profile under brand/.render), transparent where
@@ -21,11 +23,30 @@ const WORK = path.join(ROOT, 'brand', '.render');
 
 // ---------------------------------------------------------------- geometry (1024 canvas)
 
-const G = { w: 78, gap: 24, armL: 232, bar: 312, stemX: 412, r: 110, bowlX: 540, foot: 792, pin: 150 };
-const CHECK = { pts: [[548, 470], [612, 538], [830, 268]], w0: 58, w1: 80, w2: 26 };
-// The glyph's box is 232..843 × 255..792; this centres it optically (the thin
-// tail of the check carries less weight, so the mark may sit a touch right).
-const CENTRE = { dx: -18, dy: -10 };
+// W the stroke; top/bot the K's height; sx the stem's centre; armY and legY
+// where the arm's and the tick's centre lines meet the stem's right edge; ang
+// the arm's angle (the tick's long stroke matches it); legAng the short leg's
+// angle down and leg its length; tipY the tick's tip height; tick the tick's
+// widths at its start, vertex and tip; gap the cut between arm and tick.
+const G = { W: 96, top: 250, bot: 774, sx: 300, armY: 540, legY: 622, ang: 46, legAng: 42, leg: 205, tipY: 300, tick: [96, 102, 40], gap: 20 };
+
+const NAVY = '#032D60';
+const WHITE = '#FFFFFF';
+const RED = ['#E3001B', '#FF4A3D'];
+
+const f = (n) => n.toFixed(1);
+const rad = (d) => (d * Math.PI) / 180;
+
+/** A stroke from a to b as a quad, wa wide at a and wb at b. */
+function quad(a, b, wa, wb) {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const L = Math.hypot(dx, dy);
+  const nx = -dy / L;
+  const ny = dx / L;
+  return `M${f(a[0] + (nx * wa) / 2)},${f(a[1] + (ny * wa) / 2)}L${f(b[0] + (nx * wb) / 2)},${f(b[1] + (ny * wb) / 2)}L${f(b[0] - (nx * wb) / 2)},${f(b[1] - (ny * wb) / 2)}L${f(a[0] - (nx * wa) / 2)},${f(a[1] - (ny * wa) / 2)}Z`;
+}
+const dot = (p, w) => `M${f(p[0] - w / 2)},${f(p[1])}a${w / 2},${w / 2} 0 1 0 ${w},0a${w / 2},${w / 2} 0 1 0 -${w},0Z`;
 
 /** A superellipse ("squircle") filling size×size, as an SVG path. */
 function squircle(size, n = 5, inset = 0) {
@@ -41,68 +62,51 @@ function squircle(size, n = 5, inset = 0) {
   return `M${pts[0]}L${pts.slice(1).join('L')}Z`;
 }
 
-/** A brush-like check: a short leg into the vertex, then a long leg thinning to a point. */
-function brushCheck([p0, p1, p2], w0, w1, w2) {
-  const leg = (a, b, wa, wb) => {
-    const dx = b[0] - a[0];
-    const dy = b[1] - a[1];
-    const L = Math.hypot(dx, dy);
-    const nx = -dy / L;
-    const ny = dx / L;
-    return `M${[
-      [a[0] + (nx * wa) / 2, a[1] + (ny * wa) / 2],
-      [b[0] + (nx * wb) / 2, b[1] + (ny * wb) / 2],
-      [b[0] - (nx * wb) / 2, b[1] - (ny * wb) / 2],
-      [a[0] - (nx * wa) / 2, a[1] - (ny * wa) / 2],
-    ]
-      .map((p) => p.map((v) => v.toFixed(1)).join(','))
-      .join('L')}Z`;
-  };
-  const dot = (p, w) => `M${(p[0] - w / 2).toFixed(1)},${p[1]}a${w / 2},${w / 2} 0 1 0 ${w},0a${w / 2},${w / 2} 0 1 0 -${w},0Z`;
-  return [leg(p0, p1, w0, w1), leg(p1, p2, w1, w2), dot(p0, w0), dot(p1, w1), dot(p2, w2)].join('');
-}
-
-const BRUSH = brushCheck(CHECK.pts, CHECK.w0, CHECK.w1, CHECK.w2);
+// The pieces, worked out once.
+const R = G.sx + G.W / 2; // the stem's right edge
+const A = rad(G.ang);
+const LA = rad(G.legAng);
+const ARM = quad([R - 120 * Math.cos(A), G.armY + 120 * Math.sin(A)], [R + (G.armY - G.top + 80) / Math.tan(A), G.top - 80], G.W, G.W);
+const V = [R + G.leg * Math.cos(LA), G.legY + G.leg * Math.sin(LA)];
+const TIP = [V[0] + (V[1] - G.tipY) / Math.tan(A), G.tipY];
+const TICK = [quad([R - 60, G.legY - 60 * Math.tan(LA)], V, G.tick[0], G.tick[1]), quad(V, TIP, G.tick[1], G.tick[2]), dot(V, G.tick[1]), dot(TIP, G.tick[2])].join('');
+// The mark's box, for centring it on the canvas.
+const BOX = { left: G.sx - G.W / 2, right: TIP[0] + G.tick[2] / 2, top: G.top, bottom: Math.max(G.bot, V[1] + G.tick[1] / 2) };
+const CENTRE = [(BOX.left + BOX.right) / 2, (BOX.top + BOX.bottom) / 2];
 
 /**
  * One SVG of the mark.
  *   bg     'squircle' (the tile), 'square' (full bleed), or 'none'
- *   glyph  'bone' (a soft gradient) or a flat colour
- *   check  'accent' (a gradient) or a flat colour
+ *   glyph  the K's colour
+ *   check  'accent' (the red gradient) or a flat colour
  *   scale  the mark's size about the canvas centre
  */
-function build({ bg = 'squircle', glyph = 'bone', check = 'accent', scale = 1, rim = true }) {
-  const { w, gap, armL, bar, stemX, r, bowlX, foot, pin } = G;
-  const half = w / 2;
-  const glyphPaint = glyph === 'bone' ? 'url(#glyph)' : glyph;
+function build({ bg = 'squircle', glyph = WHITE, check = 'accent', scale = 0.98, rim = true }) {
+  const t = `translate(512 512) scale(${scale}) translate(${f(-CENTRE[0])} ${f(-CENTRE[1])})`;
   const checkPaint = check === 'accent' ? 'url(#check)' : check;
-  const t = `translate(512 512) scale(${scale}) translate(${-512 + CENTRE.dx} ${-512 + CENTRE.dy})`;
   const tile =
     bg === 'none'
       ? ''
       : bg === 'square'
         ? '<rect width="1024" height="1024" fill="url(#bg)"/><rect width="1024" height="1024" fill="url(#sheen)"/>'
         : `<path d="${squircle(1024)}" fill="url(#bg)"/><path d="${squircle(1024)}" fill="url(#sheen)"/>${
-            rim ? `<path d="${squircle(1024, 5, 2.5)}" fill="none" stroke="#F1ECE2" stroke-opacity="0.10" stroke-width="3"/>` : ''
+            rim ? `<path d="${squircle(1024, 5, 2.5)}" fill="none" stroke="#FFFFFF" stroke-opacity="0.10" stroke-width="3"/>` : ''
           }`;
   const mark =
     scale > 0
       ? `<g transform="${t}">
-<g mask="url(#cut)" fill="${glyphPaint}">
-<rect x="${armL}" y="${bar - half}" width="${stemX - armL}" height="${w}"/>
-<path d="M${stemX - half},${bar - half}H${stemX + half}V${foot - pin}Q${stemX + half},${foot - pin * 0.35} ${stemX},${foot}Q${stemX - half},${foot - pin * 0.35} ${stemX - half},${foot - pin}Z"/>
-<path d="M${stemX},${bar}H${bowlX}A${r},${r} 0 0 1 ${bowlX},${bar + 2 * r}H${stemX}" fill="none" stroke="${glyphPaint}" stroke-width="${w}" stroke-linejoin="round"/>
-</g>
-<path d="${BRUSH}" fill="${checkPaint}"/>
+<g clip-path="url(#k)" fill="${glyph}"><rect x="${BOX.left}" y="${G.top}" width="${G.W}" height="${G.bot - G.top}"/><path mask="url(#cut)" d="${ARM}"/></g>
+<path clip-path="url(#leg)" d="${TICK}" fill="${checkPaint}"/>
 </g>`
       : '';
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
 <defs>
-<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1024" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2B2721"/><stop offset=".55" stop-color="#1A1814"/><stop offset="1" stop-color="#100E0B"/></linearGradient>
-<radialGradient id="sheen" cx="300" cy="110" r="760" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity=".11"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
-<linearGradient id="glyph" x1="0" y1="220" x2="0" y2="820" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FCFAF5"/><stop offset="1" stop-color="#E9E2D4"/></linearGradient>
-<linearGradient id="check" x1="520" y1="620" x2="860" y2="240" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#D9381E"/><stop offset="1" stop-color="#F45E3E"/></linearGradient>
-<mask id="cut" maskUnits="userSpaceOnUse" x="-512" y="-512" width="2048" height="2048"><rect x="-512" y="-512" width="2048" height="2048" fill="#fff"/><path d="${BRUSH}" fill="#000" stroke="#000" stroke-width="${gap * 2}" stroke-linejoin="round"/></mask>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1024" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#0B4A92"/><stop offset=".55" stop-color="${NAVY}"/><stop offset="1" stop-color="#001639"/></linearGradient>
+<radialGradient id="sheen" cx="300" cy="80" r="760" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<linearGradient id="check" x1="${f(R)}" y1="${f(V[1])}" x2="${f(TIP[0])}" y2="${f(TIP[1])}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${RED[0]}"/><stop offset="1" stop-color="${RED[1]}"/></linearGradient>
+<clipPath id="k"><rect x="${BOX.left}" y="${G.top}" width="1024" height="${G.bot - G.top}"/></clipPath>
+<clipPath id="leg"><rect x="${f(R)}" y="0" width="1024" height="1024"/></clipPath>
+<mask id="cut" maskUnits="userSpaceOnUse" x="-512" y="-512" width="2048" height="2048"><rect x="-512" y="-512" width="2048" height="2048" fill="#fff"/><path d="${TICK}" fill="#000" stroke="#000" stroke-width="${G.gap * 2}" stroke-linejoin="round" clip-path="url(#leg)"/></mask>
 </defs>
 ${tile}
 ${mark}
@@ -115,12 +119,12 @@ ${mark}
 const SVGS = {
   tile: build({}),
   square: build({ bg: 'square', rim: false }),
-  adaptiveFg: build({ bg: 'none', scale: 0.67 }),
+  adaptiveFg: build({ bg: 'none', scale: 0.64 }),
   adaptiveBg: build({ bg: 'square', rim: false, scale: 0 }),
-  adaptiveMono: build({ bg: 'none', scale: 0.67, glyph: '#FFFFFF', check: '#FFFFFF' }),
-  splashLight: build({ bg: 'none', scale: 1.25, glyph: '#15130F' }),
-  splashDark: build({ bg: 'none', scale: 1.25 }),
-  notification: build({ bg: 'none', scale: 1.5, glyph: '#FFFFFF', check: '#FFFFFF' }),
+  adaptiveMono: build({ bg: 'none', scale: 0.64, check: WHITE }),
+  splashLight: build({ bg: 'none', scale: 1.2, glyph: NAVY }),
+  splashDark: build({ bg: 'none', scale: 1.2 }),
+  notification: build({ bg: 'none', scale: 1.3, check: WHITE }),
 };
 
 // [svg, file, size]: the web's tile is the SVG itself; the rest are rendered.
@@ -138,6 +142,8 @@ const PNGS = [
   ['tile', 'mobile/assets/favicon.png', 48],
 ];
 
+const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
 function browser() {
   const found = [
     process.env.BROWSER_BIN,
@@ -152,7 +158,7 @@ function browser() {
 }
 
 fs.writeFileSync(path.join(ROOT, 'web/public/logo.svg'), SVGS.tile);
-// The bare mark, Bone on transparent: the sign-in panel's watermark.
+// The bare mark, white on transparent: the sign-in panel's watermark.
 fs.writeFileSync(path.join(ROOT, 'web/public/mark.svg'), SVGS.splashDark);
 fs.writeFileSync(path.join(ROOT, 'brand/logo.svg'), SVGS.tile);
 fs.writeFileSync(path.join(ROOT, 'brand/mark-light.svg'), SVGS.splashLight);
@@ -170,28 +176,41 @@ for (const [key, file, size] of PNGS) {
     `<!doctype html><html><head><style>html,body{margin:0;background:transparent;overflow:hidden}img{display:block;width:${size}px;height:${size}px}</style></head><body><img src="${key}.svg"></body></html>`
   );
   const out = path.join(ROOT, file);
-  execFileSync(
-    bin,
-    [
-      '--headless=new',
-      '--disable-gpu',
-      '--no-first-run',
-      `--user-data-dir=${path.join(WORK, 'profile')}`,
-      '--hide-scrollbars',
-      '--force-device-scale-factor=1',
-      '--default-background-color=00000000',
-      `--window-size=${size},${size}`,
-      `--screenshot=${out}`,
-      `file:///${html.replace(/\\/g, '/')}`,
-    ],
-    { stdio: 'ignore' }
-  );
+  // Headless Edge now and then exits without writing the screenshot, so the
+  // old file goes first and a missing one is tried again.
+  fs.rmSync(out, { force: true });
+  for (let attempt = 1; !fs.existsSync(out); attempt++) {
+    if (attempt > 4) throw new Error(`${file} was not rendered`);
+    execFileSync(
+      bin,
+      [
+        '--headless=new',
+        '--disable-gpu',
+        '--no-first-run',
+        `--user-data-dir=${path.join(WORK, `profile-${key}-${size}-${attempt}`)}`,
+        '--hide-scrollbars',
+        '--force-device-scale-factor=1',
+        '--default-background-color=00000000',
+        `--window-size=${size},${size}`,
+        `--screenshot=${out}`,
+        `file:///${html.replace(/\\/g, '/')}`,
+      ],
+      { stdio: 'ignore' }
+    );
+    // The launcher can return before the renderer has written the file.
+    for (let waited = 0; waited < 8000 && !fs.existsSync(out); waited += 250) sleep(250);
+  }
   const b = fs.readFileSync(out);
   const [w, h] = [b.readUInt32BE(16), b.readUInt32BE(20)];
   if (w !== size || h !== size) throw new Error(`${file} came out ${w}x${h}, not ${size}x${size}`);
   console.log(`✓ ${file} ${w}x${h}`);
 }
-fs.rmSync(WORK, { recursive: true, force: true });
+// Edge can hold its profile open for a moment after it exits.
+try {
+  fs.rmSync(WORK, { recursive: true, force: true, maxRetries: 10, retryDelay: 500 });
+} catch {
+  console.log('(brand/.render is still in use: delete it later)');
+}
 
 // The master copies kept beside this script.
 fs.writeFileSync(path.join(ROOT, 'brand/logo-1024.svg'), SVGS.tile.replace('<svg ', '<svg width="1024" height="1024" '));

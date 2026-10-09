@@ -1,5 +1,5 @@
 /**
- * PinTask, as the shared app shell sees it.
+ * KARO, as the shared app shell sees it.
  *
  * This is the one file the platform code reads to learn which product it is
  * running: its name, logo, storage keys, the health check it expects from
@@ -9,7 +9,7 @@
 
 const productConfig = {
   key: 'taskpro',
-  name: 'PinTask',
+  name: 'KARO',
   tagline: 'Give tasks to anyone by their Task Pin',
   logo: require('../../assets/logo.png'),
 

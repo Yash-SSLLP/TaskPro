@@ -1,11 +1,11 @@
-# PinTask API contract (v2: Task Pins)
+# KARO API contract (v2: Task Pins)
 
 This is the contract between the backend, the web app and the mobile app. **Base URL `/api`.**
 - Every request except sign-up, login and password reset sends `Authorization: Bearer <token>`.
 - Errors are always `{ error: "message for the person", code?: "MACHINE_CODE" }` with a 4xx/5xx status.
 
 **Two conventions, on purpose:**
-- **Platform endpoints** (auth, contacts, teams, people, alerts, devices, files, the Super Admin console) use PinTask's style: objects carry `id`.
+- **Platform endpoints** (auth, contacts, teams, people, alerts, devices, files, the Super Admin console) use KARO's style: objects carry `id`.
 - **Task endpoints** (`/api/tasks/**`) keep the **HRMS Tasks API shapes**: `_id`, `name`, the same routes, query params and response bodies as `F:\SSLLP\External App\Tasks\backend` (`routes/taskRoutes.js`, `controllers/task*.js`).
   - The HRMS clients (`Tasks/frontend/src/api/tasks.js`, `Tasks/mobile/src/api/tasks.js`) are the reference for how they are called.
   - Only the differences listed in §3 apply.
@@ -58,7 +58,7 @@ This is the contract between the backend, the web app and the mobile app. **Base
 **Session payload** (login, sign-up and `/auth/me` all return this):
 ```json
 { "token": "…(only when issued/refreshed)", "user": Me, "settings": Settings,
-  "product": { "key": "taskpro", "name": "PinTask" } }
+  "product": { "key": "taskpro", "name": "KARO" } }
 ```
 
 ### Auth `/api/auth`
@@ -265,7 +265,7 @@ One row per thing that happened, kept 180 days:
   "badge": { "text": "Accepted", "tone": "good|bad|wait|info|neutral" } }
 ```
 
-`summary` always starts with `actorLabel` (the actor's name, `PinTask` for the system, or `Someone`), so a screen can set it in bold. Sentences are English, like all server text.
+`summary` always starts with `actorLabel` (the actor's name, `KARO` for the system, or `Someone`), so a screen can set it in bold. Sentences are English, like all server text.
 
 Actions recorded:
 
@@ -276,7 +276,7 @@ Actions recorded:
 | people | `contact.requested`, `contact.accepted`, `contact.declined`, `contact.removed`, `contact.cancelled` | routes/contacts.js |
 | people | `team.created`, `team.updated`, `team.invited`, `team.joined`, `team.declined`, `team.left`, `team.member_removed`, `team.role_changed`, `team.transferred`, `team.deleted` | routes/teams.js |
 | admin | `admin.user_created`, `admin.user_deleted`, `admin.user_disabled`, `admin.user_enabled`, `admin.password_reset`, `admin.signed_out`, `admin.session_revoked`, `admin.team_deleted`, `admin.settings_changed` | routes/platform.js, routes/teams.js |
-| tasks | `task.<kind>` for every task history row (`created`, `status`, `comment`, `edited`, `assigned`, `reminder`, `accepted`, `rejected`, `delegated`, `subtask`, `submitted`, `approved`, `sent_back`, `progress`, `split`, `claimed`, `extension_asked`, `extension_decided`, `transferred`, `nudged`, `overdue`). Target = the task (code + title); actor = the row's author; system rows have no actor ("PinTask"). | product/models/TaskUpdate.js (a `post('save')` hook) |
+| tasks | `task.<kind>` for every task history row (`created`, `status`, `comment`, `edited`, `assigned`, `reminder`, `accepted`, `rejected`, `delegated`, `subtask`, `submitted`, `approved`, `sent_back`, `progress`, `split`, `claimed`, `extension_asked`, `extension_decided`, `transferred`, `nudged`, `overdue`). Target = the task (code + title); actor = the row's author; system rows have no actor ("KARO"). | product/models/TaskUpdate.js (a `post('save')` hook) |
 
 Every row is written before the response is sent (a serverless host may stop afterwards); a row that cannot be written never fails the request. Server code adds one with `await activity.record({ req, action, target?, meta? })` (`platform/services/activity.js`). Never secrets in `meta`.
 

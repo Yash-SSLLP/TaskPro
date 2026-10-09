@@ -1,6 +1,6 @@
 /**
- * My profile (/profile): the photo, name and job title up top on an Ink
- * band, what I have in PinTask (contacts, teams, how long I've been here), my
+ * My profile (/profile): the photo, name and job title up top on a navy
+ * band, what I have in KARO (contacts, teams, how long I've been here), my
  * Task Pin, my contact details (how people see me and how I sign in), and
  * the way to Settings and the password.
  *
@@ -23,14 +23,14 @@ import { signOutEverywhere } from '../signOut';
 
 const MAX_PICK_BYTES = 25 * 1024 * 1024;
 
-// The band behind the photo: Ink with a glow of the accent, the same in both themes.
+// The band behind the photo: navy with a glow of the accent, the same in both themes.
 const BAND = {
-  backgroundColor: '#15130f',
+  backgroundColor: '#032d60',
   backgroundImage:
     'radial-gradient(120% 150% at 100% 0%, rgb(var(--brand) / 0.5) 0%, rgb(var(--brand) / 0) 55%), ' +
-    'radial-gradient(80% 120% at 0% 100%, rgba(241, 236, 226, 0.09) 0%, rgba(241, 236, 226, 0) 60%)',
+    'radial-gradient(80% 120% at 0% 100%, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 60%)',
 };
-const GRAIN = { backgroundImage: 'radial-gradient(rgba(241, 236, 226, 0.08) 1px, transparent 1.3px)', backgroundSize: '16px 16px' };
+const GRAIN = { backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1.3px)', backgroundSize: '16px 16px' };
 
 /** Every list that shows people (their photo, their name) reads again. */
 function refreshPeople(qc) {
@@ -209,9 +209,9 @@ function Hero({ onAddTitle }) {
     <section className="overflow-hidden rounded-3xl border border-line bg-card shadow-card">
       <div className="relative h-28 sm:h-36" style={BAND}>
         <div className="absolute inset-0" style={GRAIN} aria-hidden />
-        <p className="absolute left-5 top-4 text-[11px] font-bold uppercase tracking-[0.2em] text-[#f1ece2]/70 sm:left-8 sm:top-5">My profile</p>
+        <p className="absolute left-5 top-4 text-[11px] font-bold uppercase tracking-[0.2em] text-white/70 sm:left-8 sm:top-5">My profile</p>
         {admin && (
-          <span className="absolute right-5 top-3.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-[#f1ece2] ring-1 ring-inset ring-white/15 sm:right-8 sm:top-4">
+          <span className="absolute right-5 top-3.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ring-inset ring-white/15 sm:right-8 sm:top-4">
             Super Admin
           </span>
         )}

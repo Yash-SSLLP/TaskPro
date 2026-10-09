@@ -2,7 +2,7 @@
   "name": "taskpro-backend",
   "version": "1.0.0",
   "private": true,
-  "description": "PinTask API: simple task management for teams",
+  "description": "KARO API: simple task management for teams",
   "main": "src/server.js",
   "engines": {
     "node": ">=20"

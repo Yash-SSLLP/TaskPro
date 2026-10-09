@@ -18,7 +18,7 @@ const EMPTY = { name: '', email: '', phone: '', username: '', title: '' };
 function welcomeText(user, password) {
   const where = typeof window !== 'undefined' ? window.location.origin : '';
   return [
-    `Your PinTask account is ready, ${user.name.split(' ')[0]}.`,
+    `Your KARO account is ready, ${user.name.split(' ')[0]}.`,
     `Sign in with ${loginOf(user)} and this temporary password: ${password}`,
     'You will choose your own password straight away.',
     pinOf(user) ? `Your Task Pin is ${pinOf(user)}.` : '',

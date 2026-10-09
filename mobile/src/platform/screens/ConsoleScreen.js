@@ -118,7 +118,7 @@ function Overview({ navigation, onTab }) {
           </View>
           <Card padded={false} style={styles.entries}>
             <ListRow icon={Wifi} title={tr('Who is online')} subtitle={tr('Every device signed in, now, today or this week')} onPress={() => navigation.navigate('AdminOnline')} />
-            <ListRow icon={Smartphone} title={tr('App versions')} subtitle={tr('Which PinTask each person is on')} onPress={() => navigation.navigate('AdminAppVersions')} style={styles.rule} />
+            <ListRow icon={Smartphone} title={tr('App versions')} subtitle={tr('Which KARO each person is on')} onPress={() => navigation.navigate('AdminAppVersions')} style={styles.rule} />
             <ListRow icon={Logs} title={tr('Activity log')} subtitle={tr('Sign-ins, task moves and every change')} onPress={() => navigation.navigate('AdminActivity')} style={styles.rule} />
             <ListRow icon={LayoutDashboard} title={tr('Dashboard')} subtitle={tr('Who finished what, and on time')} onPress={() => navigation.navigate('Dashboard')} style={styles.rule} />
           </Card>

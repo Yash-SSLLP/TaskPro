@@ -30,7 +30,7 @@ describe('describe()', () => {
     assert.equal(accepted.actorLabel, 'Asha Rao');
 
     const login = words({ action: 'auth.login', actorName: 'Ravi Test', platform: 'android', meta: { platform: 'android', appVersion: '1.0.3' } });
-    assert.equal(login.summary, 'Ravi Test signed in on Android (PinTask 1.0.3).');
+    assert.equal(login.summary, 'Ravi Test signed in on Android (KARO 1.0.3).');
     const web = words({ action: 'auth.login', actorName: 'Ravi Test', meta: { platform: 'web', deviceName: 'Chrome on Windows', appVersion: '1.0.0' } });
     assert.equal(web.summary, 'Ravi Test signed in on the web (Chrome on Windows).');
 
@@ -46,7 +46,7 @@ describe('describe()', () => {
     assert.equal(moved.summary, 'Asha moved the task “TSK-1 Go” from Pending to In progress.');
     const system = words({ action: 'task.overdue', meta: { kind: 'OVERDUE', system: true }, target: { kind: 'task', id: 't', label: 'TSK-1 Go' } });
     assert.equal(system.summary, 'The task “TSK-1 Go” is now overdue.');
-    assert.equal(system.actorLabel, 'PinTask');
+    assert.equal(system.actorLabel, 'KARO');
 
     const profile = words({ action: 'profile.updated', actor: 'u', actorName: 'Ravi', target: { kind: 'user', id: 'u', label: 'Ravi' }, meta: { changes: [{ field: 'name', before: 'Ravi', after: 'Ravi K' }] } });
     assert.equal(profile.summary, 'Ravi changed their name from “Ravi” to “Ravi K”.');
@@ -71,7 +71,7 @@ describe('the activity log', () => {
     assert.ok(actions.includes('auth.login'));
     assert.ok(actions.includes('auth.logout'));
     const login = mine.find((r) => r.action === 'auth.login');
-    assert.equal(login.summary, `${me.name} signed in on Android (PinTask 1.0.3).`);
+    assert.equal(login.summary, `${me.name} signed in on Android (KARO 1.0.3).`);
     assert.equal(login.platform, 'android');
 
     const wrong = mine.find((r) => r.action === 'auth.login_failed');
@@ -115,8 +115,8 @@ describe('the activity log', () => {
     assert.equal(byAction['task.accepted'].actorRole, 'user');
 
     // The welcome task is the system's own.
-    const welcome = (await feed(root, `?group=tasks&q=${encodeURIComponent('Welcome to PinTask')}`))[0];
-    assert.equal(welcome.actorLabel, 'PinTask');
+    const welcome = (await feed(root, `?group=tasks&q=${encodeURIComponent('Welcome to KARO')}`))[0];
+    assert.equal(welcome.actorLabel, 'KARO');
     assert.equal(welcome.actor, null);
 
     // The detail view brings the task's other rows.

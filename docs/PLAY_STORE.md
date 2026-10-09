@@ -1,4 +1,4 @@
-# Publishing PinTask on Google Play, and shipping updates
+# Publishing KARO on Google Play, and shipping updates
 
 This is the whole path, from "it runs on my phone" to "it's on the Play Store",
 and then how to ship updates. Steps marked **one time** are done once.
@@ -106,7 +106,7 @@ prebuild. **Back up `upload.jks` and its passwords.** EAS is much less work.
 
 ## 4. Create the app in Play Console (one time)
 
-1. **Create app** → name `PinTask`, default language English, App, Free.
+1. **Create app** → name `KARO`, default language English, App, Free.
    Accept the declarations.
 
 2. **Store listing** (Grow → Store presence → Main store listing):

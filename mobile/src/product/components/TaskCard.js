@@ -8,15 +8,15 @@
  *
  * The HRMS card (2026-10-08): a heavier two-line title, both sides of the
  * handover and the day it was handed over in small print, pill-shaped tags,
- * and a "More time" chip that says with an icon where the latest ask stands.
- * Compact (2026-10-08): tight padding and line gaps, so three or more cards
- * fit on a phone's screen.
+ * a labelled "More time" chip that says where the latest ask stands, and a
+ * labelled "Overdue" chip. Spacing as HRMS's card (2026-10-09; the compact
+ * card of the day before is gone).
  */
 import React, { memo, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { tr, trParts } from '../../i18n';
 import { colors, radius, space } from '../../platform/theme';
-import { CircleCheck, CircleX, Clock, Mic, Paperclip, Repeat, SquarePen, Tag, TriangleAlert, Users } from '../icons';
+import { CircleCheck, CircleX, Clock, Mic, Paperclip, Repeat, SquarePen, Tag, Users } from '../icons';
 import {
   accentFor,
   assigneeNames,
@@ -95,20 +95,21 @@ function TaskCard({ task, meId, nudgedAt, onNudged, onOpen, onStatus, onSwipe, p
             </Text>
           ) : null}
           <View style={styles.codeEnd}>
-            {/* More time asked, and where the latest ask stands; overdue. Icons,
-                not words: a word here was cut short in the longer languages.
-                The card's label reads both out. */}
+            {/* More time asked, and where the latest ask stands; overdue. */}
             {ext ? (
-              <View style={[styles.iconChip, { borderColor: extInk, backgroundColor: extBg }]}>
-                <ExtIcon size={13} color={extInk} strokeWidth={2.5} />
+              <View style={[styles.extChip, { borderColor: extInk, backgroundColor: extBg }]}>
+                <ExtIcon size={11} color={extInk} strokeWidth={2.5} />
+                <Text style={[styles.extText, { color: extInk }]} numberOfLines={1}>
+                  {ext.label}
+                </Text>
               </View>
             ) : null}
             {late ? (
-              <View style={[styles.iconChip, styles.lateChip]}>
-                <TriangleAlert size={13} color={colors.white} strokeWidth={2.75} />
+              <View style={styles.overdueChip}>
+                <Text style={styles.overdueText}>{tr('Overdue')}</Text>
               </View>
             ) : null}
-            <NudgeBell task={task} override={nudgedAt} onNudged={onNudged} size={30} />
+            <NudgeBell task={task} override={nudgedAt} onNudged={onNudged} size={34} />
           </View>
         </View>
 
@@ -204,36 +205,46 @@ function TaskCard({ task, meId, nudgedAt, onNudged, onOpen, onStatus, onSwipe, p
 export default memo(TaskCard);
 
 const styles = StyleSheet.create({
-  // Compact: 10 px top and bottom, 5 px between lines.
-  card: { borderRadius: radius.card, borderWidth: 1, borderLeftWidth: 4, paddingVertical: space(2.5), paddingHorizontal: space(3.5), gap: 5 },
+  card: { borderRadius: radius.card, borderWidth: 1, borderLeftWidth: 4, paddingVertical: space(3), paddingHorizontal: space(3.5), gap: 8 },
   faded: { opacity: 0.6 },
   pressed: { opacity: 0.92 },
-  codeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 30 },
+  codeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 34 },
   // The more-time chip, the overdue chip and the bell, pinned right of the code.
   codeEnd: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: space(2) },
   serial: { fontSize: 11, fontWeight: '800' },
   code: { color: colors.textSecondary, fontSize: 10, letterSpacing: 0.3, flexShrink: 1 },
-  iconChip: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm, borderWidth: 1 },
-  lateChip: { borderRadius: 12, borderColor: colors.dangerFill, backgroundColor: colors.dangerFill },
-  title: { color: colors.text, fontSize: 15.5, fontWeight: '800', lineHeight: 20 },
+  extChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    minHeight: 22,
+    maxWidth: 170,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+  },
+  extText: { fontSize: 10.5, fontWeight: '800', flexShrink: 1 },
+  overdueChip: { minHeight: 22, justifyContent: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: colors.dangerFill },
+  overdueText: { color: colors.white, fontSize: 11, fontWeight: '800' },
+  title: { color: colors.text, fontSize: 15.5, fontWeight: '800', lineHeight: 21 },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', gap: space(2) },
   meta: { color: colors.textSecondary, fontSize: 12, flexShrink: 1 },
   metaFaint: { color: colors.textFaint },
-  barWrap: { gap: 3 },
+  barWrap: { gap: 4 },
   track: { height: 6, borderRadius: 3, backgroundColor: colors.border, overflow: 'hidden' },
   fill: { height: 6, borderRadius: 3 },
   barRow: { flexDirection: 'row', justifyContent: 'space-between', gap: space(2) },
   barText: { color: colors.textSecondary, fontSize: 11, fontWeight: '600' },
-  footRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space(2), marginTop: 1 },
-  tagRow: { flex: 1, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 5 },
+  footRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space(2), marginTop: 2 },
+  tagRow: { flex: 1, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    minHeight: 22,
-    maxWidth: 140,
+    minHeight: 24,
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,

@@ -1,4 +1,4 @@
-# PinTask
+# KARO
 
 Simple task management for anyone who gives or gets work. Everyone signs up
 for themselves and gets a **Task Pin**, a short unique ID like a BlackBerry
@@ -8,7 +8,7 @@ teams, and give tasks to your contacts and team-mates.
 All the features of the SSLLP HRMS Tasks module are here (accept/decline,
 review, delegate, transfer, more time, sub-tasks, progress, nudges, reminder
 patterns, repeating tasks, templates, categories, dashboard, Excel export),
-except points and AI translation. PinTask has its own database and is **not**
+except points and AI translation. KARO has its own database and is **not**
 connected to the HRMS.
 
 ```

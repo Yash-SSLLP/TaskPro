@@ -3,7 +3,7 @@
  * what happened, and a short coloured badge.
  *
  *   "Asha Rao accepted the task “TSK-2026-00008 Check delivery schedule”."
- *   "Ravi Test signed in on Android (PinTask 1.0.3)."
+ *   "Ravi Test signed in on Android (KARO 1.0.3)."
  *   "Someone tried to sign in as ra…@example.com — there is no such account."
  *   "Super Admin deleted Priya Shah's account."
  *
@@ -31,17 +31,17 @@ const badge = (text, tone = 'neutral') => ({ text, tone });
 /** Who did it, as the sentence names them. */
 function actorLabel(row) {
   if (row?.actorName) return row.actorName;
-  return row?.meta?.system ? 'PinTask' : 'Someone';
+  return row?.meta?.system ? 'KARO' : 'Someone';
 }
 
 const PLATFORM_WORDS = { web: 'the web', android: 'Android', ios: 'iPhone' };
 
-/** " on Android (Pixel 7, PinTask 1.0.3)", " on the web (Chrome on Windows)", or ''. */
+/** " on Android (Pixel 7, KARO 1.0.3)", " on the web (Chrome on Windows)", or ''. */
 function onDevice(row) {
   const m = row.meta || {};
   const platform = m.platform || row.platform;
   const where = PLATFORM_WORDS[platform];
-  const details = platform === 'web' ? [m.deviceName] : [m.deviceName, m.appVersion ? `PinTask ${m.appVersion}` : ''];
+  const details = platform === 'web' ? [m.deviceName] : [m.deviceName, m.appVersion ? `KARO ${m.appVersion}` : ''];
   const detail = details.filter(Boolean).join(', ');
   if (!where) return detail ? ` on ${detail}` : '';
   return ` on ${where}${detail ? ` (${detail})` : ''}`;
@@ -112,7 +112,7 @@ function taskWords(row, who) {
   const note = String(m.note || '');
   switch (kind) {
     case 'CREATED': {
-      if (m.system) return [`PinTask raised ${task}.`, badge('Created', 'info')];
+      if (m.system) return [`KARO raised ${task}.`, badge('Created', 'info')];
       const forWhom = nameAfter(note, /on behalf of (.+?)\.?$/);
       return [`${who} created ${task}${forWhom ? ` on behalf of ${forWhom}` : ''}.`, badge('Created', 'info')];
     }
@@ -132,7 +132,7 @@ function taskWords(row, who) {
     case 'ASSIGNED':
       return [`${who} assigned ${task}.`, badge('Assigned', 'info')];
     case 'REMINDER':
-      return [m.system ? `PinTask sent a reminder about ${task}.` : `${who} sent a reminder about ${task}.`, badge('Reminder')];
+      return [m.system ? `KARO sent a reminder about ${task}.` : `${who} sent a reminder about ${task}.`, badge('Reminder')];
     case 'ACCEPTED':
       return [`${who} accepted ${task}.`, badge('Accepted', 'good')];
     case 'REJECTED':

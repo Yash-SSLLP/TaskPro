@@ -5,7 +5,7 @@
  *   Overview      people, who is online, the app, tasks
  *   People        everyone; add a person; open one for everything about them
  *   Online        who is signed in where, right now / today / 7 days
- *   App versions  which PinTask build each person is on
+ *   App versions  which KARO build each person is on
  *   Activity      the log: sign-ins, task moves, changes, admin actions
  *   Teams         every team
  *
@@ -67,7 +67,7 @@ export function PlatformPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
-      <PageHeader title="Console" subtitle="Everyone on PinTask: who is signed in, on which app, and everything they do" />
+      <PageHeader title="Console" subtitle="Everyone on KARO: who is signed in, on which app, and everything they do" />
       <div className="max-w-full overflow-x-auto">
         <Segmented value={tab} onChange={(v) => setTab(v)} options={TABS} />
       </div>

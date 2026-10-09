@@ -219,7 +219,7 @@ export function Sidebar({ rail, onToggle, sections, isOn, badgeOf, user, pin, ad
           </span>
           <span className="side-fade min-w-0 flex-1 leading-tight">
             <span className="block truncate text-[12.5px] font-semibold text-ink">Get the Android app</span>
-            <span className="block truncate text-[11px] text-ink-faint">PinTask on your phone</span>
+            <span className="block truncate text-[11px] text-ink-faint">KARO on your phone</span>
           </span>
         </NavLink>
 

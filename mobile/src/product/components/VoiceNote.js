@@ -139,7 +139,7 @@ async function allowMicrophone() {
   if (perm.canAskAgain === false) {
     const open = await confirm({
       title: tr('Allow the microphone'),
-      message: tr('To record voice notes, allow PinTask to use the microphone in your phone settings.'),
+      message: tr('To record voice notes, allow KARO to use the microphone in your phone settings.'),
       confirmLabel: tr('Open settings'),
       cancelLabel: tr('Not now'),
     });

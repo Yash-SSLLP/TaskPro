@@ -6,8 +6,8 @@
  * the HRMS draws them (TaskPileCards / TaskStatBar there). Selection is paint
  * only: the same 1px border both ways, so choosing moves nothing.
  *
- * On a phone both fold to one slim row each (chips, then pills), so two or
- * three tasks show without scrolling.
+ * A phone draws the same cards and bar as the HRMS's phone does: two piles to
+ * a row, three figures to a row.
  */
 import clsx from 'clsx';
 import { AlertCircle, Check, Clock, Eye, Hourglass, Inbox, Layers, PlayCircle, Send, Users } from 'lucide-react';
@@ -19,57 +19,13 @@ const STAT_ICONS = { total: Layers, pending: Clock, overdue: AlertCircle, inProg
 // Two per row on a phone; from lg up, one row.
 const GRID = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-2 lg:grid-cols-3', 4: 'grid-cols-2 lg:grid-cols-4', 5: 'grid-cols-2 lg:grid-cols-5' };
 
-// A phone shows the piles as one row of slim chips, so the list starts high:
-// each an icon and its count, and only the chosen one says its name too (it
-// widens to fit it), so no word is ever cut short.
-const PILE_SHORT = { mine: 'To me', delegated: 'By me', loop: 'In loop', team: 'Team', all: 'All' };
-
-function PileChips({ piles, active, onPick, scopes }) {
-  return (
-    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 scrollbar-none sm:hidden" role="group" aria-label="Piles">
-      {piles.map((pile) => {
-        const Icon = PILE_ICONS[pile.key] || Inbox;
-        const on = active === pile.key;
-        const c = scopes?.[pile.key] || null;
-        const overdue = Number(c?.overdue) || 0;
-        return (
-          <button
-            key={pile.key}
-            type="button"
-            onClick={() => onPick?.(pile.key)}
-            aria-pressed={on}
-            title={pile.label}
-            aria-label={`${pile.label}${c ? `: ${openCount(c)} open${overdue ? `, ${overdue} overdue` : ''}` : ''}`}
-            className={clsx(
-              'relative inline-flex h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-3 text-[13px] font-semibold transition-[flex-grow,background-color,border-color,color] duration-300',
-              on ? 'min-w-max grow-[1.8] basis-0 border-brand bg-brand/10 text-ink' : 'min-w-[4.5rem] grow basis-0 border-line bg-card text-ink-soft'
-            )}
-          >
-            <Icon className={clsx('h-4 w-4 shrink-0', on && 'text-brand')} aria-hidden />
-            {on && <span className="pile-chip-name">{PILE_SHORT[pile.key] || pile.label}</span>}
-            <span className={clsx('tnum grid h-5 min-w-[22px] place-items-center rounded-full px-1.5 text-[11px] font-bold', on ? 'bg-brand text-on-brand' : 'bg-well text-ink')}>
-              {c ? openCount(c) : '–'}
-            </span>
-            {overdue > 0 && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden />}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 export function TaskPileCards({ piles, active, onPick, scopes }) {
-  return (
-    <>
-      <PileChips piles={piles} active={active} onPick={onPick} scopes={scopes} />
-      <PileGrid piles={piles} active={active} onPick={onPick} scopes={scopes} />
-    </>
-  );
+  return <PileGrid piles={piles} active={active} onPick={onPick} scopes={scopes} />;
 }
 
 function PileGrid({ piles, active, onPick, scopes }) {
   return (
-    <div className={clsx('hidden gap-3 sm:grid sm:gap-4', GRID[piles.length] || GRID[4])}>
+    <div className={clsx('grid gap-3 sm:gap-4', GRID[piles.length] || GRID[4])}>
       {piles.map((pile, i) => {
         const Icon = PILE_ICONS[pile.key] || Inbox;
         const on = active === pile.key;
@@ -130,47 +86,14 @@ function PileGrid({ piles, active, onPick, scopes }) {
   );
 }
 
-// A phone shows the figures as one strip of pills that scrolls sideways.
-const STAT_SHORT = { pending: 'Not accepted', inProgress: 'In progress', inReview: 'In review', moreTime: 'More time' };
-
-function StatPills({ counters, active, onPick, loading }) {
-  return (
-    <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 scrollbar-none sm:hidden" role="group" aria-label="Task figures">
-      {STAT_BAR_FIGURES.map(({ key, label, colour }) => {
-        const on = active === key || (!active && key === 'total');
-        const value = statValue(counters, key);
-        return (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={on}
-            aria-label={`${label}: ${loading ? 'loading' : value}`}
-            onClick={() => onPick?.(key === 'total' || active === key ? '' : key)}
-            style={on ? { borderColor: colour, color: colour, backgroundColor: `color-mix(in srgb, ${colour} var(--tint), rgb(var(--card)))` } : undefined}
-            className={clsx('inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition', on ? '' : 'border-line bg-card text-ink-soft')}
-          >
-            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: colour }} aria-hidden />
-            <span className={clsx('tnum font-bold', !on && (value || loading ? 'text-ink' : 'text-ink-faint'))}>{loading ? '·' : value}</span>
-            {STAT_SHORT[key] || label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 export function TaskStatBar({ counters = {}, active = '', onPick, loading = false }) {
-  return (
-    <>
-      <StatPills counters={counters} active={active} onPick={onPick} loading={loading} />
-      <StatGrid counters={counters} active={active} onPick={onPick} loading={loading} />
-    </>
-  );
+  return <StatGrid counters={counters} active={active} onPick={onPick} loading={loading} />;
 }
 
+// Three to a row on a phone, so the longer names are never cut; one row from sm up.
 function StatGrid({ counters, active, onPick, loading }) {
   return (
-    <div className="hidden grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line shadow-sm sm:grid sm:grid-cols-6" role="group" aria-label="Task figures">
+    <div className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line shadow-sm sm:grid-cols-6" role="group" aria-label="Task figures">
       {STAT_BAR_FIGURES.map(({ key, label, colour }) => {
         const Icon = STAT_ICONS[key] || Layers;
         const on = active === key || (!active && key === 'total');

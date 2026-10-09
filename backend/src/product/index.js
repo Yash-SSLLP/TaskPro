@@ -1,5 +1,5 @@
 /**
- * PinTask, as the platform sees it: its name, settings, file rules, routes,
+ * KARO, as the platform sees it: its name, settings, file rules, routes,
  * and the hooks the platform calls (sign-up, file access, team deletion, the
  * Super Admin console's numbers, background jobs).
  *
@@ -21,7 +21,7 @@ const oid = (id) => new mongoose.Types.ObjectId(String(id));
 
 module.exports = {
   key: 'taskpro',
-  name: 'PinTask',
+  name: 'KARO',
 
   settings,
 
@@ -49,7 +49,7 @@ module.exports = {
   async onUserCreated({ user }) {
     if (!user || user.role === 'superadmin') return;
     const task = await Task.create({
-      title: 'Welcome to PinTask: share your Task Pin',
+      title: 'Welcome to KARO: share your Task Pin',
       description:
         'Share your Task Pin with the people you work with and add theirs from Contacts. ' +
         'Create a team to give tasks to everyone in it. Mark this done when you have added your first contact.',
@@ -59,7 +59,7 @@ module.exports = {
       requiresApproval: false,
       reminders: [],
     });
-    await TaskUpdate.create({ task: task._id, kind: 'CREATED', byName: 'PinTask', to: task.status, note: 'Welcome aboard.', system: true });
+    await TaskUpdate.create({ task: task._id, kind: 'CREATED', byName: 'KARO', to: task.status, note: 'Welcome aboard.', system: true });
   },
 
   /** May this person open a file attached to `ref`? (Uploader and Super Admin are let in by the platform.) */
