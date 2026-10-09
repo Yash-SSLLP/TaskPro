@@ -79,6 +79,12 @@ export const contactsApi = {
   decline: (id) => api.post(`/api/contacts/${id}/decline`),
   /** Remove a contact, or cancel my own outgoing request. */
   remove: (id) => api.del(`/api/contacts/${id}`),
+  /** Who sent an invite link. @returns {Promise<{ inviter, whatsapp: boolean }>} */
+  invite: (pin, w) => api.get(`/api/contacts/invite/${encodeURIComponent(pin)}`, { query: { w } }),
+  /** Through an invite link. @returns {Promise<{ status: 'accepted' | 'already', contact }>} */
+  join: (pin, w) => api.post('/api/contacts/join', w ? { pin, w } : { pin }),
+  /** Stop WhatsApp reminders with a contact (either side). */
+  whatsappOff: (id) => api.patch(`/api/contacts/${id}`, { whatsapp: false }).then((r) => r.contact),
 };
 
 // ---------------------------------------------------------------- people

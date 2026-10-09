@@ -304,7 +304,13 @@ const feedOf = (taskId, { before, limit = 200 } = {}) => {
 router.get('/:id', async (req, res) => {
   const who = await access.actor(req);
   const task = await loadPopulated(who, req.params.id);
-  const [updates, children] = await Promise.all([feedOf(task._id), childrenOf(task)]);
+  const nudge = who.superAdmin ? null : access.nudgeTargets(who, task);
+  const [updates, children, whatsappTo] = await Promise.all([
+    feedOf(task._id),
+    childrenOf(task),
+    // Whoever the bell reaches, if we agreed to WhatsApp each other (invite links).
+    nudge ? people.platform.whatsappContacts(who.id, nudge.to) : [],
+  ]);
   const out = decorate(task);
   if (task.parentTask && typeof task.parentTask === 'object') {
     out.parentTask = { _id: task.parentTask._id, code: task.parentTask.code, title: task.parentTask.title, status: task.parentTask.status, progress: task.parentTask.progress };
@@ -313,7 +319,7 @@ router.get('/:id', async (req, res) => {
     task: out,
     children: children.map((c, i) => listRow(who, c, i + 1)),
     updates: updates.map(updateOut),
-    can: access.capabilitiesFor(who, task),
+    can: { ...access.capabilitiesFor(who, task), whatsappTo },
   });
 });
 

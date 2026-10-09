@@ -8,6 +8,7 @@
 import { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 import * as Linking from 'expo-linking';
+import * as Clipboard from 'expo-clipboard';
 import * as Notifications from 'expo-notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import productConfig from '../product/config';
@@ -15,9 +16,10 @@ import { tr } from '../i18n';
 import { useInApp } from './hooks';
 import { useLiveSync } from './live';
 import { flushPendingLink, navigationRef, openLink } from './navigation/links';
+import { joinPathIn } from './invite';
 import { linkOf, registerForPush } from './push';
 import { useSession } from './session';
-import { confirm } from './ui';
+import { confirm, toast } from './ui';
 import { useFollowSystemTheme } from './appearance';
 import { canSelfUpdate, checkInBackground, dismissPrompt, shouldPrompt } from './updates';
 
@@ -25,13 +27,20 @@ import { canSelfUpdate, checkInBackground, dismissPrompt, shouldPrompt } from '.
 // run, however often the app comes back to the foreground.
 const offered = new Set();
 let launched = false;
+let clipboardChecked = false;
 
-/** "taskpro://tasks/<id>" → "/tasks/<id>"; dev-server URLs carry no in-app path. */
+/**
+ * "taskpro://tasks/<id>" → "/tasks/<id>"; an App Link to the web app
+ * ("https://…/join/<pin>?w=…", "https://…/tasks/<id>") → its path; dev-server
+ * URLs carry no in-app path.
+ */
 function pathFromUrl(url) {
   if (!url) return null;
   const s = String(url);
   const dashed = s.indexOf('/--/');
   if (dashed !== -1) return `/${s.slice(dashed + 4)}`;
+  const web = /^https?:\/\/[^/]+(\/(?:join|tasks)\/[^#]*)/i.exec(s);
+  if (web) return web[1];
   if (/^(exp|exps|https?):\/\//i.test(s)) return null;
   const rest = s.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '').replace(/^\/+/, '');
   return rest ? `/${rest}` : null;
@@ -78,6 +87,26 @@ export default function AppEvents({ navReady }) {
     const sub = Linking.addEventListener('url', ({ url }) => handle(url));
     return () => sub.remove();
   }, []);
+
+  // A new install: the invite page put its link on the clipboard before the
+  // download, so look there once, signed out. The invite then waits for the
+  // sign-up (or sign-in) and opens.
+  const signedOutNow = useSession((s) => s.status === 'signedOut');
+  useEffect(() => {
+    if (Platform.OS === 'web' || !signedOutNow || clipboardChecked) return;
+    clipboardChecked = true;
+    (async () => {
+      try {
+        if (!(await Clipboard.hasStringAsync())) return;
+        const path = joinPathIn(await Clipboard.getStringAsync());
+        if (!path) return;
+        openLink(path);
+        toast(tr('Invite found. Sign up or sign in, and you join them.'));
+      } catch {
+        // No clipboard access: they can open the link again.
+      }
+    })();
+  }, [signedOutNow]);
 
   // A link that arrived before sign-in finished opens now.
   useEffect(() => {

@@ -4,8 +4,14 @@
  * Asking sends a request; the other person accepts or declines. If they had
  * already asked you, asking back simply accepts. Either side can remove the
  * contact later; that doesn't touch tasks already given.
+ *
+ * Invite links (platform/invite.js) do it in one step: the link is the
+ * inviter's ask, so joining through it makes the two contacts straight away,
+ * and a WhatsApp invite also lets them WhatsApp each other about tasks.
  */
 const express = require('express');
+const rateLimit = require('express-rate-limit');
+const config = require('../../config');
 const User = require('../models/User');
 const Contact = require('../models/Contact');
 const { publicUser } = require('../models/User');
@@ -13,14 +19,40 @@ const { pairOf, involving, otherOf } = require('../models/Contact');
 const { protect, requirePerson } = require('../auth');
 const { z, parse, idParam } = require('../validate');
 const { normalizePin } = require('../pin');
+const { invitePath, allowsWhatsapp } = require('../invite');
 const { badRequest, notFound, conflict } = require('../errors');
 const { notify } = require('../services/notify');
 const activity = require('../services/activity');
 
 const router = express.Router();
-router.use(protect, requirePerson);
 
 const person = (u) => publicUser(u, { full: false });
+
+// The invite page is public (it is opened before signing up), so it is
+// slowed down like sign-in: it says whose pin a pin is.
+const inviteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: config.isTest ? 10_000 : 120,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Too many attempts. Please wait a few minutes and try again.' },
+});
+
+/** GET /invite/:pin?w= — who sent this invite link (public). */
+router.get('/invite/:pin', inviteLimiter, async (req, res) => {
+  const pin = normalizePin(req.params.pin);
+  const user = pin ? await User.findOne({ pin, role: 'user', status: 'active' }).lean() : null;
+  if (!user) throw notFound('This invite link is not valid any more');
+  res.json({ inviter: person(user), whatsapp: allowsWhatsapp(pin, req.query.w) });
+});
+
+router.use(protect, requirePerson);
+
+/** GET /invite?whatsapp=1 — my invite link's path (each app adds its address). */
+router.get('/invite', async (req, res) => {
+  const whatsapp = req.query.whatsapp === '1' || req.query.whatsapp === 'true';
+  res.json({ path: invitePath(req.user.pin, { whatsapp }), whatsapp, pinDisplay: publicUser(req.user).pinDisplay });
+});
 
 /** The other person on a link, as an activity target (one small read). */
 async function otherTarget(link, me) {
@@ -50,7 +82,7 @@ router.get('/', async (req, res) => {
     const other = byId.get(String(otherOf(l, me)));
     if (!other) continue;
     if (l.status === 'accepted') {
-      contacts.push({ id: String(l._id), person: person(other), since: l.acceptedAt });
+      contacts.push({ id: String(l._id), person: person(other), since: l.acceptedAt, whatsapp: !!l.whatsapp });
     } else if (String(l.requestedBy) === String(me)) {
       outgoing.push({ id: String(l._id), person: person(other), at: l.createdAt });
     } else {
@@ -109,6 +141,68 @@ router.post('/', async (req, res) => {
     status: 'requested',
     request: { id: String(link._id), person: person(other), at: link.createdAt },
   });
+});
+
+/**
+ * POST /join { pin, w? } — through someone's invite link. Contacts at once
+ * (or already); a valid `w` also switches on WhatsApp reminders for the pair.
+ */
+router.post('/join', async (req, res) => {
+  const body = parse(z.object({ pin: z.string({ required_error: 'Enter a Task Pin' }), w: z.string().max(40).optional() }), req.body);
+  const other = await findByPin(body.pin);
+  if (String(other._id) === String(req.user._id)) throw badRequest("That's your own invite link. Send it to someone else.");
+  const whatsapp = allowsWhatsapp(other.pin, body.w);
+
+  const pair = pairOf(req.user._id, other._id);
+  let link = await Contact.findOne(pair);
+  const already = link?.status === 'accepted';
+  const whatsappBefore = !!link?.whatsapp;
+  if (!link) link = new Contact({ ...pair, requestedBy: other._id });
+  if (!already) {
+    link.status = 'accepted';
+    link.acceptedAt = new Date();
+  }
+  if (whatsapp) link.whatsapp = true;
+  try {
+    await link.save();
+  } catch (err) {
+    // Both joined at the same moment: the other save won, so build on it.
+    if (err?.code !== 11000) throw err;
+    link = await Contact.findOne(pair);
+    link.status = 'accepted';
+    link.acceptedAt ||= new Date();
+    if (whatsapp) link.whatsapp = true;
+    await link.save();
+  }
+
+  const turnedOn = link.whatsapp && !whatsappBefore;
+  if (!already || turnedOn) {
+    await activity.record({ req, action: 'contact.joined', target: activity.personTarget(other), meta: { whatsapp: !!link.whatsapp, already } });
+    notify([other._id], {
+      title: already ? `${req.user.name} switched on WhatsApp reminders with you` : `${req.user.name} joined from your invite`,
+      body: link.whatsapp ? 'You can give each other tasks, and WhatsApp each other about them.' : 'You can now give each other tasks.',
+      link: '/contacts',
+      kind: 'contact',
+    });
+  }
+  res.json({
+    status: already ? 'already' : 'accepted',
+    contact: { id: String(link._id), person: person(other), since: link.acceptedAt, whatsapp: !!link.whatsapp },
+  });
+});
+
+/** PATCH /:id { whatsapp: false } — stop WhatsApp reminders between us (either side). */
+router.patch('/:id', async (req, res) => {
+  const body = parse(z.object({ whatsapp: z.literal(false, { errorMap: () => ({ message: 'Send a new WhatsApp invite link to switch it on' }) }) }), req.body);
+  const link = await Contact.findOne({ _id: idParam(req.params.id), ...involving(req.user._id), status: 'accepted' });
+  if (!link) throw notFound('Contact not found');
+  if (link.whatsapp !== body.whatsapp) {
+    link.whatsapp = body.whatsapp;
+    await link.save();
+    await activity.record({ req, action: 'contact.whatsapp_off', target: await otherTarget(link, req.user._id) });
+  }
+  const other = await User.findById(otherOf(link, req.user._id));
+  res.json({ contact: { id: String(link._id), person: person(other), since: link.acceptedAt, whatsapp: !!link.whatsapp } });
 });
 
 /** A request sent TO me that is still waiting. */

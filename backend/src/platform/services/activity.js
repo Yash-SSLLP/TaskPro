@@ -17,7 +17,8 @@
  *           auth.password_changed, auth.password_forgot, auth.password_reset,
  *           auth.account_deleted
  *   people  profile.updated, profile.photo_added|photo_changed|photo_removed,
- *           contact.requested|accepted|declined|removed|cancelled,
+ *           contact.requested|accepted|declined|removed|cancelled|joined|
+ *           whatsapp_off,
  *           team.created|updated|invited|joined|declined|left|member_removed|
  *           role_changed|transferred|deleted
  *   admin   admin.user_created|user_deleted|user_disabled|user_enabled|

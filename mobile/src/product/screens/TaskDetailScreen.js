@@ -58,6 +58,7 @@ import DelegateSheet from '../components/DelegateSheet';
 import ExtensionSheet from '../components/ExtensionSheet';
 import { FileGrid, viewable } from '../components/Files';
 import NudgeBell from '../components/NudgeBell';
+import WhatsAppNudge from '../components/WhatsAppNudge';
 import ProgressControl from '../components/ProgressControl';
 import TaskStatusSheets from '../components/TaskStatusSheets';
 import TaskUpdateSheet from '../components/TaskUpdateSheet';
@@ -376,16 +377,20 @@ export default function TaskDetailScreen() {
               </Pressable>
             ) : null}
           </View>
-          {/* The reminder bell: the setter chasing the work, or the doer chasing the review — whichever the server says. */}
-          <NudgeBell
-            task={{ ...task, can }}
-            override={nudgedAt}
-            label
-            onNudged={(_id, at) => {
-              setNudgedAt(at);
-              reload();
-            }}
-          />
+          {/* The reminder bell: the setter chasing the work, or the doer chasing the review — whichever the server says.
+              Under it, WhatsApp for people who agreed to it (invite links). */}
+          <View style={styles.nudges}>
+            <NudgeBell
+              task={{ ...task, can }}
+              override={nudgedAt}
+              label
+              onNudged={(_id, at) => {
+                setNudgedAt(at);
+                reload();
+              }}
+            />
+            <WhatsAppNudge task={{ ...task, can }} />
+          </View>
         </View>
         <Text style={styles.title}>{task.title}</Text>
         <View style={styles.tagRow}>
@@ -1058,6 +1063,7 @@ const styles = StyleSheet.create({
 
   // Header card: the 4px priority rail, a big icon, the tags as pills, a figure tile.
   head: { gap: space(3), padding: space(4), borderRadius: 18, borderWidth: 1, borderLeftWidth: 4 },
+  nudges: { alignItems: 'flex-end', gap: 6 },
   headTop: { flexDirection: 'row', alignItems: 'center', gap: space(3) },
   headIcon: { width: 48, height: 48, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.card },
   headIds: { flex: 1, minWidth: 0, gap: 2 },

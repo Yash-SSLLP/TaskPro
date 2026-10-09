@@ -3,12 +3,10 @@
  * or I), stored without a dash ("7KQ4M9XA") and shown as "7KQ4-M9XA".
  * Typing is forgiving: case, spaces and dashes are ignored.
  *
- * Also: sharing my pin (the system share sheet, or WhatsApp straight away)
- * and the words for team roles.
+ * Also: copying my pin (invite links are in invite.js) and the words for
+ * team roles.
  */
-import { Linking, Share } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import productConfig from '../product/config';
 import { tr } from '../i18n';
 
 export const PIN_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -51,34 +49,8 @@ export function pinInput(text) {
 /** The pin to show for a person or me (pinDisplay from the server, else formatted). */
 export const pinOf = (p) => p?.pinDisplay || (p?.pin ? formatPin(p.pin) : '');
 
-export function pinMessage(user) {
-  return tr('Add me on {app}. My Task Pin is {pin}. Install {app}, sign up, then add me with this pin so we can give each other tasks.', {
-    app: productConfig.name,
-    pin: pinOf(user),
-  });
-}
-
 export async function copyPin(user) {
   await Clipboard.setStringAsync(pinOf(user));
-}
-
-/** The phone's share sheet (WhatsApp, SMS, email…). */
-export function sharePin(user) {
-  return Share.share({ message: pinMessage(user), title: tr('My Task Pin') }).catch(() => {});
-}
-
-/** Straight into WhatsApp; the share sheet if WhatsApp is not there. */
-export async function whatsappPin(user) {
-  const text = encodeURIComponent(pinMessage(user));
-  try {
-    await Linking.openURL(`whatsapp://send?text=${text}`);
-  } catch {
-    try {
-      await Linking.openURL(`https://wa.me/?text=${text}`);
-    } catch {
-      sharePin(user);
-    }
-  }
 }
 
 // ---------------------------------------------------------------- team roles

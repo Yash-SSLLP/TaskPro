@@ -157,8 +157,37 @@ async function assignablePeople(user, { q = '', limit = 200 } = {}) {
     }));
 }
 
+/**
+ * The people among `ids` this person may WhatsApp about tasks: accepted
+ * contacts who joined (or invited) with WhatsApp on, still active, with a
+ * mobile number. In the order of `ids`: [{ id, name, phone }].
+ */
+async function whatsappContacts(userId, ids) {
+  const uid = oid(userId);
+  const wanted = [...new Set((ids || []).map(String))].filter((id) => id !== String(uid) && mongoose.isValidObjectId(id));
+  if (!wanted.length) return [];
+  const links = await Contact.find({
+    $or: wanted.map((id) => {
+      const [a, b] = [String(uid), id].sort();
+      return { a: oid(a), b: oid(b) };
+    }),
+    status: 'accepted',
+    whatsapp: true,
+  })
+    .select('a b')
+    .lean();
+  const open = new Set(links.map((l) => String(String(l.a) === String(uid) ? l.b : l.a)));
+  if (!open.size) return [];
+  const users = await User.find({ _id: { $in: [...open] }, status: 'active', phone: { $type: 'string', $ne: '' } })
+    .select('name phone')
+    .lean();
+  const byId = new Map(users.map((u) => [String(u._id), u]));
+  return wanted.filter((id) => byId.has(id)).map((id) => ({ id, name: byId.get(id).name, phone: byId.get(id).phone }));
+}
+
 module.exports = {
   contactIds,
+  whatsappContacts,
   teamsOf,
   adminTeamIds,
   teamRole,

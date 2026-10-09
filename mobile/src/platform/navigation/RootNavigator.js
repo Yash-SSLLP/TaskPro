@@ -22,6 +22,7 @@ import OnlineScreen from '../screens/admin/OnlineScreen';
 import AppUpdateScreen from '../screens/AppUpdateScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import ContactsScreen from '../screens/ContactsScreen';
+import JoinScreen from '../screens/JoinScreen';
 import DeleteAccountScreen from '../screens/DeleteAccountScreen';
 import ForcePasswordScreen from '../screens/ForcePasswordScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
@@ -122,6 +123,7 @@ export default function RootNavigator() {
           <Stack.Screen key={s.name} name={s.name} component={s.component} options={s.options} />
         ))}
         <Stack.Screen name="Contacts" component={ContactsScreen} />
+        <Stack.Screen name="Join" component={JoinScreen} />
         <Stack.Screen name="Teams" component={TeamsScreen} />
         <Stack.Screen name="TeamDetail" component={TeamDetailScreen} />
         <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />

@@ -205,6 +205,11 @@ const SENTENCES = {
   'contact.declined': (row, who) => [`${who} declined ${possessive(row.target?.label)} contact request.`, badge('Declined')],
   'contact.removed': (row, who) => [`${who} removed ${row.target?.label || 'someone'} from their contacts.`, badge('Contact removed')],
   'contact.cancelled': (row, who) => [`${who} cancelled their contact request to ${row.target?.label || 'someone'}.`, badge('Cancelled')],
+  'contact.joined': (row, who) => [
+    `${who} joined ${possessive(row.target?.label)} invite link${row.meta?.whatsapp ? ', with WhatsApp reminders' : ''}.`,
+    badge('Joined by invite', 'good'),
+  ],
+  'contact.whatsapp_off': (row, who) => [`${who} switched off WhatsApp reminders with ${row.target?.label || 'someone'}.`, badge('WhatsApp off')],
 
   'team.created': (row, who) => [`${who} created the team ${quote(row.target?.label)}.`, badge('Team created', 'good')],
   'team.updated': (row, who) => {

@@ -14,6 +14,10 @@ const contactSchema = new mongoose.Schema(
     requestedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     status: { type: String, enum: ['pending', 'accepted'], default: 'pending' },
     acceptedAt: { type: Date, default: null },
+    // Both agreed (through a WhatsApp invite link) that each may WhatsApp the
+    // other about tasks, so each sees the other's mobile on shared tasks.
+    // Either side can switch it off; only a new WhatsApp invite turns it on.
+    whatsapp: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

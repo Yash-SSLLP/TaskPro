@@ -47,16 +47,3 @@ export async function copyText(text, done = 'Copied') {
     toast.error("Couldn't copy. Select the text and copy it yourself.");
   }
 }
-
-/** Use the phone's share sheet when there is one, WhatsApp otherwise. */
-export async function sharePin(pinDisplay) {
-  if (navigator.share) {
-    try {
-      await navigator.share({ text: shareMessage(pinDisplay) });
-      return;
-    } catch (err) {
-      if (err?.name === 'AbortError') return;
-    }
-  }
-  window.open(whatsappUrl(pinDisplay), '_blank', 'noopener');
-}

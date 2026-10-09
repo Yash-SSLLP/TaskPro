@@ -36,6 +36,7 @@ import { DueChip, OverdueChip, PiecesChip, ProgressBar, StatusChip, TransferredC
 import { ChildTaskList } from './ChildTaskList';
 import { ExtensionModal } from './ExtensionModal';
 import { NudgeBell } from './NudgeBell';
+import { WhatsAppNudge } from './WhatsAppNudge';
 import { DelegateModal } from './DelegateModal';
 import { TransferModal } from './TransferModal';
 import { VoicePlayer, VoiceRecorder } from './VoiceNote';
@@ -833,7 +834,8 @@ export function TaskDetailBody({ taskId, initialEdit = false, onChanged, onOpenT
               <PiecesChip task={task} />
               <TransferredChip task={task} />
               {Number(task.progress) > 0 && <ProgressBar task={task} className="min-w-[7rem]" />}
-              <span className="ml-auto">
+              {/* The bell, and under it WhatsApp for people who agreed to it (invite links). */}
+              <span className="ml-auto flex flex-col items-end gap-1.5">
                 <NudgeBell
                   task={{ ...task, can }}
                   override={nudgedAt}
@@ -844,6 +846,7 @@ export function TaskDetailBody({ taskId, initialEdit = false, onChanged, onOpenT
                     refresh();
                   }}
                 />
+                <WhatsAppNudge task={{ ...task, can }} />
               </span>
             </div>
           </div>

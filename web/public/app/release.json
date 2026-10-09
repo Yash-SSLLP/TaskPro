@@ -1,8 +1,8 @@
 {
-  "versionName": "1.0.4",
-  "versionCode": 5,
-  "fileName": "taskpro-1.0.4-5.apk",
-  "size": 43780384,
-  "notes": "Now called KARO, with a new logo and new colours.\nThe Tasks screen is back to the bigger cards with full labels.",
-  "publishedAt": "2026-10-09T13:53:48.722Z"
+  "versionName": "1.0.5",
+  "versionCode": 6,
+  "fileName": "taskpro-1.0.5-6.apk",
+  "size": 43811400,
+  "notes": "Invite links: one link gets the app and adds you as a contact, no pin to type.\nChoose \"Let us WhatsApp each other\" when you send it, and a green WhatsApp button appears under Remind on your tasks.\nSwitch WhatsApp off for anyone in Contacts.",
+  "publishedAt": "2026-10-09T17:33:32.959Z"
 }

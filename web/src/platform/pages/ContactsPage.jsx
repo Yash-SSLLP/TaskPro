@@ -11,7 +11,7 @@ import { api } from '../api';
 import { timeAgo } from '../format';
 import { pinOf } from '../pin';
 import { useSession, useTz } from '../session';
-import { Badge, Button, Card, EmptyState, ErrorState, Input, PageHeader, PersonLine, PinCard, PinLookup, Skeleton, useConfirm } from '../ui';
+import { Badge, Button, Card, EmptyState, ErrorState, Input, PageHeader, PersonLine, PinCard, PinLookup, Skeleton, WhatsAppIcon, useConfirm } from '../ui';
 
 function useRefresh() {
   const qc = useQueryClient();
@@ -211,6 +211,23 @@ function ContactList({ contacts, loading, tz }) {
     }
   };
 
+  const whatsappOff = async (c) => {
+    const ok = await confirm({
+      title: `Stop WhatsApp with ${c.person?.name}?`,
+      text: "Neither of you will see the other's mobile number on tasks, or a WhatsApp button. To switch it on again, send them a new WhatsApp invite link.",
+      confirmLabel: 'Switch off',
+      tone: 'warning',
+    });
+    if (!ok) return;
+    try {
+      await api.patch(`/api/contacts/${c.id}`, { whatsapp: false });
+      toast.success('WhatsApp switched off');
+      refresh();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
   return (
     <div>
       <SectionTitle title="My contacts" count={contacts.length}>
@@ -243,6 +260,16 @@ function ContactList({ contacts, loading, tz }) {
               <PersonLine person={c.person} sub={c.since ? `since ${timeAgo(c.since, tz)}` : undefined} />
             </div>
             <div className="flex shrink-0 items-center gap-1 pl-[52px] sm:pl-0">
+              {c.whatsapp && (
+                <button
+                  type="button"
+                  onClick={() => whatsappOff(c)}
+                  title="You can WhatsApp each other about tasks. Click to switch off."
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#25D366]/40 bg-[#25D366]/10 px-2.5 text-xs font-semibold text-ink transition-colors hover:bg-[#25D366]/20"
+                >
+                  <WhatsAppIcon className="h-3.5 w-3.5" /> WhatsApp on
+                </button>
+              )}
               <Button size="sm" variant="soft" to={`/tasks?assign=${c.person?.id}`}>
                 Assign task
               </Button>

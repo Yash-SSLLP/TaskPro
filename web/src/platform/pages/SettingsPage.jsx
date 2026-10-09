@@ -298,7 +298,7 @@ export function SettingsPage() {
     <div className="mx-auto max-w-3xl space-y-5">
       <PageHeader title="Settings" />
       <ProfileCard />
-      {!superAdmin && <PinCard person={user} compact />}
+      {!superAdmin && <PinCard person={user} compact invite={false} />}
       <PasswordSection />
       <PreferencesSection />
       <AppearanceSection />

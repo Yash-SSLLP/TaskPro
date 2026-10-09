@@ -6,7 +6,7 @@
  *                           Alerts, Settings — and, for the Super Admin, the
  *                           Console (people, teams) with All tasks.
  */
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Compass } from 'lucide-react';
@@ -24,6 +24,8 @@ import { ContactsPage } from './platform/pages/ContactsPage';
 import { TeamDetailPage, TeamsPage } from './platform/pages/TeamsPage';
 import { DeleteAccountPage, PrivacyPage } from './platform/pages/legal';
 import { GET_APP_PATH, GetAppPage } from './platform/pages/mobileApp';
+import { JoinPage } from './platform/pages/JoinPage';
+import { JOIN_RE, clearAfterSignIn, peekAfterSignIn } from './platform/invite';
 import { EmptyState, Button } from './platform/ui';
 
 function NotFound() {
@@ -36,6 +38,13 @@ function NotFound() {
       action={<Button to={isSuperAdmin(user) ? product.adminHomePath : product.homePath}>Go home</Button>}
     />
   );
+}
+
+/** /sign-in or /sign-up once signed in: where the auth page meant to go (an invite, a task), else home. */
+function AfterSignIn({ home }) {
+  const [to] = useState(() => peekAfterSignIn() || home);
+  useEffect(() => clearAfterSignIn(), []);
+  return <Navigate to={to} replace />;
 }
 
 /** Refresh the session from the server once per load (role, pin, settings, …). */
@@ -73,7 +82,8 @@ export default function App() {
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/delete-account" element={<DeleteAccountPage />} />
         <Route path={GET_APP_PATH} element={<GetAppPage />} />
-        <Route path="*" element={<Navigate to="/sign-in" replace state={{ from: location.pathname }} />} />
+        <Route path="/join/:pin" element={<JoinPage />} />
+        <Route path="*" element={<Navigate to="/sign-in" replace state={{ from: location.pathname + location.search }} />} />
       </Routes>
     );
   }
@@ -84,6 +94,15 @@ export default function App() {
   if (location.pathname === GET_APP_PATH) return <GetAppPage />;
 
   if (user.mustChangePassword) return <ForcePasswordPage />;
+
+  // An invite link, signed in: "Add <name> as a contact".
+  if (JOIN_RE.test(location.pathname)) {
+    return (
+      <Routes>
+        <Route path="/join/:pin" element={<JoinPage />} />
+      </Routes>
+    );
+  }
 
   const admin = isSuperAdmin(user);
   const home = admin ? product.adminHomePath : product.homePath;
@@ -113,8 +132,8 @@ export default function App() {
           </>
         )}
         <Route path="/" element={<Navigate to={home} replace />} />
-        <Route path="/sign-in" element={<Navigate to={home} replace />} />
-        <Route path="/sign-up" element={<Navigate to={home} replace />} />
+        <Route path="/sign-in" element={<AfterSignIn home={home} />} />
+        <Route path="/sign-up" element={<AfterSignIn home={home} />} />
         <Route path="/team" element={<Navigate to={admin ? '/console?tab=teams' : '/teams'} replace />} />
         <Route path="/report" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<NotFound />} />

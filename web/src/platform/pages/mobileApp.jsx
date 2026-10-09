@@ -17,7 +17,7 @@ import { LegalShell } from './legal';
 export const GET_APP_PATH = '/get-app';
 
 /** The published build, or null when there is none. */
-function useRelease() {
+export function useRelease() {
   return useQuery({
     queryKey: ['app-release'],
     queryFn: async () => {

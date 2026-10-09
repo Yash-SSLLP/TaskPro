@@ -10,6 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { tr } from '../../i18n';
 import { PinCard } from '../components/PinCard';
 import { PinLookup } from '../components/PinLookup';
+import { WhatsAppIcon, WHATSAPP_GREEN } from '../components/WhatsAppIcon';
 import { contactsApi, platformKeys } from '../endpoints';
 import { relativeTime } from '../format';
 import { useContacts, usePullRefresh, useRefetchOnFocus } from '../hooks';
@@ -88,6 +89,24 @@ export default function ContactsScreen({ navigation }) {
     try {
       await contactsApi.remove(c.id);
       toast.success(tr('Removed.'));
+      refresh();
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+
+  const whatsappOff = async (c) => {
+    setChosen(null);
+    await new Promise((r) => setTimeout(r, 300));
+    const ok = await confirm({
+      title: tr('Stop WhatsApp with {name}?', { name: c.person?.name }),
+      message: tr("Neither of you will see the other's mobile number on tasks, or a WhatsApp button. To switch it on again, send them a new WhatsApp invite link."),
+      confirmLabel: tr('Switch off'),
+    });
+    if (!ok) return;
+    try {
+      await contactsApi.whatsappOff(c.id);
+      toast.success(tr('WhatsApp switched off'));
       refresh();
     } catch (e) {
       toast.error(e.message);
@@ -173,6 +192,7 @@ export default function ContactsScreen({ navigation }) {
                   left={<Avatar person={c.person} size={40} />}
                   title={c.person?.name}
                   subtitle={[c.person?.title, pinOf(c.person)].filter(Boolean).join(' · ')}
+                  right={c.whatsapp ? <WhatsAppIcon size={18} /> : undefined}
                   onPress={() => setChosen(c)}
                 />
               ))}
@@ -203,6 +223,16 @@ export default function ContactsScreen({ navigation }) {
                 setTimeout(() => navigation.navigate('AssignTask', { assignees: id ? [id] : [] }), 300);
               }}
             />
+            {chosen.whatsapp ? (
+              <ListRow
+                icon={WhatsAppIcon}
+                iconColor={WHATSAPP_GREEN}
+                title={tr('Stop WhatsApp reminders')}
+                subtitle={tr('You can WhatsApp each other about tasks.')}
+                chevron={false}
+                onPress={() => whatsappOff(chosen)}
+              />
+            ) : null}
             <ListRow icon={UserX} title={tr('Remove contact')} danger chevron={false} onPress={() => remove(chosen)} />
           </View>
         ) : null}

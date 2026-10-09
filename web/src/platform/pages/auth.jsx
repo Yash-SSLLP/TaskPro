@@ -4,13 +4,14 @@
  * "choose your own password" step.
  */
 import { useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Copy, KeyRound, MessageCircle, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { product } from '../../product/config';
 import { api } from '../api';
 import { useSession } from '../session';
 import { copyText, pinOf, whatsappUrl } from '../pin';
+import { setAfterSignIn, takeInvite } from '../invite';
 import { Logo, Wordmark } from '../Logo';
 import { ThemeToggle } from '../ThemeToggle';
 import { Button, Input, PasswordInput } from '../ui';
@@ -18,6 +19,17 @@ import { signOutEverywhere } from '../signOut';
 
 const HOME = '/tasks';
 const homeFor = (user) => (user?.role === 'superadmin' ? '/console' : HOME);
+
+/**
+ * Where to go once signed in: an invite opened before signing in, else the
+ * page a link was taken to (a task from a WhatsApp reminder), else home.
+ */
+function nextFor(user, from) {
+  const invite = takeInvite();
+  if (invite && user?.role !== 'superadmin') return invite;
+  if (typeof from === 'string' && from.startsWith('/') && !/^\/(sign-|forgot|reset)/.test(from) && from !== '/') return from;
+  return homeFor(user);
+}
 
 function AuthLayout({ title, subtitle, children, footer }) {
   return (
@@ -103,6 +115,7 @@ export function SignInPage() {
   const setSession = useSession((s) => s.setSession);
   const notice = useSession((s) => s.notice);
   const navigate = useNavigate();
+  const from = useLocation().state?.from;
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const formRef = useRef(null);
@@ -114,8 +127,10 @@ export function SignInPage() {
     const pw = password || field('current-password');
     if (!id || !pw) throw new Error('Enter your email, mobile or username, and your password.');
     const data = await api.post('/api/auth/login', { identifier: id, password: pw });
+    const next = nextFor(data.user, from);
+    setAfterSignIn(next);
     setSession(data);
-    navigate(homeFor(data.user), { replace: true });
+    navigate(next, { replace: true });
   });
 
   return (
@@ -215,8 +230,10 @@ export function SignUpPage() {
     });
     if (pinOf(data.user)) setCreated(data);
     else {
+      const next = nextFor(data.user);
+      setAfterSignIn(next);
       setSession(data);
-      navigate(homeFor(data.user), { replace: true });
+      navigate(next, { replace: true });
     }
   });
 
@@ -225,9 +242,11 @@ export function SignUpPage() {
       <NewPinStep
         data={created}
         onContinue={() => {
+          const next = nextFor(created.user);
+          setAfterSignIn(next);
           setSession(created);
           toast.success(`Welcome to ${product.name}!`);
-          navigate(HOME, { replace: true });
+          navigate(next, { replace: true });
         }}
       />
     );

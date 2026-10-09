@@ -119,11 +119,17 @@ The session's `lastSeenAt` is stamped at most once a minute; device details are 
 
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| GET | `/` | | `{ contacts: [{ id, person, since }], incoming: [{ id, person, at }], outgoing: [{ id, person, at }] }`. `id` = the contact link id. |
+| GET | `/` | | `{ contacts: [{ id, person, since, whatsapp }], incoming: [{ id, person, at }], outgoing: [{ id, person, at }] }`. `id` = the contact link id; `whatsapp` = the two may WhatsApp each other about tasks. |
 | POST | `/` | `{ pin }` | 201 `{ status: "requested", request: { id, person, at } }`. If they had already asked you, it is accepted: `{ status: "accepted", contact: { id, person, since } }`. |
 | POST | `/:id/accept` | | `{ contact: { id, person, since } }` (recipient only) |
 | POST | `/:id/decline` | | `{ ok }` (recipient only; removes the request) |
 | DELETE | `/:id` | | `{ ok }`: remove a contact (either side) or cancel your own outgoing request |
+| PATCH | `/:id` | `{ whatsapp: false }` | `{ contact }`: stop WhatsApp reminders (either side). Only a new WhatsApp invite link turns it back on; `true` is a 400. |
+| GET | `/invite?whatsapp=1` | | `{ path, whatsapp, pinDisplay }`: my invite link's path, e.g. `/join/7KQ4-M9XA` or `/join/7KQ4-M9XA?w=<sig>`. Apps put their own address in front. |
+| GET | `/invite/:pin?w=` | | **Public** (rate-limited): `{ inviter: Person, whatsapp }` for the invite page. 404 "This invite link is not valid any more". |
+| POST | `/join` | `{ pin, w? }` | `{ status: "accepted" \| "already", contact: { id, person, since, whatsapp } }`. Through an invite link: contacts at once, whatever requests were pending. A valid `w` also switches WhatsApp on (a wrong one is ignored). 400 on your own link. |
+
+**Invite links** (`platform/invite.js`): one link carries the pin, gets the app and joins. `w` is an HMAC of the pin, so only the inviter's own WhatsApp link carries it. The web page `/join/<pin>` offers sign-up / sign-in (the invite waits and opens again), "Open in the app" and the APK (copying the link first, so a fresh install finds it on the clipboard). The Android app opens `https://<host>/join/…` and `/tasks/…` itself once installed (App Links, `web/public/.well-known/assetlinks.json`).
 
 **Errors on POST:**
 - 404 "No one has that Task Pin"
@@ -316,6 +322,7 @@ Everything not listed here behaves exactly as in the HRMS Tasks backend: routes,
   - `onBehalfOf` is Super Admin only.
   - An empty assignee list means a task for yourself (HRMS rule).
 - **Visibility:** you can see a task if you are an assignee, setter, approver, loop user, in `openTo`, an original assignee, or owner/admin of the task's `team`. Sub-tasks follow their parent. The Super Admin sees everything. Anyone else gets **404**.
+- **WhatsApp reminders** (`GET /:id`): `can.whatsappTo: [{ id, name, phone }]`, the people the reminder bell reaches (`nudgeTo`) who are WhatsApp contacts of yours (joined through a WhatsApp invite link, not switched off) and have a mobile number. Empty otherwise, and always for the Super Admin. The apps draw a WhatsApp button under the bell that opens a chat with the reminder and the task's link typed in.
 - **Assigner rights** (HRMS `isAssigner` / `tasks.manage`):
   - The setter, the approver, the owner/admin of the task's team, and the Super Admin.
   - **Delete (archive):** the setter, team owner/admin, or Super Admin. **Purge** (`?purge=1`): Super Admin only.
