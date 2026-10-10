@@ -1,8 +1,8 @@
 {
-  "versionName": "1.0.5",
-  "versionCode": 6,
-  "fileName": "taskpro-1.0.5-6.apk",
-  "size": 43811400,
-  "notes": "Invite links: one link gets the app and adds you as a contact, no pin to type.\nChoose \"Let us WhatsApp each other\" when you send it, and a green WhatsApp button appears under Remind on your tasks.\nSwitch WhatsApp off for anyone in Contacts.",
-  "publishedAt": "2026-10-09T17:33:32.959Z"
+  "versionName": "1.0.6",
+  "versionCode": 7,
+  "fileName": "taskpro-1.0.6-7.apk",
+  "size": 43815480,
+  "notes": "KARO now works on iPhone",
+  "publishedAt": "2026-10-10T12:04:24.132Z"
 }
