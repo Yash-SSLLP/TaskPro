@@ -7,7 +7,12 @@ import App from './App';
 import { queryClient } from './platform/queryClient';
 import { useTheme } from './platform/theme';
 import { ConfirmProvider } from './platform/ui';
+import { advertiseIphoneApp, redirectIphoneToApp } from './platform/iphoneApp';
 import './index.css';
+
+// iPhones open the mobile app (public/iphone/) instead: see platform/iphoneApp.
+advertiseIphoneApp();
+const leaving = redirectIphoneToApp();
 
 /** The CSS re-themes itself (every colour is a variable); only the toasts are told. */
 function Themed() {
@@ -20,7 +25,7 @@ function Themed() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+if (!leaving) ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>

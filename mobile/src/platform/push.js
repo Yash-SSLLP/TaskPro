@@ -15,6 +15,7 @@ import productConfig from '../product/config';
 import { devicesApi } from './endpoints';
 import { brand } from './theme';
 import { tr } from '../i18n';
+import { IS_WEB, registerWebPush } from './web';
 
 const PUSH_KEY = `${productConfig.key}.pushToken`;
 let pushToken = null;
@@ -43,9 +44,27 @@ export function setupNotifications() {
 
 const easProjectId = () => Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId ?? null;
 
-/** Ask for permission, get the Expo push token and tell the server. */
+/** The iPhone web build: a Web Push subscription instead of an Expo token. */
+async function registerWeb() {
+  const token = await registerWebPush({
+    getKey: async () => (await devicesApi.webPushKey()).publicKey,
+    register: async (subscription) => (await devicesApi.registerWeb(subscription))?.token || null,
+  });
+  if (token) {
+    pushToken = token;
+    AsyncStorage.setItem(PUSH_KEY, token).catch(() => {});
+  }
+  return token;
+}
+
+/**
+ * Ask for permission, get the Expo push token and tell the server. In the
+ * iPhone web build, never asks (iOS allows that only from a tap: see
+ * web/PushPrompt) and subscribes once notifications are allowed.
+ */
 export async function registerForPush() {
   try {
+    if (IS_WEB) return await registerWeb();
     if (Platform.OS === 'web' || !Device.isDevice) return null;
     if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return null;
     const projectId = easProjectId();

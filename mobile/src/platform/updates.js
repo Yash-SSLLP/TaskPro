@@ -15,13 +15,15 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Application from 'expo-application';
+import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { create } from 'zustand';
 import { tr } from '../i18n';
 import { getApiUrl } from './api';
 
-export const installedVersion = Application.nativeApplicationVersion || '1.0.0';
+// The iPhone web build has no native package: it is the build app.json names.
+export const installedVersion = Application.nativeApplicationVersion || Constants.expoConfig?.version || '1.0.0';
 // Compared as the build number (Android's versionCode): it is what Android
 // compares, and it refuses to install a lower one over a higher one.
 export const installedBuild = Number(Application.nativeBuildVersion) || 0;

@@ -22,6 +22,7 @@ import { useSession } from './session';
 import { confirm, toast } from './ui';
 import { useFollowSystemTheme } from './appearance';
 import { canSelfUpdate, checkInBackground, dismissPrompt, shouldPrompt } from './updates';
+import { IS_WEB, listenWebPush } from './web';
 
 // Builds already offered since the app started: one prompt per version per
 // run, however often the app comes back to the foreground.
@@ -37,6 +38,9 @@ let clipboardChecked = false;
 function pathFromUrl(url) {
   if (!url) return null;
   const s = String(url);
+  // The iPhone web build, sent an invite or task link by the website (?open=).
+  const opened = IS_WEB ? /[?&]open=([^&#]+)/.exec(s) : null;
+  if (opened) return decodeURIComponent(opened[1]);
   const dashed = s.indexOf('/--/');
   if (dashed !== -1) return `/${s.slice(dashed + 4)}`;
   const web = /^https?:\/\/[^/]+(\/(?:join|tasks)\/[^#]*)/i.exec(s);
@@ -61,6 +65,13 @@ export default function AppEvents({ navReady }) {
 
   // Notifications: a tap opens its screen; an arrival refreshes what is on screen.
   useEffect(() => {
+    // The iPhone web build: the same, through its service worker (web/webPush.js).
+    if (IS_WEB) {
+      return listenWebPush(
+        (data) => openLink(data?.link || ''),
+        () => qc.invalidateQueries()
+      );
+    }
     if (Platform.OS === 'web') return undefined;
     const handled = (response) => {
       if (!response) return;
@@ -84,6 +95,8 @@ export default function AppEvents({ navReady }) {
       if (path) openLink(path);
     };
     Linking.getInitialURL().then(handle).catch(() => {});
+    // Once read, so a reload does not open it again.
+    if (IS_WEB && /[?&]open=/.test(window.location.search)) window.history.replaceState(null, '', window.location.pathname);
     const sub = Linking.addEventListener('url', ({ url }) => handle(url));
     return () => sub.remove();
   }, []);

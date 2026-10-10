@@ -67,6 +67,8 @@ const PEEK_AFTER = 900;
 const FIRE_AFTER = 120;
 /** gesture-handler's springs: no bounce, settling where its Swipeable does. */
 const SETTLE = { bounciness: 0, restSpeedThreshold: 1.7, restDisplacementThreshold: 0.4, useNativeDriver: true };
+/** Values born native. Not in the iPhone web build: a browser has no native driver, and react-native-web throws on one. */
+const NATIVE_VALUE = { useNativeDriver: Platform.OS !== 'web' };
 
 const quiet = () => {};
 
@@ -171,7 +173,7 @@ export function useSwipeHint() {
  */
 export function SwipeHint({ gap = 0 }) {
   const status = useHint((s) => s.status);
-  const [fade] = useState(() => new Animated.Value(0, { useNativeDriver: true }));
+  const [fade] = useState(() => new Animated.Value(0, NATIVE_VALUE));
   const rise = useMemo(() => fade.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }), [fade]);
   const height = useRef(0);
   // The closing: a height and a margin that shrink together (layout, so not the native driver).
@@ -335,8 +337,8 @@ export default function TaskSwipe({ actions, onAction, enabled = true, peek = fa
   const { left, right } = actions || {};
   const swipes = enabled && Boolean(left || right);
   // Native from the start, so even a card's first pull moves on the UI thread.
-  const [x] = useState(() => new Animated.Value(0, { useNativeDriver: true }));
-  const [pop] = useState(() => new Animated.Value(0, { useNativeDriver: true }));
+  const [x] = useState(() => new Animated.Value(0, NATIVE_VALUE));
+  const [pop] = useState(() => new Animated.Value(0, NATIVE_VALUE));
   // The panes are drawn once the card is first pulled sideways (or peeks):
   // a list of cards nobody swipes carries none.
   const [drawn, setDrawn] = useState(false);

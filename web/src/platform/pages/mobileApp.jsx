@@ -8,8 +8,9 @@
  */
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Copy, Download } from 'lucide-react';
+import { Copy, Download, Share } from 'lucide-react';
 import { product } from '../../product/config';
+import { IPHONE_APP_PATH } from '../iphoneApp';
 import { copyText } from '../pin';
 import { Button, Skeleton } from '../ui';
 import { LegalShell } from './legal';
@@ -121,14 +122,55 @@ export function AndroidAppDetails() {
   );
 }
 
+/**
+ * The iPhone app: the Android app's screens, served by this site at /iphone/
+ * and added to the home screen from Safari (see ../iphoneApp.js).
+ */
+export function IphoneAppDetails() {
+  const url = `${window.location.origin}${IPHONE_APP_PATH}`;
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">iPhone</p>
+        <p className="mt-1 text-sm text-ink-soft">The same app as Android, added from Safari. Nothing to download.</p>
+      </div>
+      <div className="flex gap-2">
+        <input
+          readOnly
+          value={url}
+          onFocus={(e) => e.target.select()}
+          className="h-10 min-w-0 flex-1 rounded-xl border border-line bg-slate-50 px-3 font-mono text-sm text-ink"
+          aria-label="Link to the iPhone app"
+        />
+        <Button variant="secondary" size="sm" icon={Copy} className="h-10" onClick={() => copyText(url, 'Link copied')}>
+          Copy
+        </Button>
+      </div>
+      <ol className="list-decimal space-y-1 pl-5 text-sm text-ink-soft">
+        <li>
+          Open the link on the iPhone in <strong className="text-ink">Safari</strong>.
+        </li>
+        <li>
+          Tap <Share className="inline h-4 w-4 align-[-3px]" aria-label="Share" /> then <strong className="text-ink">Add to Home Screen</strong>,
+          with <strong className="text-ink">Open as Web App</strong> on.
+        </li>
+        <li>Open {product.name} from the home screen and sign in. Allow notifications when it asks.</li>
+      </ol>
+    </div>
+  );
+}
+
 /** The public page: /get-app. */
 export function GetAppPage() {
   return (
     <LegalShell>
-      <h1 className="text-3xl font-bold tracking-tight text-ink">Get {product.name} for Android</h1>
-      <p className="mt-2 text-[15px] text-ink-soft">Your tasks, reminders and alerts on your phone.</p>
+      <h1 className="text-3xl font-bold tracking-tight text-ink">Get {product.name} on your phone</h1>
+      <p className="mt-2 text-[15px] text-ink-soft">Your tasks, reminders and alerts on Android and iPhone.</p>
       <div className="mt-8 rounded-2xl border border-line bg-card p-5 shadow-card sm:p-6">
         <AndroidAppDetails />
+      </div>
+      <div className="mt-5 rounded-2xl border border-line bg-card p-5 shadow-card sm:p-6">
+        <IphoneAppDetails />
       </div>
     </LegalShell>
   );

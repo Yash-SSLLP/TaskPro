@@ -199,9 +199,16 @@ How an open screen learns that somebody else changed what it shows. There are no
 - What the apps do: the web polls every 4 s while its tab is visible, the phone every 5 s while in the foreground; both at once on coming back, back off on errors (up to a minute), and pause for 10 minutes on a 404 (an older server).
 - How it works (backend/src/platform/live): every write to a watched model bumps per-person counters (`u:<userId>:<topic>`) plus shared ones (`all:tasks` for the Super Admin, `all:people`, `bulk:<topic>` for sweeps such as an account or team being deleted). A request's bumps are written in one `bulkWrite` just before its answer is sent. Writes that touch only bookkeeping (reminder stamps, "last seen", settings, logins) bump nothing.
 
-### Devices `/api/devices` (unchanged)
+### Devices `/api/devices`
 
-`POST { token, platform }` and `DELETE { token }`, using Expo push tokens.
+`POST { token, platform }` and `DELETE { token }`, using Expo push tokens. `POST` answers `{ ok, token }`.
+
+The iPhone home-screen app (web/public/iphone) uses Web Push instead:
+
+| Method | Path | Body | Returns |
+|---|---|---|---|
+| GET | `/web-push-key` | | `{ publicKey }`: the VAPID key to subscribe with (`VAPID_PUBLIC_KEY`, or a pair made once and kept in the database). |
+| POST | `/` | `{ platform: "web", webPush: PushSubscription.toJSON() }` | `{ ok, token }`. The endpoint must be on a known push service (Apple, Google, Mozilla, Microsoft). `token` is `webpush:<hash of the endpoint>`; unregister with `DELETE { token }`. |
 
 ### Files `/api/files`
 

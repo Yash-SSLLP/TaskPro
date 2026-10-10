@@ -24,6 +24,10 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Notifications from 'expo-notifications';
 import productConfig from '../product/config';
 import { currentLanguage, tr } from '../i18n';
+import { IS_WEB, installWeb, prepareForm, webOrigin, webPushPermission } from './web';
+
+// iPhone web build only (a no-op in the phone app): browser uploads.
+installWeb();
 
 const URL_KEY = `${productConfig.key}.apiUrl`;
 const REQUEST_TIMEOUT_MS = 20000;
@@ -51,6 +55,9 @@ export function normalizeUrl(raw) {
 }
 
 export function defaultApiUrl() {
+  // The iPhone web build is served BY the website, so it talks to whichever
+  // host served it: same origin, no CORS.
+  if (webOrigin) return webOrigin;
   return normalizeUrl(Constants.expoConfig?.extra?.apiUrl || 'http://10.0.2.2:5120');
 }
 
@@ -177,6 +184,7 @@ const headerText = (value, max = 80) =>
 
 /** "Google Pixel 7", "Samsung SM-A515F", "iPhone 15". */
 function deviceLabel() {
+  if (IS_WEB) return /iPhone|iPod/.test(navigator.userAgent || '') ? 'iPhone (home screen app)' : 'Web app';
   const make = headerText(Device.manufacturer || Device.brand, 30);
   const model = headerText(Device.modelName, 50);
   if (!model) return make;
@@ -186,9 +194,13 @@ function deviceLabel() {
 
 const CLIENT_HEADERS = Object.fromEntries(
   Object.entries({
-    'X-Platform': ['android', 'ios', 'web'].includes(Platform.OS) ? Platform.OS : 'other',
-    'X-App-Version': headerText(Application.nativeApplicationVersion, 40),
-    'X-App-Build': headerText(Application.nativeBuildVersion, 20),
+    // The iPhone web build is the iPhone app, so the console counts it as one.
+    'X-Platform': IS_WEB
+      ? /iPhone|iPod/.test(navigator.userAgent || '') ? 'ios' : 'web'
+      : ['android', 'ios'].includes(Platform.OS) ? Platform.OS : 'other',
+    // The iPhone web build has no native package: it is the build app.json names.
+    'X-App-Version': headerText(Application.nativeApplicationVersion || (IS_WEB ? Constants.expoConfig?.version : ''), 40),
+    'X-App-Build': headerText(Application.nativeBuildVersion || (IS_WEB ? Constants.expoConfig?.android?.versionCode : ''), 20),
     'X-Device-Name': deviceLabel(),
     'X-OS-Version': headerText([Device.osName, Device.osVersion].filter(Boolean).join(' '), 40),
   }).filter(([, v]) => v)
@@ -198,7 +210,10 @@ let pushPermission = null;
 
 /** Whether this phone lets the app show notifications ('granted' | 'denied' | 'undetermined'). Never asks. */
 export async function refreshPushPermission() {
-  if (Platform.OS === 'web') return null;
+  if (IS_WEB) {
+    pushPermission = webPushPermission();
+    return pushPermission;
+  }
   try {
     const { status } = await Notifications.getPermissionsAsync();
     if (['granted', 'denied', 'undetermined'].includes(status)) pushPermission = status;
@@ -290,8 +305,10 @@ export const api = {
  * @param {FormData} form
  * @param {{ onProgress?: (p: number) => void, query?: object }} opts
  */
-export function sendForm(method, path, form, { onProgress, query } = {}) {
+export async function sendForm(method, path, form, { onProgress, query } = {}) {
   const sentToken = token;
+  // The iPhone web build turns the picked files into real Blobs first.
+  const body = await prepareForm(form);
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open(method, buildUrl(path, query));
@@ -315,7 +332,7 @@ export function sendForm(method, path, form, { onProgress, query } = {}) {
     };
     xhr.onerror = () => reject(new ApiError(networkMessage(), { code: 'NETWORK' }));
     xhr.ontimeout = () => reject(new ApiError(tr('The upload took too long. Please try again.'), { code: 'NETWORK' }));
-    xhr.send(form);
+    xhr.send(body);
   });
 }
 

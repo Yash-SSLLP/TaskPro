@@ -7,6 +7,7 @@
 const Notification = require('../models/Notification');
 const Device = require('../models/Device');
 const { sendPush } = require('./push');
+const { sendWebPush } = require('./webPush');
 
 // Notification.title / body have maxlength 140 / 400. Clip instead of letting
 // one long title fail validation and silently drop the alert for everyone.
@@ -29,10 +30,15 @@ async function notify(userIds, { title, body = '', link = '', kind = 'info', exc
 
     await Notification.insertMany(ids.map((user) => ({ user, title, body, link, kind })));
 
-    const devices = await Device.find({ user: { $in: ids } }).select('token').lean();
-    if (devices.length) {
-      await sendPush(devices.map((d) => ({ to: d.token, title, body, data: { link } })));
-    }
+    // Each phone the way it can be reached: an Expo token, or (the iPhone
+    // home-screen app) a Web Push subscription.
+    const devices = await Device.find({ user: { $in: ids } }).select('token webPush').lean();
+    const web = devices.filter((d) => d.webPush?.endpoint);
+    const expo = devices.filter((d) => !d.webPush?.endpoint);
+    await Promise.all([
+      expo.length ? sendPush(expo.map((d) => ({ to: d.token, title, body, data: { link } }))) : null,
+      web.length ? sendWebPush(web, { title, body, data: { link } }) : null,
+    ]);
   } catch (err) {
     console.warn('[notify] failed:', err.message);
   }

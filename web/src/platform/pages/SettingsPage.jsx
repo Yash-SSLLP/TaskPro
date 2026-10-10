@@ -14,7 +14,7 @@ import { isSuperAdmin, useSession, useSettings } from '../session';
 import { signOutEverywhere } from '../signOut';
 import { Avatar, Button, Card, Input, PageHeader, PasswordInput, PinCard, Select, Skeleton, Switch } from '../ui';
 import { ReminderEditor } from '../../product/components/Reminders';
-import { AndroidAppDetails } from './mobileApp';
+import { AndroidAppDetails, IphoneAppDetails } from './mobileApp';
 import { setThemeMode, useTheme } from '../theme';
 
 export function Section({ id, title, description, children }) {
@@ -302,8 +302,11 @@ export function SettingsPage() {
       <PasswordSection />
       <PreferencesSection />
       <AppearanceSection />
-      <Section title="Android app" description="KARO on your phone, with reminders and alerts.">
+      <Section title="Phone app" description="KARO on your phone, with reminders and alerts.">
         <AndroidAppDetails />
+        <div className="mt-5 border-t border-line pt-5">
+          <IphoneAppDetails />
+        </div>
       </Section>
       <Section title="Privacy and your account" description="How we handle your information, and how to leave.">
         <div className="flex flex-wrap gap-3">

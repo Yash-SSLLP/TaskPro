@@ -78,6 +78,16 @@ const config = {
 
   // Optional Expo access token for push (only if "enhanced push security" is on).
   expoAccessToken: env('EXPO_ACCESS_TOKEN'),
+
+  // Web Push for the iPhone home-screen app (platform/services/webPush.js).
+  // Optional: without keys, a pair is made once and kept in the database.
+  // The subject is a contact Apple's push service may use ("mailto:…" or an
+  // https URL); it defaults to the web app's address.
+  vapid: {
+    publicKey: env('VAPID_PUBLIC_KEY'),
+    privateKey: env('VAPID_PRIVATE_KEY'),
+    subject: env('VAPID_SUBJECT'),
+  },
 };
 
 module.exports = config;

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>KARO</title>
+    <meta name="description" content="KARO: simple task management for your business and team." />
+    <!-- Added from Safari with Share › Add to Home Screen: opens full screen, like the app. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="KARO" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="format-detection" content="telephone=no" />
+    <!-- The page colour behind the status bar; the app keeps it in step with its own Light / Dark choice. -->
+    <meta name="theme-color" content="#f3f3f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#001639" media="(prefers-color-scheme: dark)" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <style id="expo-reset">
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #f3f3f3;
+        overscroll-behavior: none;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-text-size-adjust: 100%;
+        -webkit-user-select: none;
+        user-select: none;
+        touch-action: manipulation;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      @media (prefers-color-scheme: dark) { body { background: #001639; } }
+      #root { display: flex; height: 100%; flex: 1; }
+      /* Typing and copying still work where there is text to type or copy. */
+      input, textarea, [contenteditable] { -webkit-user-select: text; user-select: text; }
+      /* Inputs at 16px or more, or iOS zooms the page in on focus. */
+      input, textarea, select { font-size: max(16px, 1em); }
+      #ios-install {
+        position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom));
+        z-index: 2147483647; display: none; align-items: center; gap: 12px;
+        padding: 12px 12px 12px 14px; border-radius: 16px;
+        background: #032d60; color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+        font: 15px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      #ios-install img { width: 40px; height: 40px; border-radius: 9px; flex: none; }
+      #ios-install .t { flex: 1; }
+      #ios-install b { color: #78b0fd; font-weight: 600; }
+      #ios-install svg { vertical-align: -3px; }
+      #ios-install button {
+        flex: none; width: 36px; height: 36px; border: 0; border-radius: 18px;
+        background: rgba(255,255,255,.14); color: #fff; font-size: 18px; line-height: 36px;
+      }
+    </style>
+  <link rel="icon" href="/iphone/favicon.ico" /></head>
+
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <div id="ios-install" role="dialog" aria-label="Install the app">
+      <img src="icons/apple-touch-icon.png" alt="" />
+      <div class="t">
+        Tap
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#78b0fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Share"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+        then <b>Add to Home Screen</b> to open KARO full screen.
+      </div>
+      <button type="button" aria-label="Close">&#x2715;</button>
+    </div>
+    <script>
+      // In Safari only: never inside the app opened from the home screen.
+      (function () {
+        var ua = navigator.userAgent || '';
+        var iOS = /iPhone|iPod/.test(ua);
+        var installed = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+        var dismissed = false;
+        try { dismissed = sessionStorage.getItem('taskpro.installHint') === '1'; } catch (e) {}
+        if (!iOS || installed || dismissed) return;
+        var el = document.getElementById('ios-install');
+        el.style.display = 'flex';
+        el.querySelector('button').addEventListener('click', function () {
+          el.style.display = 'none';
+          try { sessionStorage.setItem('taskpro.installHint', '1'); } catch (e) {}
+        });
+      })();
+    </script>
+  <script src="/iphone/_expo/static/js/web/index-32d8550f3fdfdc1a2601c79a5b5314b6.js" defer></script>
+</body>
+</html>

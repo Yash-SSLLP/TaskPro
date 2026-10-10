@@ -127,6 +127,9 @@ export const notificationsApi = {
 
 export const devicesApi = {
   register: (token, platform) => api.post('/api/devices', { token, platform }),
+  // The iPhone web build: a Web Push subscription, signed with this key.
+  webPushKey: () => api.get('/api/devices/web-push-key'),
+  registerWeb: (subscription) => api.post('/api/devices', { platform: 'web', webPush: subscription }),
   // The token goes in the body (API.md); also in the query for servers that drop DELETE bodies.
   unregister: (token) => api.del('/api/devices', { body: { token }, query: { token } }),
 };

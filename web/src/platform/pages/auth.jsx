@@ -72,7 +72,7 @@ function AuthLayout({ title, subtitle, children, footer }) {
           <p className="mt-6 flex items-center justify-center gap-4 text-sm text-ink-soft">
             <Link to="/get-app" className="inline-flex items-center gap-1.5 font-medium text-brand hover:underline">
               <Smartphone className="h-4 w-4" aria-hidden />
-              Get the Android app
+              Get the app
             </Link>
             <Link to="/privacy" className="hover:text-ink hover:underline">
               Privacy policy

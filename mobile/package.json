@@ -9,9 +9,11 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "apk": "node scripts/build-apk.js",
-    "publish": "node scripts/publish-release.js"
+    "publish": "node scripts/publish-release.js",
+    "iphone": "node scripts/build-iphone.js"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~6.1.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-navigation/bottom-tabs": "^7.19.2",
@@ -41,16 +43,19 @@
     "expo-system-ui": "~6.0.9",
     "lucide-react-native": "^1.48.0",
     "react": "19.1.0",
+    "react-dom": "19.1.0",
     "react-native": "0.81.5",
     "react-native-restart": "^0.0.29",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-svg": "15.12.1",
+    "react-native-web": "^0.21.0",
     "zustand": "^5.0.15"
   },
   "private": true,
   "devDependencies": {
     "eslint": "^9.0.0",
-    "eslint-config-expo": "~10.0.0"
+    "eslint-config-expo": "~10.0.0",
+    "pdfjs-dist": "4.10.38"
   }
 }

@@ -1,11 +1,15 @@
 /**
- * /api/devices: phones registering (and unregistering) for push.
+ * /api/devices: phones registering (and unregistering) for push. The phone
+ * app sends an Expo push token; the iPhone home-screen app (platform 'web')
+ * sends a Web Push subscription instead, and its token is made here from the
+ * subscription's endpoint, never taken from the client.
  */
 const express = require('express');
 const Device = require('../models/Device');
 const { protect } = require('../auth');
 const { z, parse } = require('../validate');
 const { isExpoToken } = require('../services/push');
+const webPush = require('../services/webPush');
 const { badRequest } = require('../errors');
 
 const router = express.Router();
@@ -16,13 +20,26 @@ const schema = z.object({
   platform: z.enum(['android', 'ios', 'web', 'other']).default('android'),
 });
 
+// The VAPID public key the iPhone home-screen app subscribes with.
+router.get('/web-push-key', async (req, res) => {
+  res.json({ publicKey: await webPush.publicKey() });
+});
+
 router.post('/', async (req, res) => {
-  const body = parse(schema, req.body);
-  if (!isExpoToken(body.token)) throw badRequest('Not a push token');
+  let device;
+  if (req.body?.platform === 'web') {
+    const subscription = webPush.cleanSubscription(req.body.webPush);
+    if (!subscription) throw badRequest('Not a push subscription');
+    device = { token: webPush.tokenFor(subscription.endpoint), platform: 'web', webPush: subscription };
+  } else {
+    const body = parse(schema, req.body);
+    if (!isExpoToken(body.token)) throw badRequest('Not a push token');
+    device = { token: body.token, platform: body.platform };
+  }
   // A phone belongs to whoever signed in on it last.
-  await Device.deleteMany({ token: body.token });
-  await Device.create({ user: req.user._id, token: body.token, platform: body.platform });
-  res.json({ ok: true });
+  await Device.deleteMany({ token: device.token });
+  await Device.create({ user: req.user._id, ...device });
+  res.json({ ok: true, token: device.token });
 });
 
 router.delete('/', async (req, res) => {

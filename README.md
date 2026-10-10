@@ -154,6 +154,39 @@ gradlew.bat assembleRelease
 
 The APK is written to `android\app\build\outputs\apk\release\` inside that folder.
 
+### iPhone
+
+There is no App Store build. iPhones run the **same app** as Android,
+exported for the web into `web/public/iphone/` and added to the home screen
+from Safari (Share › Add to Home Screen, with **Open as Web App** on). It then
+opens full screen, without Safari's address bar or toolbar, and gets
+notifications through Web Push (iOS 16.4 or later).
+
+```bash
+cd mobile
+npm run iphone
+```
+
+That rebuilds `web/public/iphone/`; commit it and it goes live with the next
+website deploy, at `/iphone/index.html`. Run it after any change under
+`mobile/` so iPhones get the same app as Android.
+
+- On an iPhone, the website sends every page to the app, except privacy,
+  account deletion and password reset. Invite and task links open inside the
+  app (`?open=`). `?desktop=1` keeps the website on that phone; `?desktop=0`
+  undoes it. See `web/src/platform/iphoneApp.js`.
+- The browser stand-ins for native-only modules (file system, sharing, secure
+  store, date picker, dialogs, photos behind a session) are in
+  `mobile/src/platform/web/`, swapped in by `mobile/metro.config.js` for the
+  web build only. The Android build is unchanged.
+- Push: the app asks once, after sign-in, with a tap (iOS allows nothing
+  else). The server signs Web Push with `VAPID_PUBLIC_KEY` and
+  `VAPID_PRIVATE_KEY` (optional `VAPID_SUBJECT`, e.g. `mailto:you@example.com`).
+  Without them it makes a pair once and keeps it in the database. Changing the
+  keys later is safe: each iPhone subscribes again the next time it opens.
+- An icon added before this existed, or from Safari with Open as Web App off,
+  opens with Safari's bars: delete it and add it again.
+
 ## Privacy policy, account deletion and Google Play
 
 - The privacy policy is at `/privacy` on the web app and under **More →

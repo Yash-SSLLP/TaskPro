@@ -55,7 +55,8 @@ function usePicker(mode, current, commit, { minimumDate, maximumDate } = {}) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(current);
   const show = () => {
-    if (Platform.OS === 'android') {
+    // The iPhone web build draws the Android dialog too (web/shims/DateTimePicker.js).
+    if (Platform.OS === 'android' || Platform.OS === 'web') {
       DateTimePickerAndroid.open({
         value: current,
         mode,

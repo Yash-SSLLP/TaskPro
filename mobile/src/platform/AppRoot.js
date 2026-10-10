@@ -16,11 +16,12 @@ import { useLang } from '../i18n';
 import AppEvents from './AppEvents';
 import { navigationRef } from './navigation/links';
 import RootNavigator from './navigation/RootNavigator';
-import { setupNotifications } from './push';
+import { registerForPush, setupNotifications } from './push';
 import { queryClient } from './queryClient';
 import { useSession } from './session';
 import { navigationColors, theme } from './theme';
 import { DialogHost, ToastHost } from './ui';
+import { WebHosts } from './web';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 SplashScreen.setOptions({ fade: true, duration: 250 });
@@ -51,6 +52,8 @@ export default function AppRoot() {
           key={lang}
           ref={navigationRef}
           theme={navigationTheme}
+          // The iPhone web build keeps the app's name as the page title, not the screen's.
+          documentTitle={{ enabled: false }}
           initialState={navState.current}
           onStateChange={(state) => {
             navState.current = state;
@@ -63,6 +66,8 @@ export default function AppRoot() {
         <AppEvents navReady={navReady} />
         <ToastHost />
         <DialogHost />
+        {/* iPhone web build: its file viewer, date picker and notification prompt (nothing in the phone app). */}
+        <WebHosts signedIn={status === 'signedIn'} onPushAllowed={registerForPush} />
         <StatusBar style={theme.dark ? 'light' : 'dark'} />
       </QueryClientProvider>
     </SafeAreaProvider>
