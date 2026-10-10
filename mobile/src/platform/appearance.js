@@ -11,6 +11,7 @@ import { AppState, Appearance, Pressable, StyleSheet, Text, View } from 'react-n
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNRestart from 'react-native-restart';
 import { tr } from '../i18n';
+import productConfig from '../product/config';
 import { Check, Moon, Smartphone, Sun, SunMoon } from './icons';
 import { colors, font, radius, space, theme, THEME_KEY, THEME_MODES } from './theme';
 import { BottomSheet, confirm, toast } from './ui';
@@ -31,7 +32,7 @@ async function restartWith(mode) {
   try {
     RNRestart.restart('theme');
   } catch {
-    toast(tr('Close and reopen the app to see the new look.'));
+    toast(tr('Close and reopen {app} to see the new look.', { app: productConfig.name }));
   }
 }
 
@@ -40,7 +41,7 @@ export async function chooseTheme(mode) {
   if (mode === theme.mode) return;
   const ok = await confirm({
     title: tr('Change the look?'),
-    message: tr('The app restarts to switch to {theme}.', { theme: themeLabel(mode) }),
+    message: tr('{app} restarts to switch to {theme}.', { app: productConfig.name, theme: themeLabel(mode) }),
     confirmLabel: tr('Restart'),
   });
   if (ok) await restartWith(mode);
@@ -63,7 +64,7 @@ export function useFollowSystemTheme() {
 
 export function ThemeSheet({ visible, onClose }) {
   return (
-    <BottomSheet visible={visible} onClose={onClose} title={tr('Appearance')} subtitle={tr('Choose how the app looks.')}>
+    <BottomSheet visible={visible} onClose={onClose} title={tr('Appearance')} subtitle={tr('Choose how {app} looks.', { app: productConfig.name })}>
       {THEME_MODES.map((mode) => {
         const on = mode === theme.mode;
         const Icon = ICONS[mode];

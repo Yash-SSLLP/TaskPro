@@ -194,7 +194,7 @@ function ContactList({ contacts, loading, tz }) {
   const remove = async (c) => {
     const ok = await confirm({
       title: `Remove ${c.person?.name}?`,
-      text: "You won't be able to give each other new tasks unless you share a team. Tasks you already have stay as they are.",
+      text: "You won't be able to give each other new tasks unless you share an organization. Tasks you already have stay as they are.",
       confirmLabel: 'Remove',
       tone: 'danger',
     });

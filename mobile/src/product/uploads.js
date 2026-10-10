@@ -12,6 +12,7 @@ import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { tr } from '../i18n';
 import { toast } from '../platform/ui';
 import { mimeFromName } from './api';
+import productConfig from './config';
 
 const MAX_SIDE = 1600;
 const MAX_BYTES = 20 * 1024 * 1024;
@@ -60,7 +61,7 @@ export async function pickFiles(source, room = MAX_FILES) {
     if (source === 'camera') {
       const perm = await ImagePicker.requestCameraPermissionsAsync();
       if (!perm.granted) {
-        toast.error(tr('Allow camera access for KARO in your phone settings to take photos.'));
+        toast.error(tr('Allow camera access for {app} in your phone settings to take photos.', { app: productConfig.name }));
         return [];
       }
       res = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 });

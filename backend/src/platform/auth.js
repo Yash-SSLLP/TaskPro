@@ -108,7 +108,7 @@ function requireSuperAdmin(req, res, next) {
 
 /** Contacts, teams and task pins belong to people, not to the Super Admin. */
 function requirePerson(req, res, next) {
-  if (isSuperAdmin(req.user)) throw forbidden('The Super Admin has no contacts or teams of their own');
+  if (isSuperAdmin(req.user)) throw forbidden('The Super Admin has no contacts or organizations of their own');
   next();
 }
 

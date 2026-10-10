@@ -471,14 +471,29 @@ export const RANGES = [
   ['custom', 'Custom'],
 ];
 
-/** The piles (the API's `scope`). `team` needs a team I own or admin; `all` is the Super Admin's. */
+/** The piles (the API's `scope`). `team` needs an organization I own or admin; `all` is the Super Admin's. */
 export const PILES = [
   { key: 'mine', label: 'Assigned to me' },
   { key: 'delegated', label: 'Assigned by me' },
   { key: 'loop', label: 'In the loop' },
-  { key: 'team', label: 'Team tasks', teamOnly: true },
+  { key: 'team', label: 'Organization tasks', teamOnly: true },
   { key: 'all', label: 'All tasks', adminOnly: true },
 ];
+
+/**
+ * The organization tabs (`/meta` → orgTabs: { key: 'all' | 'general' | <id>,
+ * name?, myRole? }) in my saved order (settings.orgTabs): the saved ones that
+ * still exist, then All and General, then the other organizations by name —
+ * the server's order, worked out here too so a reorder shows at once.
+ */
+export function orderOrgTabs(tabs = [], saved = []) {
+  const byKey = new Map(tabs.map((t) => [String(t.key), t]));
+  // By name as the server sorts them (character codes, so 'Zeta' before 'acme'), so web and phone agree.
+  const named = tabs.filter((t) => t.name).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)).map((t) => String(t.key));
+  return [...new Set([...(saved || []).map(String), 'all', 'general', ...named])].filter((k) => byKey.has(k)).map((k) => byKey.get(k));
+}
+
+export const orgTabLabel = (tab) => (tab.key === 'all' ? 'All' : tab.key === 'general' ? 'General' : tab.name || 'Organization');
 
 /**
  * The figures, as the HRMS has them since 2026-09-29: Total (open work) · Not
@@ -489,12 +504,12 @@ export const PILES = [
  */
 export const STAT_BAR = [
   { key: 'total', label: 'Total', colour: 'rgb(var(--brand))', query: { status: OPEN_STATUSES.join(',') } },
-  { key: 'pending', label: 'Not Accepted Yet', colour: '#DC6803', query: { status: STATUS.PENDING, overdue: 'false' } },
-  { key: 'overdue', label: 'Overdue', colour: '#D92D20', query: { overdue: 'true' } },
-  { key: 'inProgress', label: 'In Progress', colour: '#0086C9', query: { status: STATUS.IN_PROGRESS, overdue: 'false' } },
-  { key: 'inReview', label: 'Under Review', colour: '#7C3AED', query: { status: STATUS.SUBMITTED } },
-  { key: 'moreTime', label: 'More Time Asked', colour: '#B54708', query: { moreTime: '1' } },
-  { key: 'completed', label: 'Completed', colour: '#079455', query: { status: STATUS.COMPLETED } },
+  { key: 'pending', label: 'Not Accepted Yet', colour: 'var(--stat-pending)', query: { status: STATUS.PENDING, overdue: 'false' } },
+  { key: 'overdue', label: 'Overdue', colour: 'var(--stat-overdue)', query: { overdue: 'true' } },
+  { key: 'inProgress', label: 'In Progress', colour: 'var(--stat-in-progress)', query: { status: STATUS.IN_PROGRESS, overdue: 'false' } },
+  { key: 'inReview', label: 'Under Review', colour: 'var(--stat-in-review)', query: { status: STATUS.SUBMITTED } },
+  { key: 'moreTime', label: 'More Time Asked', colour: 'var(--stat-more-time)', query: { moreTime: '1' } },
+  { key: 'completed', label: 'Completed', colour: 'var(--stat-completed)', query: { status: STATUS.COMPLETED } },
 ];
 export const STAT_BAR_FIGURES = STAT_BAR.filter((s) => s.key !== 'completed');
 
@@ -512,8 +527,9 @@ export function statQueryFor(key) {
 
 export const openCount = (c = {}) => statValue(c, 'total');
 
+// `more-time-chip`: orange in the dark (index.css), amber in the light.
 export const EXTENSION_LOOK = {
-  PENDING: { label: 'More time: Pending', cls: 'border-amber-200 bg-amber-50 text-amber-700' },
+  PENDING: { label: 'More time: Pending', cls: 'more-time-chip border-amber-200 bg-amber-50 text-amber-700' },
   APPROVED: { label: 'More time: Approved', cls: 'border-green-200 bg-green-50 text-green-700' },
   DECLINED: { label: 'More time: Declined', cls: 'border-red-200 bg-red-50 text-red-700' },
 };
@@ -580,7 +596,7 @@ export const isOverdue = (task) => {
   return new Date(task.dueDate) < new Date();
 };
 
-export const RELATION_LABEL = { self: 'You', team: 'Team-mate', contact: 'Contact', other: 'Everyone' };
+export const RELATION_LABEL = { self: 'You', team: 'Organization member', contact: 'Contact', other: 'Everyone' };
 
 export const sizeLabel = (bytes) => {
   const n = Number(bytes) || 0;

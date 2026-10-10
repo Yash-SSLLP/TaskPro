@@ -1,6 +1,7 @@
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const h = require('./helpers');
+const User = require('../src/platform/models/User');
 const { normalizePin, formatPin, generatePin, PIN_RE } = require('../src/platform/pin');
 
 before(h.start);
@@ -33,7 +34,7 @@ describe('sign up and sign in', () => {
     assert.equal(res.body.user.name, 'Meera');
     assert.equal(res.body.product.key, 'taskpro');
     assert.equal(res.body.settings.timezone, 'Asia/Kolkata');
-    assert.equal(res.body.settings.approvalDefault, true);
+    assert.equal(res.body.settings.approvalDefault, false);
     assert.equal(res.body.settings.lang, 'en');
     assert.equal('workspace' in res.body, false);
   });
@@ -81,6 +82,29 @@ describe('settings', () => {
     assert.equal((await a.patch('/api/me/settings', { lang: 'fr' })).status, 400);
     assert.equal((await a.patch('/api/me/settings', { colour: 'blue' })).status, 400);
     assert.equal((await a.get('/api/auth/me')).body.settings.lang, 'hi');
+  });
+
+  test('review starts off; an old saved approvalDefault is ignored; turning it on sticks', async () => {
+    const fresh = await h.signup('Fresh');
+    assert.equal((await fresh.get('/api/me/settings')).body.settings.approvalDefault, false);
+    assert.equal((await fresh.get('/api/tasks/meta')).body.approvalDefault, false);
+
+    // Settings saved before 1.0.7 carry approvalDefault: true for nearly everyone.
+    const old = await h.signup('OldSaved');
+    await User.updateOne({ _id: old.id }, { $set: { settings: { timezone: 'Asia/Kolkata', approvalDefault: true, lang: 'en' } } });
+    assert.equal((await old.get('/api/me/settings')).body.settings.approvalDefault, false);
+    assert.equal((await old.get('/api/tasks/meta')).body.approvalDefault, false);
+
+    const on = await old.patch('/api/me/settings', { approvalDefault: true });
+    assert.equal(on.status, 200);
+    assert.equal(on.body.settings.approvalDefault, true);
+    assert.equal('reviewDefault' in on.body.settings, false, 'the apps only ever see approvalDefault');
+    // Saving something else later keeps it.
+    assert.equal((await old.patch('/api/me/settings', { lang: 'ta' })).body.settings.approvalDefault, true);
+    assert.equal((await old.get('/api/me/settings')).body.settings.approvalDefault, true);
+    assert.equal((await old.get('/api/auth/me')).body.settings.approvalDefault, true);
+    assert.equal((await old.get('/api/tasks/meta')).body.approvalDefault, true);
+    assert.equal((await old.patch('/api/me/settings', { approvalDefault: 'yes' })).status, 400);
   });
 });
 
@@ -217,7 +241,7 @@ describe('teams', () => {
     assert.equal((await owner.del(`/api/teams/${team.id}/members/${owner.id}`)).status, 400, 'the owner cannot leave');
     assert.equal((await a.del(`/api/teams/${team.id}/members/${a.id}`)).status, 200, 'a member can leave');
     assert.equal((await owner.del(`/api/teams/${team.id}/members/${b.id}`)).status, 200);
-    assert.match((await h.alerts(b))[0].title, /removed from the team/);
+    assert.match((await h.alerts(b))[0].title, /removed from the organization/);
 
     await h.makeTeam(owner, [], { name: 'Unused' });
     const t2 = await h.makeTeam(owner, [a]);
@@ -264,7 +288,7 @@ describe('who you can give work to', () => {
     const User = require('../src/platform/models/User');
     const meDoc = await User.findById(me.id);
     await assertAssignable(meDoc, [me.id, mate.id, contact.id]);
-    await assert.rejects(assertAssignable(meDoc, [stranger.id]), /isn't in your contacts or teams yet/);
+    await assert.rejects(assertAssignable(meDoc, [stranger.id]), /isn't in your contacts or organizations yet/);
   });
 
   test('an invited (not yet joined) team member is not assignable', async () => {

@@ -33,8 +33,8 @@ export function Badge({ tone = 'neutral', className, children }) {
   );
 }
 
-/** A selectable pill (filters, categories). */
-export function Chip({ active, onClick, children, className, tone = 'brand', ...rest }) {
+/** A selectable pill (filters, categories). `warn` tints it red while it is not chosen (something overdue in it). */
+export function Chip({ active, onClick, children, className, tone = 'brand', warn = false, ...rest }) {
   const activeTone = {
     brand: 'border-brand bg-brand text-on-brand',
     in: 'border-cashin bg-cashin text-white',
@@ -47,7 +47,7 @@ export function Chip({ active, onClick, children, className, tone = 'brand', ...
       aria-pressed={!!active}
       className={clsx(
         'inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-[13px] font-medium transition-colors',
-        active ? activeTone : 'border-line bg-card text-ink hover:bg-well',
+        active ? activeTone : warn ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100' : 'border-line bg-card text-ink hover:bg-well',
         className
       )}
       {...rest}

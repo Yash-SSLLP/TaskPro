@@ -1,5 +1,5 @@
 /**
- * The piles (Assigned to me · Assigned by me · In the loop · Team tasks · All
+ * The piles (Assigned to me · Assigned by me · In the loop · Organization tasks · All
  * tasks) as big cards, each wearing its own figures from `withScopes`, and the
  * stat bar under them — Total · Not Accepted Yet · Overdue · In Progress ·
  * Under Review · More Time Asked — where every figure is a filter. Laid out as
@@ -112,7 +112,7 @@ function StatGrid({ counters, active, onPick, loading }) {
               <span className={clsx('tnum text-2xl font-bold leading-none sm:text-3xl', !on && (value || loading ? 'text-ink' : 'text-slate-300'))} style={on ? { color: colour } : undefined}>
                 {loading ? <span className="text-slate-300">·</span> : value}
               </span>
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg" style={on ? { backgroundColor: colour, color: key === 'total' ? 'rgb(var(--on-brand))' : '#fff' } : { backgroundColor: `color-mix(in srgb, ${colour} 12%, transparent)`, color: colour }}>
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg" style={on ? { backgroundColor: colour, color: key === 'total' ? 'rgb(var(--on-brand))' : 'rgb(var(--on-solid))' } : { backgroundColor: `color-mix(in srgb, ${colour} 12%, transparent)`, color: colour }}>
                 <Icon className="h-3.5 w-3.5" />
               </span>
             </span>

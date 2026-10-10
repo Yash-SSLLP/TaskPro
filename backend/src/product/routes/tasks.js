@@ -18,7 +18,7 @@ const notify = require('../services/notify');
 const recurrence = require('../services/recurrence');
 const exporter = require('../services/export');
 const { decorate, updateOut, PERSON_FIELDS } = require('../services/present');
-const { buildQuery, countersFor, resolveSort, sortedRows, FIGURES_IGNORE, populateRows } = require('../services/query');
+const { buildQuery, countersFor, orgCounters, resolveSort, sortedRows, FIGURES_IGNORE, populateRows } = require('../services/query');
 const {
   taskUpload, parseBody, truthy, cleanReminders, ROUTINE_REMINDERS, cleanRepeat, cleanLinks, storeFiles, storeVoiceNote,
 } = require('../services/inputs');
@@ -34,7 +34,13 @@ const later = (p) => p.catch((e) => console.warn('[tasks] notify failed:', e.mes
 
 // ---------------------------------------------------------------- reading
 
-/** GET / — one page of rows, the counters above it, and (withScopes) each pile's figures. */
+const flag = (v) => v === '1' || v === 'true';
+
+/**
+ * GET / — one page of rows, the counters above it, (withScopes) each pile's
+ * figures and (withOrgs) each organization tab's: the same pile and filters,
+ * across every organization.
+ */
 router.get('/', async (req, res) => {
   const who = await access.actor(req);
   const filter = await buildQuery(req);
@@ -42,20 +48,23 @@ router.get('/', async (req, res) => {
   const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
   const { sort, key: sortKey, dir: sortDir } = resolveSort(req.query);
 
-  const withScopes = req.query.withScopes === '1' || req.query.withScopes === 'true';
+  const withScopes = flag(req.query.withScopes);
+  const withOrgs = flag(req.query.withOrgs);
   const scopeKeys = withScopes ? access.scopesFor(who) : [];
   const narrowed = Object.keys(FIGURES_IGNORE).some((k) => req.query[k] !== undefined && String(req.query[k]).trim() !== '');
   const barFilter = narrowed ? await buildQuery(req, FIGURES_IGNORE) : filter;
 
-  const [rows, total, counters, ...scopeCounters] = await Promise.all([
+  const [rows, total, counters, orgs, ...scopeCounters] = await Promise.all([
     sortedRows(filter, sort, sortKey, (page - 1) * limit, limit),
     Task.countDocuments(filter),
     countersFor(barFilter),
+    withOrgs ? buildQuery(req, { ...FIGURES_IGNORE, org: '', team: '' }).then((f) => orgCounters(who, f)) : null,
     ...scopeKeys.map(async (scope) => countersFor(await buildQuery(req, { scope, ...FIGURES_IGNORE }))),
   ]);
 
   res.json({
     ...(withScopes ? { scopes: Object.fromEntries(scopeKeys.map((k, i) => [k, scopeCounters[i]])) } : {}),
+    ...(withOrgs ? { orgs } : {}),
     // The serial continues across pages: row 51 is "51".
     tasks: rows.map((row, i) => listRow(who, row, (page - 1) * limit + i + 1)),
     page,
@@ -129,15 +138,15 @@ function cleanTitle(raw, message = 'Give the task a title.') {
   return title;
 }
 
-/** A team the setter may file a task under (an active member; the Super Admin: any). */
+/** An organization (team) the setter may file a task under (an active member; the Super Admin: any). */
 async function teamFor(raw, setter, superAdmin) {
   if (raw === undefined || raw === null || raw === '') return null;
-  if (!mongoose.isValidObjectId(String(raw))) throw badRequest('Choose a valid team.');
+  if (!mongoose.isValidObjectId(String(raw))) throw badRequest('Choose a valid organization.');
   const Team = require('../../platform/models/Team');
   const team = await Team.findById(String(raw)).select('_id').lean();
-  if (!team) throw badRequest('That team no longer exists.');
+  if (!team) throw badRequest('That organization no longer exists.');
   if (!superAdmin && !(await people.platform.isActiveMember(setter._id, team._id))) {
-    throw badRequest('You can only file a task under a team you are in.');
+    throw badRequest('You can only file a task under an organization you are in.');
   }
   return team._id;
 }
@@ -206,7 +215,6 @@ router.post('/', taskUpload, async (req, res) => {
     repeat,
     reminders,
     links: cleanLinks(body.links),
-    template: mongoose.isValidObjectId(String(body.template || '')) ? body.template : undefined,
   });
   await task.save();
 
@@ -356,7 +364,7 @@ const FIELD_WORDS = {
   category: 'the category',
   priority: 'the priority',
   requiresApproval: 'the review setting',
-  team: 'the team',
+  team: 'the organization',
   dueDate: 'the deadline',
   startDate: 'the start date',
   reminders: 'the reminders',
@@ -453,7 +461,7 @@ async function updateTask(req, res) {
     if (idOf(team) !== idOf(task.team)) {
       const Team = require('../../platform/models/Team');
       const names = new Map((await Team.find({ _id: { $in: [task.team, team].filter(Boolean) } }).select('name').lean()).map((t) => [String(t._id), t.name]));
-      note('team', names.get(idOf(task.team)) || 'No team', names.get(idOf(team)) || 'No team');
+      note('team', names.get(idOf(task.team)) || 'General', names.get(idOf(team)) || 'General');
       task.team = team;
       changed.push('team');
     }
@@ -576,13 +584,13 @@ router.patch('/:id', taskUpload, updateTask);
 router.put('/:id', taskUpload, updateTask);
 
 /**
- * DELETE /:id — archive (the setter, team owner/admin, Super Admin), or with
+ * DELETE /:id — archive (the setter, organization owner/admin, Super Admin), or with
  * `?purge=1` delete for good, files and all (Super Admin only).
  */
 router.delete('/:id', async (req, res) => {
   const who = await access.actor(req);
   const task = await access.loadVisible(who, req.params.id);
-  if (!access.canDelete(who, task)) throw forbidden('Only the person who set this task, a team owner or admin, or the Super Admin can remove it.');
+  if (!access.canDelete(who, task)) throw forbidden('Only the person who set this task, an organization owner or admin, or the Super Admin can remove it.');
 
   if (req.query.purge === '1' || req.query.purge === 'true') {
     if (!access.canPurge(who)) throw forbidden('Only the Super Admin can delete a task for good.');

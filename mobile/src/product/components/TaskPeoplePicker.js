@@ -6,7 +6,7 @@
  * The list is `meta.people` (GET /tasks/meta): the people I may give tasks
  * to. Before anybody types it shows
  *   Myself         when the caller allows it (an empty choice means "me")
- *   Team-mates     active members of teams I'm in
+ *   Organization members   active members of organizations I'm in
  *   Contacts       people I added by Task Pin
  *   Everyone else  the Super Admin only
  * Typing searches names and Task Pins.
@@ -27,12 +27,18 @@ import { PinLookup } from '../../platform/components/PinLookup';
 import { contactsApi, platformKeys } from '../../platform/endpoints';
 import { normalizePin, pinOf } from '../../platform/pin';
 import { colors, font, radius, space } from '../../platform/theme';
-import { Avatar } from '../../platform/ui';
+import { Avatar, useKeyboardVisible, useVisibleHeight } from '../../platform/ui';
 import { taskKeys } from '../api';
 import { Check, ChevronDown, ChevronUp, Search, UserPlus, X } from '../icons';
 
 const MAX_ROWS = 40;
 const FOCUS_DELAY_MS = 280;
+// While the keyboard is up a framed list gives way to it, so the search box,
+// a few rows and the sheet's button above the keyboard all still show: what
+// is left of the screen less about this much for the title, search row and
+// footer, but never under two rows.
+const KEYBOARD_CHROME = 300;
+const MIN_LIST = 120;
 
 const idOf = (p) => String(p?._id || p?.id || '');
 
@@ -72,6 +78,9 @@ export default function TaskPeoplePicker({
   const [adding, setAdding] = useState(false);
   const inputRef = useRef(null);
   const qc = useQueryClient();
+  const keyboardUp = useKeyboardVisible();
+  const visibleHeight = useVisibleHeight();
+  const listHeight = keyboardUp && maxListHeight ? Math.min(maxListHeight, Math.max(MIN_LIST, visibleHeight - KEYBOARD_CHROME)) : maxListHeight;
 
   useEffect(() => {
     if (!autoFocus) return undefined;
@@ -105,7 +114,7 @@ export default function TaskPeoplePicker({
     const others = hits.filter((p) => p.relation !== 'team' && p.relation !== 'contact');
     return [
       ...head,
-      { key: 'team', title: tr('Team-mates'), ...cut(team) },
+      { key: 'team', title: tr('Organization members'), ...cut(team) },
       { key: 'contacts', title: tr('Contacts'), ...cut(contacts) },
       { key: 'others', title: tr('Everyone else'), ...cut(others) },
     ].filter((s) => s.rows.length);
@@ -201,8 +210,8 @@ export default function TaskPeoplePicker({
         ) : null}
       </View>
 
-      {maxListHeight ? (
-        <ScrollView style={{ maxHeight: maxListHeight }} nestedScrollEnabled keyboardShouldPersistTaps="handled">
+      {listHeight ? (
+        <ScrollView style={{ maxHeight: listHeight }} nestedScrollEnabled keyboardShouldPersistTaps="handled">
           {list}
         </ScrollView>
       ) : (

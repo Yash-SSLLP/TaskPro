@@ -1,6 +1,6 @@
 /**
- * Reference data: GET /meta (everything the assign form needs, in one call)
- * and the category list (yours plus your teams').
+ * Reference data: GET /meta (everything the assign form needs, in one call),
+ * the category list (yours plus your teams'), and an empty GET /templates.
  */
 const express = require('express');
 const mongoose = require('mongoose');
@@ -21,12 +21,11 @@ const {
 const router = express.Router();
 
 /** The category lists a person sees: their own, and their teams'. */
-async function categoryFilter(who) {
+function categoryFilter(who) {
   if (who.superAdmin) return { isActive: true };
-  const teams = await people.platform.teamsOf(who.user._id);
   return {
     isActive: true,
-    $or: [{ scope: `user:${who.id}` }, { team: { $in: teams.map((t) => new mongoose.Types.ObjectId(t.id)) } }],
+    $or: [{ scope: `user:${who.id}` }, { team: { $in: [...who.memberTeams.keys()].map((id) => new mongoose.Types.ObjectId(id)) } }],
   };
 }
 
@@ -40,13 +39,27 @@ async function everyone() {
   return users.map((u) => ({ ...publicUser(u, { full: false }), self: false, contact: false, teams: [] }));
 }
 
+/**
+ * The Tasks screen's organization tabs, in the person's order: the tabs they
+ * saved that still exist, then All and General if missing, then any other
+ * organization they are in, by name. The Super Admin: All and General.
+ */
+function orgTabsOf(who, saved) {
+  if (who.superAdmin) return [{ key: 'all' }, { key: 'general' }];
+  const keys = ['all', 'general', ...who.memberTeams.keys()];
+  const first = (saved || []).filter((k) => keys.includes(k));
+  return [...new Set([...first, ...keys])].map((key) => {
+    const team = who.memberTeams.get(key);
+    return team ? { key, name: team.name, myRole: team.role } : { key };
+  });
+}
+
 /** GET /meta */
 router.get('/meta', async (req, res) => {
   const who = await access.actor(req);
-  const [list, teams, categories] = await Promise.all([
+  const [list, categories] = await Promise.all([
     who.superAdmin ? everyone() : people.platform.assignablePeople(req.user),
-    who.superAdmin ? [] : people.platform.teamsOf(req.user._id),
-    TaskCategory.find(await categoryFilter(who)).sort({ name: 1 }).lean(),
+    TaskCategory.find(categoryFilter(who)).sort({ name: 1 }).lean(),
   ]);
 
   const relationOf = (p) => (p.self ? 'self' : p.teams.length ? 'team' : p.contact ? 'contact' : 'other');
@@ -73,7 +86,8 @@ router.get('/meta', async (req, res) => {
     canSetReminders: true,
     team: { direct, indirect: [] },
     hasTeam: direct.length > 0,
-    teams: teams.map((t) => ({ id: t.id, name: t.name, myRole: t.role })),
+    teams: [...who.memberTeams].map(([id, t]) => ({ id, name: t.name, myRole: t.role })),
+    orgTabs: orgTabsOf(who, req.settings?.orgTabs),
     categories: categories.map(categoryOut),
     priorities: TASK_PRIORITY,
     priorityColors: PRIORITY_COLORS,
@@ -101,11 +115,15 @@ router.get('/meta', async (req, res) => {
     swipeRemarkRequired: true,
     nudgeCooldownMin: NUDGE_COOLDOWN_MIN,
     defaultReminders: req.settings?.defaultReminders || [],
-    approvalDefault: req.settings?.approvalDefault ?? true,
+    approvalDefault: req.settings?.approvalDefault ?? false,
     isAdmin: who.superAdmin,
     canManageCategories: true,
   });
 });
+
+// Task templates are gone. Installed 1.0.6 apps still ask, so they get their
+// empty state rather than "That task no longer exists" from GET /:id.
+router.get('/templates', (req, res) => res.json({ mine: [], team: [], templates: [] }));
 
 // ---------------------------------------------------------------- categories
 
@@ -117,7 +135,7 @@ const tasksUnder = (cat, name = cat.name) => (cat.team ? { team: cat.team, categ
 async function loadCategory(who, id) {
   const cat = mongoose.isValidObjectId(id) ? await TaskCategory.findById(id) : null;
   if (!cat) throw notFound('That category is gone.');
-  if (!mayManage(who, cat)) throw forbidden('Only whoever made this category, a team owner or admin, or the Super Admin can change it.');
+  if (!mayManage(who, cat)) throw forbidden('Only whoever made this category, an organization owner or admin, or the Super Admin can change it.');
   return cat;
 }
 
@@ -131,7 +149,7 @@ function cleanName(raw) {
 /** GET /categories (?withCounts=1 adds how many tasks are filed under each). */
 router.get('/categories', async (req, res) => {
   const who = await access.actor(req);
-  const categories = await TaskCategory.find(await categoryFilter(who)).sort({ name: 1 }).lean();
+  const categories = await TaskCategory.find(categoryFilter(who)).sort({ name: 1 }).lean();
   if (req.query.withCounts !== '1' && req.query.withCounts !== 'true') return res.json({ categories: categories.map(categoryOut) });
   const counts = await Promise.all(categories.map((c) => Task.countDocuments({ ...tasksUnder(c), archived: { $ne: true } })));
   res.json({ categories: categories.map((c, i) => ({ ...categoryOut(c), taskCount: counts[i] })) });
@@ -144,8 +162,8 @@ router.post('/categories', async (req, res) => {
   const name = cleanName(body.name);
   let team = null;
   if (body.team) {
-    if (!mongoose.isValidObjectId(String(body.team))) throw badRequest('Choose a valid team.');
-    if (!who.superAdmin && !who.adminTeams.has(String(body.team))) throw forbidden('Only a team owner or admin can add a category for the team.');
+    if (!mongoose.isValidObjectId(String(body.team))) throw badRequest('Choose a valid organization.');
+    if (!who.superAdmin && !who.adminTeams.has(String(body.team))) throw forbidden('Only an organization owner or admin can add a category for the organization.');
     team = new mongoose.Types.ObjectId(String(body.team));
   }
   const scope = TaskCategory.scopeOf(team, who.id);

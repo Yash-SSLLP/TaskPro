@@ -50,10 +50,29 @@ export function acceptanceLabel(a) {
   return '';
 }
 
+/**
+ * Dark mode's status colours (WhatsApp's dark look), one hue per meaning,
+ * shared by chips, cards, figure tiles and the calendar. `bg` is the hue at
+ * 16% over the card (#111B21), for a chip; `wash` 10%, for a whole card, so
+ * its faint words still read; `border` 45%. All solid #RRGGBB (code adds an
+ * alpha to some). Red, amber, sky and green are the dark theme's danger,
+ * warning, info and success too. Light mode keeps its own literals below.
+ */
+export const DARK_HUES = {
+  red: { ink: '#FF6B78', bg: '#37282F', wash: '#29232A', border: '#7C3F48' }, // overdue, declined, urgent
+  amber: { ink: '#FFD279', bg: '#37382F', wash: '#292D2A', border: '#7C6D49' }, // not accepted yet, waiting, medium
+  orange: { ink: '#FFA056', bg: '#373029', wash: '#292826', border: '#7C5739' }, // more time asked, sent back
+  sky: { ink: '#53BDEB', bg: '#1C3541', wash: '#182B35', border: '#2F647C' }, // in progress
+  violet: { ink: '#A791FF', bg: '#292E45', wash: '#202737', border: '#555085' }, // under review
+  green: { ink: '#3DD68C', bg: '#183932', wash: '#152E2C', border: '#256F51' }, // done
+  grey: { ink: '#AEBAC1', bg: '#2A343B', wash: '#212B31', border: '#586369' }, // to do, low
+  faint: { ink: '#8696A0', bg: '#242F35', wash: '#1D272E', border: '#46525A' }, // cancelled
+};
+
 export const DECLINED_COLORS = { bg: colors.dangerSoft, fg: colors.danger };
 export const AWAITING_COLORS = { bg: colors.warningSoft, fg: colors.warning };
 /** In review: violet, the one hue no status or priority already owns. */
-export const REVIEW_COLORS = theme.dark ? { bg: '#2e1f5e', fg: '#c4b5fd' } : { bg: '#ede9fe', fg: '#6d28d9' };
+export const REVIEW_COLORS = theme.dark ? { bg: DARK_HUES.violet.bg, fg: DARK_HUES.violet.ink } : { bg: '#ede9fe', fg: '#6d28d9' };
 
 /** The colours a status chip is drawn in. Red is reserved for overdue. */
 export function statusColors(status, overdue = false) {
@@ -102,12 +121,18 @@ export function priorityLabel(p) {
   return tr('Medium');
 }
 
+/**
+ * A card in dark mode, from its hue: the faint wash, the 45% edge, and the
+ * bright ink as its stripe and solid (a filled chip puts dark words on it).
+ */
+const darkCard = (hue, solid = hue.ink) => ({ ink: hue.ink, bg: hue.wash, border: hue.border, solid });
+
 /** A copy of the server's palette, used when a row carries none (and in dark mode, whose tints the server does not send). */
 export const PRIORITY_COLORS = theme.dark
   ? {
-      Urgent: { ink: '#FDA29B', bg: '#3B1714', border: '#7A271A', solid: '#F04438' },
-      Medium: { ink: '#FEC84B', bg: '#3A2A0C', border: '#7A4A06', solid: '#F79009' },
-      Low: { ink: '#D0D5DD', bg: '#1F2937', border: '#344054', solid: '#98A2B3' },
+      Urgent: darkCard(DARK_HUES.red),
+      Medium: darkCard(DARK_HUES.amber),
+      Low: darkCard(DARK_HUES.grey, DARK_HUES.faint.ink),
     }
   : {
       Urgent: { ink: '#B42318', bg: '#FEF3F2', border: '#FDA29B', solid: '#D92D20' },
@@ -115,10 +140,10 @@ export const PRIORITY_COLORS = theme.dark
       Low: { ink: '#475467', bg: '#F2F4F7', border: '#D0D5DD', solid: '#98A2B3' },
     };
 export const DONE_COLOR = theme.dark
-  ? { ink: '#6CE9A6', bg: '#0B2E1F', border: '#05603A', solid: '#12B76A' }
+  ? darkCard(DARK_HUES.green)
   : { ink: '#027A48', bg: '#ECFDF3', border: '#6CE9A6', solid: '#12B76A' };
 export const CANCELLED_COLOR = theme.dark
-  ? { ink: '#98A2B3', bg: '#1A2230', border: '#2B3546', solid: '#667085' }
+  ? darkCard(DARK_HUES.faint)
   : { ink: '#667085', bg: '#F9FAFB', border: '#EAECF0', solid: '#98A2B3' };
 
 const served = (accent) => Boolean(accent && accent.solid && accent.bg && accent.border && accent.ink);
@@ -523,17 +548,17 @@ export function rangeLabel(key) {
 
 /**
  * The figure tiles on the Tasks screen, in order. `tint` is for the light
- * theme, `tintDark` for the dark one, where the same reds and greens read too
- * dark against the card (the HRMS app's pairs); tileTint() picks.
+ * theme, `tintDark` for the dark one (the status hues above, bright on the
+ * dark card, so a filled chip on them takes dark words); tileTint() picks.
  */
 export const GRID_TILES = [
-  // Total wears the KARO accent (no tint: tileTint falls back to the primary), as on the web.
+  // Total wears the Karo accent (no tint: tileTint falls back to the primary), as on the web.
   { key: 'total', icon: 'layers' },
-  { key: 'pending', icon: 'hourglass', tint: '#DC6803', tintDark: '#FDB022' },
-  { key: 'overdue', icon: 'alert', tint: '#D92D20', tintDark: '#F97066' },
-  { key: 'inProgress', icon: 'play', tint: '#0086C9', tintDark: '#36BFFA' },
-  { key: 'inReview', icon: 'eye', tint: '#7C3AED', tintDark: '#A78BFA' },
-  { key: 'moreTime', icon: 'clock', tint: '#B54708', tintDark: '#FDB022' },
+  { key: 'pending', icon: 'hourglass', tint: '#DC6803', tintDark: DARK_HUES.amber.ink },
+  { key: 'overdue', icon: 'alert', tint: '#D92D20', tintDark: DARK_HUES.red.ink },
+  { key: 'inProgress', icon: 'play', tint: '#0086C9', tintDark: DARK_HUES.sky.ink },
+  { key: 'inReview', icon: 'eye', tint: '#7C3AED', tintDark: DARK_HUES.violet.ink },
+  { key: 'moreTime', icon: 'clock', tint: '#B54708', tintDark: DARK_HUES.orange.ink },
 ];
 export const COMPLETED_TINT = '#079455';
 export const tileTint = (tile) => (theme.dark && tile?.tintDark) || tile?.tint || colors.primary;

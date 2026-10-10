@@ -2,10 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Colours as "r g b" so Tailwind can add opacity. KARO's palette: Salesforce's
-   (salesforce.com): its brand blue on white and a neutral grey page, navy in
-   the dark. html.dark (set by src/platform/theme.js) swaps them; the slate and
-   hue scales are swapped by the plugin in tailwind.config.js. */
+/* Colours as "r g b" so Tailwind can add opacity. Karo's palette: Salesforce's
+   (salesforce.com): its brand blue on white and a neutral grey page; the dark
+   is WhatsApp's (its blue-black surfaces and greys) with the same blue.
+   html.dark (set by src/platform/theme.js) swaps them; the slate and hue
+   scales are swapped by the plugin in tailwind.config.js. */
 :root {
   --brand: 1 118 211; /* #0176d3: Salesforce blue. Buttons, links, done checks */
   --brand-dark: 1 68 134; /* #014486: the hover */
@@ -47,49 +48,69 @@
   --tp-cancelled-bg: #f7f7f7;
   --tp-cancelled-border: #e5e5e5;
   --tp-cancelled-solid: #aeaeae;
+
+  /* The figures' colours (lifecycle.js STAT_BAR; Total is the brand) and the
+     label on any coloured solid: white here, dark ink on the dark's bright
+     solids. */
+  --stat-pending: #dc6803;
+  --stat-overdue: #d92d20;
+  --stat-in-progress: #0086c9;
+  --stat-in-review: #7c3aed;
+  --stat-more-time: #b54708;
+  --stat-completed: #079455;
+  --on-solid: 255 255 255;
   color-scheme: light;
 }
 
 html.dark {
-  --brand: 27 150 255; /* #1b96ff: Salesforce's lighter blue, bright on navy */
+  --brand: 27 150 255; /* #1b96ff: Salesforce's lighter blue, bright on the dark */
   --brand-dark: 120 176 253; /* #78b0fd: the hover lifts on the dark */
-  --brand-soft: 9 57 112; /* #093970 */
+  --brand-soft: 19 47 69; /* #132f45 */
   --brand-accent: 27 150 255;
-  --on-brand: 0 22 57; /* navy on the bright blue */
-  --ink: 238 244 255; /* #eef4ff */
-  --ink-soft: 168 184 208; /* #a8b8d0 */
-  --ink-faint: 111 132 166; /* #6f84a6 */
-  --line: 28 61 107; /* #1c3d6b */
-  --page: 0 22 57; /* #001639: navy */
-  --card: 4 34 76; /* #04224c */
-  --well: 10 42 87; /* #0a2a57 */
+  --on-brand: 11 20 26; /* the page's blue-black on the bright blue */
+  --ink: 233 237 239; /* #e9edef */
+  --ink-soft: 174 186 193; /* #aebac1 */
+  --ink-faint: 134 150 160; /* #8696a0 */
+  --line: 34 45 52; /* #222d34 */
+  --page: 11 20 26; /* #0b141a: WhatsApp's blue-black */
+  --card: 17 27 33; /* #111b21 */
+  --well: 32 44 51; /* #202c33: inputs, sheets, a raised step */
   --tint: 10%;
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.02);
   --shadow-pop: 0 16px 40px -12px rgb(0 0 0 / 0.75), 0 4px 12px -4px rgb(0 0 0 / 0.5);
 
-  /* Soft washes of the same hues over the navy card (mixed at ~16%, edges at
-     ~42%), so a row reads as amber or red without turning into a block; the
-     ink is the hue's light end. */
-  --tp-urgent-ink: #fda29b;
-  --tp-urgent-bg: #2a2749;
-  --tp-urgent-border: #673044;
-  --tp-urgent-solid: #f04438;
-  --tp-medium-ink: #fec84b;
-  --tp-medium-bg: #2b3441;
-  --tp-medium-border: #6a5030;
-  --tp-medium-solid: #f79009;
-  --tp-low-ink: #c9d4e5;
-  --tp-low-bg: #0c2a55;
-  --tp-low-border: #2b4f80;
-  --tp-low-solid: #a8b8d0;
-  --tp-done-ink: #6ce9a6;
-  --tp-done-bg: #063a51;
-  --tp-done-border: #0a6159;
-  --tp-done-solid: #12b76a;
-  --tp-cancelled-ink: #a8b8d0;
-  --tp-cancelled-bg: #0a2650;
-  --tp-cancelled-border: #1c3d6b;
-  --tp-cancelled-solid: #6f84a6;
+  /* One light ink per meaning (red urgent, amber medium, grey low, green done),
+     a faint 10% wash of it over the card (a row's faint words and the chip
+     tintStyle lays on top still read at 4.5:1) and a 45% edge. The solid is
+     bright, so a label on it is dark (--on-solid). */
+  --tp-urgent-ink: #ff6b78;
+  --tp-urgent-bg: #29232a;
+  --tp-urgent-border: #7c3f48;
+  --tp-urgent-solid: #ff6b78;
+  --tp-medium-ink: #ffd279;
+  --tp-medium-bg: #292d2a;
+  --tp-medium-border: #7c6d49;
+  --tp-medium-solid: #ffd279;
+  --tp-low-ink: #aebac1;
+  --tp-low-bg: #212b31;
+  --tp-low-border: #586369;
+  --tp-low-solid: #8696a0;
+  --tp-done-ink: #3dd68c;
+  --tp-done-bg: #152e2c;
+  --tp-done-border: #256f51;
+  --tp-done-solid: #3dd68c;
+  --tp-cancelled-ink: #8696a0;
+  --tp-cancelled-bg: #1d272e;
+  --tp-cancelled-border: #46525a;
+  --tp-cancelled-solid: #8696a0;
+
+  --stat-pending: #ffd279;
+  --stat-overdue: #ff6b78;
+  --stat-in-progress: #53bdeb;
+  --stat-in-review: #a791ff;
+  --stat-more-time: #ffa056;
+  --stat-completed: #3dd68c;
+  --on-solid: 11 20 26; /* #0b141a */
   color-scheme: dark;
 }
 
@@ -255,6 +276,18 @@ html.dark .hover-veil:hover {
     0 0 0 3px rgb(var(--brand) / 0.16),
     0 12px 28px -16px rgb(var(--brand) / 0.7);
 }
+/* More time asked and sent back: orange in the dark, apart from the amber of
+   "not accepted yet". The light theme keeps its amber, so these are dark-only
+   (the pending ask's chip, lifecycle.js EXTENSION_LOOK, and two activity icons
+   in TaskDetailBody.jsx). */
+html.dark .more-time-chip {
+  border-color: rgb(var(--orange-200));
+  background-color: rgb(var(--orange-50));
+  color: var(--stat-more-time);
+}
+html.dark .more-time-ink {
+  color: var(--stat-more-time);
+}
 @media (prefers-reduced-motion: reduce) {
   .task-pile,
   .task-row {
@@ -277,13 +310,43 @@ html.dark .hover-veil:hover {
   --cal-cell-out: #f8f9fb;
   --cal-ink: #181818;
   --cal-ink-dim: #747474;
+  /* Each kind's colour and the words on it (product/calendar.js KINDS). */
+  --cal-k-overdue: #ef4444;
+  --cal-k-overdue-fg: #ffffff;
+  --cal-k-reminder: #6366f1;
+  --cal-k-reminder-fg: #ffffff;
+  --cal-k-shared-reminder: #f97316;
+  --cal-k-shared-reminder-fg: #ffffff;
+  --cal-k-pending: #f59e0b;
+  --cal-k-pending-fg: #1f2937;
+  --cal-k-in-progress: #0ea5e9;
+  --cal-k-in-progress-fg: #ffffff;
+  --cal-k-in-review: #8b5cf6;
+  --cal-k-in-review-fg: #ffffff;
+  --cal-k-done: #10b981;
+  --cal-k-done-fg: #06281f;
 }
+/* In the dark: the status inks, bright, so the words on them are dark. */
 html.dark {
-  --cal-panel: #031d42;
-  --cal-cell: #0a2a57;
-  --cal-cell-out: #06234b;
-  --cal-ink: #eef4ff;
-  --cal-ink-dim: #7a8fb0;
+  --cal-panel: #111b21;
+  --cal-cell: #202c33;
+  --cal-cell-out: #182229;
+  --cal-ink: #e9edef;
+  --cal-ink-dim: #8696a0;
+  --cal-k-overdue: #ff6b78;
+  --cal-k-overdue-fg: #0b141a;
+  --cal-k-reminder: #818cf8;
+  --cal-k-reminder-fg: #0b141a;
+  --cal-k-shared-reminder: #ffa056;
+  --cal-k-shared-reminder-fg: #0b141a;
+  --cal-k-pending: #ffd279;
+  --cal-k-pending-fg: #0b141a;
+  --cal-k-in-progress: #53bdeb;
+  --cal-k-in-progress-fg: #0b141a;
+  --cal-k-in-review: #a791ff;
+  --cal-k-in-review-fg: #0b141a;
+  --cal-k-done: #3dd68c;
+  --cal-k-done-fg: #0b141a;
 }
 
 .cal-shell {
@@ -922,6 +985,10 @@ html.dark .side-item.is-active {
   color: rgb(var(--brand));
   box-shadow: 0 8px 20px -8px rgb(var(--brand) / 0.6);
 }
+/* A black shadow in the dark (until the pointer lights it in the brand). */
+html.dark .side-handle:not(:hover):not(:focus-visible) {
+  box-shadow: 0 4px 14px -6px rgb(0 0 0 / 0.6);
+}
 .side-handle-icon {
   width: 14px;
   height: 14px;
@@ -967,8 +1034,8 @@ html.dark .side-item.is-active {
   transform: translateY(-50%) rotate(45deg);
 }
 html.dark .side-tip {
-  background-color: #eef4ff;
-  color: #001639;
+  background-color: #e9edef;
+  color: #0b141a;
 }
 .side-tip-extra {
   padding: 2px 6px;
@@ -977,7 +1044,7 @@ html.dark .side-tip {
   background-color: rgb(255 255 255 / 0.12);
 }
 html.dark .side-tip-extra {
-  background-color: rgb(0 22 57 / 0.08);
+  background-color: rgb(11 20 26 / 0.08);
 }
 @keyframes side-tip-in {
   from {

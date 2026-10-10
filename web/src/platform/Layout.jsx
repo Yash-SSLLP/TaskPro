@@ -3,19 +3,21 @@
  * on desktop with a slim top bar (the light / dark switch, alerts, me), and
  * on a phone a top bar and bottom tabs.
  *   everyone      WORK Tasks · Calendar · Recurring · Dashboard
- *                 PEOPLE Contacts · Teams      ACCOUNT Alerts · Settings
- *   Super Admin   CONSOLE Console · All tasks
+ *                 PEOPLE Contacts · Organizations      ACCOUNT Alerts · Settings
+ *   Super Admin   CONSOLE Console · All tasks · Website
  *                 WORK Calendar · Recurring · Dashboard   ACCOUNT Alerts · Settings
- * The phone's bottom tabs: Tasks · Calendar · Contacts · Teams · Settings
- * (Super Admin: Console · All tasks · Calendar · Settings). The sidebar
- * footer shows my Task Pin (click to copy).
+ * The phone's bottom tabs: Tasks · Calendar · Contacts · Orgs · Settings
+ * (Super Admin: Console · All tasks · Calendar · Settings; the Website editor
+ * is a desktop job, though it works on a phone). `short` is a row's name on
+ * a bottom tab, where five share the width. The sidebar footer shows my Task
+ * Pin (click to copy).
  *
  * The row a page belongs to is handed to its PageHeader (platform/place.js).
  */
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { Bell, LayoutDashboard, Layers, Settings, UserPlus, Users } from 'lucide-react';
+import { Bell, Globe, LayoutDashboard, Layers, Settings, UserPlus, Users } from 'lucide-react';
 import { product } from '../product/config';
 import { api } from './api';
 import { isSuperAdmin, useSession } from './session';
@@ -38,7 +40,7 @@ export function useUnreadCount() {
   return data?.unread || 0;
 }
 
-/** Waiting on me: incoming contact requests and team invites (people only). */
+/** Waiting on me: incoming contact requests and organization invites (people only). */
 function usePendingCounts(enabled) {
   // Kept fresh by live sync, which refetches them when people change.
   const contacts = useQuery({ queryKey: ['contacts'], queryFn: () => api.get('/api/contacts'), enabled, staleTime: 30_000 });
@@ -60,6 +62,7 @@ function navSections(admin) {
         items: [
           { to: '/console', label: 'Console', icon: LayoutDashboard },
           { to: '/tasks?scope=all', label: 'All tasks', icon: Layers, match: '/tasks' },
+          { to: '/website', label: 'Website', icon: Globe, phone: false },
         ],
       },
       { group: 'Work', items: product.nav.filter((n) => n.to !== '/tasks') },
@@ -72,7 +75,7 @@ function navSections(admin) {
       group: 'People',
       items: [
         { to: '/contacts', label: 'Contacts', icon: UserPlus, badge: 'contacts' },
-        { to: '/teams', label: 'Teams', icon: Users, badge: 'teams' },
+        { to: '/teams', label: 'Organizations', short: 'Orgs', icon: Users, badge: 'teams' },
       ],
     },
     { group: 'Account', items: ACCOUNT },
@@ -220,7 +223,7 @@ export function Layout() {
                   <span className={clsx('grid h-7 w-11 place-items-center rounded-full transition-colors', on && 'bg-brand-soft')}>
                     <item.icon className="h-[19px] w-[19px]" aria-hidden />
                   </span>
-                  {item.label}
+                  {item.short || item.label}
                   <CountBadge n={badgeOf(item)} className="absolute left-1/2 top-1 ml-2" />
                 </NavLink>
               );

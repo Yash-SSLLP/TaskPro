@@ -147,7 +147,7 @@ describe('recurring schedules', () => {
     const raised = await Task.find({ recurringTask: weekly.body.schedule._id }).lean();
     assert.equal(raised.length, 1);
     assert.equal(raised[0].occurrenceKey, tomorrow.toISODate());
-    assert.equal(raised[0].requiresApproval, true);
+    assert.equal(raised[0].requiresApproval, false, 'review is off unless asked for, on the schedule and what it raises');
     assert.equal(String(raised[0].team), team.id);
     await jobs.recurringTick(now);
     assert.equal(await Task.countDocuments({ recurringTask: weekly.body.schedule._id }), 1);

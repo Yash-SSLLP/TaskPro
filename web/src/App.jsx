@@ -2,11 +2,12 @@
  * Routes and the gates in front of them:
  *   signed out            → sign-in pages only
  *   must change password  → the choose-a-password screen only
- *   everyone else         → the app layout: the product, Contacts, Teams,
- *                           Alerts, Settings — and, for the Super Admin, the
- *                           Console (people, teams) with All tasks.
+ *   everyone else         → the app layout: the product, Contacts,
+ *                           Organizations, Alerts, Settings — and, for the
+ *                           Super Admin, the Console (people, organizations)
+ *                           with All tasks, and the public Website's editor.
  */
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Compass } from 'lucide-react';
@@ -26,7 +27,28 @@ import { DeleteAccountPage, PrivacyPage } from './platform/pages/legal';
 import { GET_APP_PATH, GetAppPage } from './platform/pages/mobileApp';
 import { JoinPage } from './platform/pages/JoinPage';
 import { JOIN_RE, clearAfterSignIn, peekAfterSignIn } from './platform/invite';
-import { EmptyState, Button } from './platform/ui';
+import { EmptyState, Button, Spinner } from './platform/ui';
+
+// The website's editor is the Super Admin's alone: its code loads when it is first opened.
+// If it can't (a release since this tab opened replaced the file, or the
+// connection dropped), say so with a Reload instead of losing the whole app.
+const WebsitePage = lazy(() =>
+  import('./platform/pages/website/WebsitePage').then(
+    (m) => ({ default: m.WebsitePage }),
+    () => ({ default: EditorNotLoaded })
+  )
+);
+
+function EditorNotLoaded() {
+  return (
+    <EmptyState
+      icon={Compass}
+      title="The website editor didn't load"
+      text={`${product.name} may have been updated since this page opened, or the connection dropped.`}
+      action={<Button onClick={() => window.location.reload()}>Reload</Button>}
+    />
+  );
+}
 
 function NotFound() {
   const user = useSession((s) => s.user);
@@ -120,6 +142,14 @@ export default function App() {
         {admin ? (
           <>
             <Route path="/console" element={<PlatformPage />} />
+            <Route
+              path="/website/*"
+              element={
+                <Suspense fallback={<Spinner label="Loading the website editor" />}>
+                  <WebsitePage />
+                </Suspense>
+              }
+            />
             <Route path="/platform" element={<Navigate to="/console" replace />} />
             <Route path="/contacts" element={<Navigate to="/console" replace />} />
             <Route path="/teams" element={<Navigate to="/console?tab=teams" replace />} />

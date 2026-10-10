@@ -1,21 +1,26 @@
 /**
  * Tasks: the piles, the figures, search, filters and the cards.
  *
- *   PILES     Assigned to me · Assigned by me · In the loop · Team (owner/admin
- *             of a team) · All tasks (Super Admin), each with how much is
- *             open and late (or waiting on a review).
+ *   PILES     Assigned to me · Assigned by me · In the loop · Organization
+ *             (owner/admin of one) · All tasks (Super Admin), each with how
+ *             much is open and late (or waiting on a review).
+ *   TABS      All · General · one per organization, under the piles: each
+ *             with how much is open in it (red when some of it is late), in
+ *             the person's own order. The first tab is the one the screen
+ *             opens on. Hidden without organizations, and for the Super Admin.
  *   SEARCH    the task's name, or the name of whoever set it or holds it.
- *   FILTER    one sheet: due date, team, category, people, completed tasks,
- *             priority, status (overdue / finished late / more time asked),
- *             and the order.
+ *   FILTER    one sheet: due date, the tabs' order, category, people,
+ *             completed tasks, priority, status (overdue / finished late /
+ *             more time asked), and the sort.
  *   FIGURES   Total (open work) · Not accepted · Overdue · In progress ·
  *             Under review · More time asked.
  *   CARDS     tinted by priority, each with a status pill (the moves the
  *             server allows), a reminder bell and swipes.
  *
  * Every filter runs on the server and the figures come back with the rows
- * (pile counters too, via `withScopes`), so a change is one request. Pages of
- * 25 load as the list scrolls; nothing collapses on a refetch.
+ * (pile counters too, via `withScopes`, and the tabs' via `withOrgs`), so a
+ * change is one request. Pages of 25 load as the list scrolls; nothing
+ * collapses on a refetch.
  *
  * AS HRMS's TASKS SCREEN (2026-10-09; the compact chips and figure strip of
  * the day before are gone):
@@ -39,8 +44,10 @@
  *                  the ✕), a tip sits above the cards and the first card that
  *                  swipes peeks each way, once a launch.
  *
- * Route params (optional): { pile, team, assignedTo, nonce } open the screen
- * on a pile, a team or a person (Team tasks, the console).
+ * Route params (optional): { pile, team, teamName, assignedTo, nonce } open
+ * the screen on a pile, an organization's tab or a person (Organization
+ * tasks, the console). The Super Admin has no tabs: there `team` narrows the
+ * list as a removable chip.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -57,9 +64,11 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { tr } from '../../i18n';
+import { settingsApi } from '../../platform/endpoints';
 import { usePullRefresh, useRefetchOnFocus } from '../../platform/hooks';
+import { useSession } from '../../platform/session';
 import { colors, radius, space } from '../../platform/theme';
 import {
   BottomSheet,
@@ -72,9 +81,12 @@ import {
   FAB,
   Header,
   HeaderIcon,
+  IconButton,
   Screen,
+  ScrollSegmented,
   SkeletonCards,
   SwitchRow,
+  TextButton,
   toast,
   ymdLabel,
 } from '../../platform/ui';
@@ -86,6 +98,7 @@ import { SwipeHint, useSwipeHint } from '../components/TaskSwipe';
 import {
   ArrowDown,
   ArrowUp,
+  Building,
   CheckCheck,
   ChevronDown,
   CircleAlert,
@@ -99,7 +112,6 @@ import {
   Search,
   Send,
   SlidersHorizontal,
-  Users,
   X,
 } from '../icons';
 import {
@@ -128,8 +140,8 @@ import {
 } from '../taskStatus';
 
 const PAGE_SIZE = 25;
-/** Each pile's icon: work coming in, work sent out, watching, a team, everything. */
-const PILE_ICONS = { mine: Inbox, delegated: Send, loop: Eye, team: Users, all: Layers };
+/** Each pile's icon: work coming in, work sent out, watching, an organization, everything. */
+const PILE_ICONS = { mine: Inbox, delegated: Send, loop: Eye, team: Building, all: Layers };
 /** Each figure's icon (GRID_TILES names them). */
 const TILE_ICONS = { layers: Layers, hourglass: Hourglass, alert: CircleAlert, play: CirclePlay, eye: Eye, clock: Clock };
 /** The list's gutter; the pile strip bleeds through it to the screen's edges. */
@@ -144,7 +156,6 @@ const DEFAULT_FILTERS = {
   range: 'all',
   from: '',
   to: '',
-  team: '',
   category: [],
   assignedTo: [],
   assignedBy: [],
@@ -166,15 +177,36 @@ function pileLabel(key) {
       mine: tr('Assigned to me'),
       delegated: tr('Assigned by me'),
       loop: tr('In the loop'),
-      team: tr('Team'),
+      team: tr('Organization'),
       all: tr('All tasks'),
     }[key] || key
   );
 }
 
+/** An organization's id, as opposed to the 'all' and 'general' tabs. */
+const isOrgId = (key) => /^[a-f0-9]{24}$/i.test(String(key || ''));
+
+/** A tab's name: All and General in the app's words, an organization by its own. */
+function tabLabel(tab) {
+  if (tab.key === 'all') return tr('All');
+  if (tab.key === 'general') return tr('General');
+  return tab.name || tr('Organization');
+}
+
+/** The order the server gives an empty `orgTabs`: All, General, then each organization by name (meta.teams' order). */
+const defaultTabOrder = (teams) => ['all', 'general', ...(teams || []).map((t) => String(t.id))];
+
+/** meta.orgTabs as the server resolves a saved order: those keys first, then the default order. */
+const orderedTabs = (m, keys) => {
+  const byKey = new Map(m.orgTabs.map((t) => [String(t.key), t]));
+  return [...new Set([...keys, ...defaultTabOrder(m.teams)])].map((k) => byKey.get(k)).filter(Boolean);
+};
+
 export default function TasksScreen() {
   const nav = useNavigation();
   const route = useRoute();
+  const qc = useQueryClient();
+  const settings = useSession((st) => st.settings);
   const metaQ = useTaskMeta();
   const meta = metaQ.data;
   const isAdmin = Boolean(meta?.isAdmin);
@@ -182,9 +214,15 @@ export default function TasksScreen() {
   const managedTeams = useMemo(() => (meta?.teams || []).filter((t) => t.myRole === 'owner' || t.myRole === 'admin'), [meta]);
 
   const [pile, setPile] = useState(() => route.params?.pile || 'mine');
+  /**
+   * The tab: 'all', 'general' or an organization's id; null follows the first
+   * tab in the person's order. Opened from an organization (a `team` param)
+   * it starts on that organization's tab (the Super Admin: on its chip).
+   */
+  const [org, setOrg] = useState(() => (route.params?.team ? String(route.params.team) : null));
+  const [orgName, setOrgName] = useState(() => route.params?.teamName || '');
   const [filters, setFilters] = useState(() => ({
     ...DEFAULT_FILTERS,
-    team: route.params?.team || '',
     assignedTo: route.params?.assignedTo ? [String(route.params.assignedTo)] : [],
   }));
   const [tile, setTile] = useState('');
@@ -201,15 +239,16 @@ export default function TasksScreen() {
   const [sheet, setSheet] = useState(null);
   const [nudged, setNudged] = useState({});
 
-  // Opened again with new params (Team tasks, the console): follow them.
+  // Opened again with new params (Organization tasks, the console): follow them.
   const nonce = route.params?.nonce;
   useEffect(() => {
     if (!nonce) return;
     if (route.params?.pile) setPile(route.params.pile);
     setTile('');
+    setOrg(route.params?.team ? String(route.params.team) : null);
+    setOrgName(route.params?.teamName || '');
     setFilters((f) => ({
       ...f,
-      team: route.params?.team || '',
       assignedTo: route.params?.assignedTo ? [String(route.params.assignedTo)] : [],
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -220,12 +259,32 @@ export default function TasksScreen() {
     return () => clearTimeout(id);
   }, [search]);
 
-  // A pile this person does not have goes back to their own.
+  // ── The tabs: All · General · each organization, in the person's order ──
+  const tabs = useMemo(() => meta?.orgTabs || [], [meta]);
+  const showTabs = !isAdmin && tabs.some((t) => isOrgId(t.key));
+  // The first tab: the server's order once it is here, the saved one before.
+  const firstTab = String(tabs[0]?.key || settings?.orgTabs?.[0] || 'all');
+  // The tab on screen. One that is gone (left, deleted) falls back to the
+  // first; the Super Admin's is the organization the screen was opened on.
+  let orgKey;
+  if (isAdmin) orgKey = isOrgId(org) ? org : 'all';
+  else if (meta && !showTabs) orgKey = 'all';
+  else if (org && (!meta || tabs.some((t) => String(t.key) === org))) orgKey = org;
+  else orgKey = firstTab;
+  const orgNameOf = useCallback(
+    (id) => tabs.find((t) => String(t.key) === String(id))?.name || orgName || tr('Organization'),
+    [tabs, orgName]
+  );
+  // The Organization pile: on All, or on an organization this person owns or
+  // runs; never on General (it is the work filed under their organizations).
+  const orgPile = isAdmin || (orgKey === 'all' ? managedTeams.length > 0 : managedTeams.some((t) => String(t.id) === orgKey));
+
+  // A pile this person does not have (on this tab) goes back to their own.
   useEffect(() => {
     if (!meta) return;
     if (pile === 'all' && !isAdmin) setPile('mine');
-    if (pile === 'team' && !managedTeams.length && !isAdmin) setPile('mine');
-  }, [meta, pile, isAdmin, managedTeams.length]);
+    if (pile === 'team' && !orgPile) setPile('mine');
+  }, [meta, pile, isAdmin, orgPile]);
 
   const params = useMemo(() => {
     const f = filters;
@@ -240,7 +299,7 @@ export default function TasksScreen() {
       scope: pile,
       range: f.range,
       ...(f.range === 'custom' ? { from: f.from, to: f.to } : {}),
-      ...(f.team ? { team: f.team } : {}),
+      ...(orgKey !== 'all' ? { org: orgKey } : {}),
       ...(f.category.length ? { category: csv(f.category) } : {}),
       // "Assigned to" on EVERY pile: on Assigned to me it finds the tasks I
       // share with those people. The side of a pile that is always the reader
@@ -256,11 +315,13 @@ export default function TasksScreen() {
       sort: f.sort,
       dir: f.dir,
     };
-  }, [pile, filters, debounced, tile]);
+  }, [pile, filters, debounced, tile, orgKey]);
 
   const q = useInfiniteQuery({
     queryKey: taskKeys.list(params),
-    queryFn: ({ pageParam }) => listTasks({ ...params, page: pageParam, limit: PAGE_SIZE, ...(pageParam === 1 ? { withScopes: 1 } : {}) }),
+    // Page 1 also brings the piles' counts and (not for the Super Admin) the tabs'.
+    queryFn: ({ pageParam }) =>
+      listTasks({ ...params, page: pageParam, limit: PAGE_SIZE, ...(pageParam === 1 ? { withScopes: 1, ...(isAdmin ? {} : { withOrgs: 1 }) } : {}) }),
     initialPageParam: 1,
     getNextPageParam: (last) => ((last?.page || 1) < (last?.pages || 1) ? (last.page || 1) + 1 : undefined),
     placeholderData: (prev) => prev,
@@ -274,6 +335,7 @@ export default function TasksScreen() {
   const tasks = useMemo(() => q.data?.pages.flatMap((p) => p?.tasks || []) || null, [q.data]);
   const counters = first?.counters || {};
   const scopes = first?.scopes || null;
+  const orgCounts = first?.orgs || null;
   const loading = !q.data && q.isPending;
 
   const refresh = useCallback(() => refetch(), [refetch]);
@@ -286,12 +348,61 @@ export default function TasksScreen() {
     (id) => (String(id) === meId ? tr('me') : people.find((p) => String(p._id || p.id) === String(id))?.name || tr('someone')),
     [people, meId]
   );
-  const teamName = useCallback((id) => (meta?.teams || []).find((t) => String(t.id) === String(id))?.name || tr('Team'), [meta]);
 
   const pickPile = useCallback((key) => {
     setTile('');
     setPile(key);
   }, []);
+  const pickOrg = useCallback(
+    (key) => {
+      setTile('');
+      setOrg(key);
+      // No Organization pile on General or on an organization this person is only in:
+      // move off it now, not one request later.
+      if (!isAdmin && key !== 'all' && !managedTeams.some((t) => String(t.id) === key)) setPile((p) => (p === 'team' ? 'mine' : p));
+    },
+    [isAdmin, managedTeams]
+  );
+
+  /**
+   * Filter → Tab order, saved to the account (so the phone, the iPhone app
+   * and the website share it) as each ↑ / ↓ is tapped: shown at once, and if
+   * the server refuses, back to the last order it confirmed. Only the latest
+   * save's answer counts. `[]` is the default order (Reset order). The tab on
+   * screen stays; the new first tab is where the screen opens next time.
+   */
+  const orderSeq = useRef(0);
+  const orderPending = useRef(0);
+  const orderConfirmed = useRef([]);
+  const saveTabOrder = useCallback(
+    async (keys) => {
+      const seq = ++orderSeq.current;
+      const orgTabs = keys.slice(0, 60);
+      const session = () => useSession.getState();
+      const show = (list) => qc.setQueryData(taskKeys.meta, (m) => (m?.orgTabs ? { ...m, orgTabs: orderedTabs(m, list) } : m));
+      // With nothing in flight, the order on screen is the server's.
+      if (!orderPending.current) orderConfirmed.current = session().settings?.orgTabs || [];
+      orderPending.current += 1;
+      if (!org) setOrg(orgKey);
+      session().setSettings({ ...session().settings, orgTabs });
+      show(orgTabs);
+      try {
+        const saved = await settingsApi.update({ orgTabs });
+        if (saved) orderConfirmed.current = saved.orgTabs || [];
+        if (saved && seq === orderSeq.current) session().setSettings(saved);
+      } catch (e) {
+        if (seq === orderSeq.current) {
+          session().setSettings({ ...session().settings, orgTabs: orderConfirmed.current });
+          show(orderConfirmed.current);
+        }
+        toast.error(e?.message || tr('Could not save that.'));
+      } finally {
+        orderPending.current -= 1;
+      }
+      if (seq === orderSeq.current) qc.invalidateQueries({ queryKey: taskKeys.meta });
+    },
+    [qc, org, orgKey]
+  );
   const pickTile = useCallback((key) => setTile((cur) => (cur === key || key === 'total' ? '' : key)), []);
 
   /** What is narrowing the list, each removable on its own. */
@@ -305,7 +416,8 @@ export default function TasksScreen() {
           : tr('Due: {range}', { range: rangeLabel(f.range) });
       out.push({ key: 'range', label, clear: { range: 'all', from: '', to: '' } });
     }
-    if (f.team) out.push({ key: 'team', label: tr('Team: {name}', { name: teamName(f.team) }), clear: { team: '' } });
+    // The Super Admin's organization (opened from it): there are no tabs to show it.
+    if (isAdmin && orgKey !== 'all') out.push({ key: 'org', label: tr('Organization: {name}', { name: orgNameOf(orgKey) }), onClear: () => setOrg(null) });
     f.category.forEach((c) => out.push({ key: `c-${c}`, label: c, clear: { category: f.category.filter((x) => x !== c) } }));
     f.assignedTo.forEach((id) => out.push({ key: `t-${id}`, label: tr('To {name}', { name: nameOf(id) }), clear: { assignedTo: f.assignedTo.filter((x) => x !== id) } }));
     if (pile !== 'delegated') f.assignedBy.forEach((id) => out.push({ key: `b-${id}`, label: tr('By {name}', { name: nameOf(id) }), clear: { assignedBy: f.assignedBy.filter((x) => x !== id) } }));
@@ -316,7 +428,7 @@ export default function TasksScreen() {
     if (f.late) out.push({ key: 'late', label: tr('Finished late'), clear: { late: false } });
     if (f.moreTime) out.push({ key: 'moreTime', label: tr('More time asked'), clear: { moreTime: false } });
     return out;
-  }, [filters, pile, nameOf, teamName, tile]);
+  }, [filters, pile, nameOf, tile, isAdmin, orgKey, orgNameOf]);
 
   // The badge on Filter: every chip but the due date, which is a window, not a filter.
   const filterCount = chips.filter((c) => c.key !== 'range').length;
@@ -406,8 +518,8 @@ export default function TasksScreen() {
   );
 
   const piles = useMemo(
-    () => ['mine', 'delegated', 'loop', ...(managedTeams.length || scopes?.team ? ['team'] : []), ...(isAdmin ? ['all'] : [])],
-    [managedTeams.length, scopes?.team, isAdmin]
+    () => ['mine', 'delegated', 'loop', ...(orgPile && (managedTeams.length || scopes?.team) ? ['team'] : []), ...(isAdmin ? ['all'] : [])],
+    [orgPile, managedTeams.length, scopes?.team, isAdmin]
   );
 
   const completedCount = Number(counters.completed) || 0;
@@ -429,7 +541,7 @@ export default function TasksScreen() {
     <Header
       surface
       title={pile === 'all' ? tr('All tasks') : tr('Tasks')}
-      subtitle={pile === 'team' && filters.team ? teamName(filters.team) : undefined}
+      subtitle={isOrgId(orgKey) ? orgNameOf(orgKey) : orgKey === 'general' ? tr('General') : undefined}
       titleSlot={searchOpen ? <NavSearch initial={search} onChange={setSearch} onClose={closeSearch} /> : undefined}
       right={
         searchOpen ? null : (
@@ -446,13 +558,14 @@ export default function TasksScreen() {
   const listHeader = (
     <View style={styles.headerWrap}>
       <PileStrip piles={piles} pile={pile} scopes={scopes} onPile={pickPile} />
+      {showTabs ? <ScopeStrip tabs={tabs} value={orgKey} counts={orgCounts} onPick={pickOrg} /> : null}
 
       {chips.length > 0 ? (
         <View style={styles.chipsRow}>
           {chips.map((c) => (
             <Pressable
               key={c.key}
-              onPress={() => setFilters((f) => ({ ...f, ...c.clear }))}
+              onPress={() => (c.onClear ? c.onClear() : setFilters((f) => ({ ...f, ...c.clear })))}
               style={styles.activeChip}
               hitSlop={4}
               accessibilityRole="button"
@@ -466,7 +579,10 @@ export default function TasksScreen() {
           ))}
           {chips.length > 1 ? (
             <Pressable
-              onPress={() => setFilters((f) => ({ ...DEFAULT_FILTERS, sort: f.sort, dir: f.dir }))}
+              onPress={() => {
+                setFilters((f) => ({ ...DEFAULT_FILTERS, sort: f.sort, dir: f.dir }));
+                if (isAdmin) setOrg(null);
+              }}
               style={styles.clearAll}
               hitSlop={4}
               accessibilityRole="button"
@@ -484,8 +600,9 @@ export default function TasksScreen() {
         {GRID_TILES.map((t) => {
           const on = tile === t.key || (!tile && t.key === 'total');
           const tint = tileTint(t);
-          // Total wears the primary, so its filled chip takes the primary's ink.
-          const ink = t.key === 'total' ? colors.onPrimary : colors.white;
+          // A filled chip takes the primary's ink: white in light, and in dark
+          // the page's near-black, as every tint there is bright.
+          const ink = colors.onPrimary;
           const Icon = TILE_ICONS[t.icon] || Layers;
           const value = t.key === 'total' ? totalValue(counters, filters.closed) : statValue(counters, t.key);
           return (
@@ -554,7 +671,8 @@ export default function TasksScreen() {
   return (
     <Screen inTabs padded={false} header={topBar} style={styles.screenTop} contentStyle={styles.screenBody}>
       {body}
-      <FAB title={tr('Assign task')} icon={Plus} onPress={() => nav.navigate('AssignTask')} />
+      {/* From an organization's tab, the new task is filed under it. */}
+      <FAB title={tr('Assign task')} icon={Plus} onPress={() => nav.navigate('AssignTask', !isAdmin && isOrgId(orgKey) ? { team: orgKey } : undefined)} />
 
       <FilterSheet
         visible={filterOpen}
@@ -562,6 +680,8 @@ export default function TasksScreen() {
         meta={meta}
         pile={pile}
         value={filters}
+        tabs={showTabs ? tabs : null}
+        onTabOrder={saveTabOrder}
         tileChosen={Boolean(tile)}
         onApply={(f) => {
           setFilters(f);
@@ -749,7 +869,8 @@ function PileCard({ pileKey, on, c, onPress }) {
             {n ?? '–'}
           </Text>
           <Text style={styles.pileOpen} numberOfLines={1} maxFontSizeMultiplier={1.2}>
-            {` ${tr('open')}`}
+            {/* A no-break space: the iPhone (web) build drops a plain one at the start of a text. */}
+            {` ${tr('open')}`}
             {overdue > 0 ? (
               <Text style={styles.pileLate}>{` · ${tr('{n} late', { n: overdue })}`}</Text>
             ) : review > 0 ? (
@@ -763,13 +884,42 @@ function PileCard({ pileKey, on, c, onPress }) {
 }
 
 /**
+ * The organization tabs, between the piles and the figures (the HRMS app's
+ * carousel switch, small): All, General and one per organization in the
+ * person's order, each with how much is open in it under the current pile
+ * and filters, tinted red when some of it is late. The counts come with the
+ * list's first page (`withOrgs`); a tab reads "Sales, 4 open" to a screen
+ * reader.
+ */
+function ScopeStrip({ tabs, value, counts, onPick }) {
+  const options = tabs.map((t) => {
+    const key = String(t.key);
+    const c = counts?.[key];
+    const n = c ? openCount(c) : null;
+    const late = Number(c?.overdue) || 0;
+    const label = tabLabel(t);
+    let a11y = n === null ? label : tr('{name}, {n} open', { name: label, n });
+    if (late) a11y += `, ${tr('{n} late', { n: late })}`;
+    return { value: key, label, count: n ?? '–', alert: late > 0, accessibilityLabel: a11y };
+  });
+  return <ScrollSegmented compact options={options} value={value} onChange={onPick} accessibilityLabel={tr('Organizations')} />;
+}
+
+/**
  * The Filter sheet. Changes are not live until "Show tasks". The people
  * choice swaps the sheet's content for the picker, and "Done" comes back:
  * one sheet, its content swapped, never a modal on top of another.
+ *
+ * TAB ORDER (where the Team filter was): the tabs one to a row with ↑ / ↓,
+ * the first marked "Opens first". It is not a filter (no chip, not in the
+ * count, not undone by Reset, not waiting for "Show tasks"): every move is
+ * handed to the screen at once, which saves it.
  */
-function FilterSheet({ visible, onClose, meta, pile, value, tileChosen, onApply }) {
+function FilterSheet({ visible, onClose, meta, pile, value, tabs, onTabOrder, tileChosen, onApply }) {
   const [draft, setDraft] = useState(value);
   const [picking, setPicking] = useState(null);
+  const [order, setOrder] = useState([]);
+  const tabKeys = (tabs || []).map((t) => String(t.key)).join();
 
   useEffect(() => {
     if (visible) {
@@ -777,13 +927,27 @@ function FilterSheet({ visible, onClose, meta, pile, value, tileChosen, onApply 
       setPicking(null);
     }
   }, [visible, value]);
+  // The order as the tabs stand when the sheet opens (or when an organization comes or goes).
+  useEffect(() => {
+    if (visible) setOrder(tabKeys ? tabKeys.split(',') : []);
+  }, [visible, tabKeys]);
 
   const set = (patch) => setDraft((d) => ({ ...d, ...patch }));
   const toggle = (key, item) => set({ [key]: draft[key].includes(item) ? draft[key].filter((x) => x !== item) : [...draft[key], item] });
   const people = meta?.people || [];
   const names = (ids) => ids.map((id) => people.find((p) => String(p._id || p.id) === String(id))?.name).filter(Boolean).join(', ');
   const categories = [...new Set((meta?.categories || []).map((c) => (typeof c === 'string' ? c : c?.name)).filter(Boolean))];
-  const teams = meta?.teams || [];
+  const tabOf = (key) => (tabs || []).find((t) => String(t.key) === key);
+  const reorder = (next) => {
+    setOrder(next);
+    onTabOrder(next);
+  };
+  const move = (i, by) => {
+    const next = [...order];
+    [next[i], next[i + by]] = [next[i + by], next[i]];
+    reorder(next);
+  };
+  const defaultOrder = defaultTabOrder(meta?.teams).filter((k) => tabOf(k));
 
   if (picking) {
     return (
@@ -834,14 +998,37 @@ function FilterSheet({ visible, onClose, meta, pile, value, tileChosen, onApply 
         ) : null}
       </FilterSection>
 
-      {teams.length ? (
-        <FilterSection title={tr('Team')}>
-          <ChipRow style={styles.chipWrap}>
-            <Chip label={tr('Any team')} selected={!draft.team} onPress={() => set({ team: '' })} />
-            {teams.map((t) => (
-              <Chip key={t.id} label={t.name} icon={Users} selected={String(draft.team) === String(t.id)} onPress={() => set({ team: t.id })} />
-            ))}
-          </ChipRow>
+      {tabs ? (
+        <FilterSection title={tr('Tab order')} hint={tr('Tasks opens on the first tab.')}>
+          {order.map((key, i) => {
+            const tab = tabOf(key);
+            if (!tab) return null;
+            const label = tabLabel(tab);
+            return (
+              <View key={key} style={styles.orderRow}>
+                <View style={styles.flex}>
+                  <Text style={styles.orderLabel} numberOfLines={1}>
+                    {label}
+                  </Text>
+                  {i === 0 ? <Text style={styles.orderFirst}>{tr('Opens first')}</Text> : null}
+                </View>
+                <IconButton icon={ArrowUp} label={tr('Move {name} up', { name: label })} size={19} disabled={i === 0} onPress={() => move(i, -1)} />
+                <IconButton icon={ArrowDown} label={tr('Move {name} down', { name: label })} size={19} disabled={i === order.length - 1} onPress={() => move(i, 1)} />
+              </View>
+            );
+          })}
+          {order.join() !== defaultOrder.join() ? (
+            <TextButton
+              title={tr('Reset order')}
+              align="left"
+              onPress={() => {
+                // Saved as [] (the default), so organizations joined later still fall into place by name.
+                setOrder(defaultOrder);
+                onTabOrder([]);
+              }}
+              style={styles.resetOrder}
+            />
+          ) : null}
         </FilterSection>
       ) : null}
 
@@ -1068,4 +1255,21 @@ const styles = StyleSheet.create({
   dropRowPressed: { backgroundColor: colors.muted },
   dropLabel: { color: colors.textFaint, fontSize: 11, fontWeight: '700' },
   dropValue: { color: colors.text, fontSize: 14, fontWeight: '600', marginTop: 1 },
+  // Tab order: one row a tab, ↑ and ↓ at the end.
+  orderRow: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    marginBottom: space(1.5),
+    paddingLeft: space(3.5),
+    paddingRight: space(1),
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+  },
+  orderLabel: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  orderFirst: { color: colors.primary, fontSize: 11, fontWeight: '700', marginTop: 1 },
+  resetOrder: { alignSelf: 'flex-start' },
 });

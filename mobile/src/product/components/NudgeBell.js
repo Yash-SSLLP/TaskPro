@@ -16,7 +16,7 @@ import { Bell, BellRing } from '../icons';
 import { REVIEW_COLORS, clockOf, nudgeState } from '../taskStatus';
 
 const GOLD = theme.dark ? '#D6B25A' : '#A9863A';
-const GOLD_SOFT = theme.dark ? '#2B2411' : '#fdf6e3';
+const GOLD_SOFT = theme.dark ? '#31332A' : '#fdf6e3'; // dark: the gold at 16% over the card
 
 export default function NudgeBell({ task, override = null, onNudged, size = 36, label = false }) {
   const [busy, setBusy] = useState(false);

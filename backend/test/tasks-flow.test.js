@@ -15,7 +15,7 @@ const feedKinds = async (who, id) => (await who.get(`/api/tasks/${id}/updates`))
 describe('lifecycle', () => {
   test('accept, hand in, send back, withdraw, approve, reopen, cancel', async () => {
     const { boss, a } = await crew('Life');
-    const t = await give(boss, { title: 'Send GST invoices', assignees: [a.id], dueDate: inMs(2 * DAY) });
+    const t = await give(boss, { title: 'Send GST invoices', assignees: [a.id], dueDate: inMs(2 * DAY), requiresApproval: true });
 
     let can = (await detail(a, t._id)).can;
     assert.equal(can.role, 'doer');
@@ -156,7 +156,7 @@ describe('changing hands', () => {
 
     const refused = await act(a, t._id, 'delegate', { to: stranger.id });
     assert.equal(refused.status, 400);
-    assert.match(refused.body.error, /isn't in your contacts or teams yet/);
+    assert.match(refused.body.error, /isn't in your contacts or organizations yet/);
     assert.equal((await act(boss, t._id, 'delegate', { to: c.id })).status, 403);
 
     const res = await act(a, t._id, 'delegate', { to: c.id, note: 'You know the manager' });

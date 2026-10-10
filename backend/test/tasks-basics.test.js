@@ -1,7 +1,7 @@
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const h = require('./helpers');
-const { HOUR, DAY, inMs, give, move, detail, ids, titles, crew, alertTitles } = require('./task-helpers');
+const { HOUR, DAY, inMs, give, act, move, detail, ids, titles, crew, alertTitles } = require('./task-helpers');
 
 before(h.start);
 after(h.stop);
@@ -11,8 +11,11 @@ describe('giving tasks', () => {
     const p = await h.signup('Newbie');
     const res = await p.get('/api/tasks?scope=mine');
     assert.equal(res.status, 200);
-    assert.deepEqual(titles(res), ['Welcome to KARO: share your Task Pin']);
+    assert.deepEqual(titles(res), ['Welcome to Karo: share your Task Pin']);
     const t = res.body.tasks[0];
+    assert.match(t.description, /^In Karo, you give tasks by Task Pin\./);
+    assert.match(t.description, /Create an organization/);
+    assert.equal((await detail(p, t._id)).updates[0].byName, 'Karo');
     assert.equal(t.requiresApproval, false);
     assert.equal(t.createdBy.id, p.id);
     assert.match(t.code, /^TSK-\d{4}-\d{5}$/);
@@ -40,7 +43,7 @@ describe('giving tasks', () => {
     const t = await give(boss, { title: 'Send GST invoices', assignees: [a.id, b.id], dueDate: inMs(2 * DAY), priority: 'Urgent', team: team.id });
     assert.match(t.code, /^TSK-\d{4}-\d{5}$/);
     assert.equal(t.status, 'PENDING');
-    assert.equal(t.requiresApproval, true);
+    assert.equal(t.requiresApproval, false, 'review is off unless asked for');
     assert.deepEqual(t.team, { id: team.id, name: team.name });
     assert.deepEqual(t.assignees.map((x) => x.user.id), [a.id, b.id]);
     const person = t.assignees[0].user;
@@ -55,7 +58,7 @@ describe('giving tasks', () => {
 
     const refused = await boss.post('/api/tasks', { title: 'x', assignees: [stranger.id] });
     assert.equal(refused.status, 400);
-    assert.equal(refused.body.error, `${stranger.name} isn't in your contacts or teams yet. Add them by their Task Pin first.`);
+    assert.equal(refused.body.error, `${stranger.name} isn't in your contacts or organizations yet. Add them by their Task Pin first.`);
     const loopRefused = await boss.post('/api/tasks', { title: 'x', loopUsers: [stranger.id] });
     assert.equal(loopRefused.status, 400);
 
@@ -70,6 +73,20 @@ describe('giving tasks', () => {
     assert.equal((await boss.post('/api/tasks', { title: 'x', team: other.id })).status, 400);
     // On someone else's behalf is the Super Admin's alone.
     assert.equal((await boss.post('/api/tasks', { title: 'x', onBehalfOf: a.id })).status, 403);
+  });
+
+  test('a task given without saying is not awaiting review, unless the setter turned review on', async () => {
+    const { boss, a } = await crew('Review');
+    const plain = await give(boss, { title: 'No review', assignees: [a.id] });
+    assert.equal(plain.requiresApproval, false);
+    await act(a, plain._id, 'accept');
+    const done = await move(a, plain._id, 'COMPLETED', 'done');
+    assert.equal(done.status, 200, JSON.stringify(done.body));
+    assert.equal(done.body.task.status, 'COMPLETED', 'closed without waiting for the setter');
+
+    assert.equal((await boss.patch('/api/me/settings', { approvalDefault: true })).status, 200);
+    assert.equal((await give(boss, { title: 'Check it', assignees: [a.id] })).requiresApproval, true);
+    assert.equal((await give(boss, { title: 'Not this one', assignees: [a.id], requiresApproval: false })).requiresApproval, false);
   });
 
   test('meta: the assignable people, my teams, and the vocabulary', async () => {

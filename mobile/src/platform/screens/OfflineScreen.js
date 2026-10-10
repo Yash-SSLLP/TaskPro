@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import productConfig from '../../product/config';
 import { WifiOff } from '../icons';
 import { useSession } from '../session';
 import { colors, font, space, type } from '../theme';
@@ -20,7 +21,7 @@ export default function OfflineScreen() {
       <View style={styles.icon}>
         <WifiOff size={30} color={colors.danger} />
       </View>
-      <Text style={styles.title}>{tr('Can’t reach the server')}</Text>
+      <Text style={styles.title}>{tr('Can’t reach {app}', { app: productConfig.name })}</Text>
       <Text style={styles.message}>{bootError || tr('Check your internet connection and try again.')}</Text>
       <Button title={tr('Try again')} size="lg" onPress={() => refresh({ launching: true })} style={styles.retry} />
       <TextButton title={tr('Sign out')} color={colors.textSecondary} onPress={() => signOut({ remote: false })} />

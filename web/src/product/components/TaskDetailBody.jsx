@@ -18,7 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 import {
-  Activity, AlertCircle, AlertTriangle, ArrowRight, ArrowRightLeft, Bell, Bookmark, CalendarDays, Check, CheckCircle2, ChevronDown, Clock,
+  Activity, AlertCircle, AlertTriangle, ArrowRight, ArrowRightLeft, Bell, CalendarDays, Check, CheckCircle2, ChevronDown, Clock,
   CornerUpRight, Download, Eye, Flag, GitBranch, ImageIcon, Link2, Lock, MessageSquare, Paperclip, Pencil, Play, Repeat, RotateCcw, Send,
   Slash, Tag, ThumbsDown, ThumbsUp, Trash2, TrendingUp, User, UserCheck, Users, X, XCircle,
 } from 'lucide-react';
@@ -41,7 +41,6 @@ import { DelegateModal } from './DelegateModal';
 import { TransferModal } from './TransferModal';
 import { VoicePlayer, VoiceRecorder } from './VoiceNote';
 import { AssignTaskModal } from './AssignTaskModal';
-import { SaveTemplateModal } from './TaskTemplates';
 import { teamNameOf } from './TaskRow';
 
 /* The one card, the one heading, the one chip, the one button — declared once
@@ -64,6 +63,7 @@ const ICON_BTN = 'grid h-9 w-9 shrink-0 place-items-center rounded-lg border bor
 /** Rows whose note the ENGINE writes, not a person. */
 const MACHINE_SAID = new Set(['PROGRESS', 'SPLIT', 'CLAIMED', 'REMINDER']);
 
+// `more-time-ink`: sent back and more time asked turn orange in the dark (index.css).
 const FEED_WORDS = {
   CREATED: { icon: Flag, says: 'set this task', tone: 'text-ink-faint' },
   STATUS: { icon: Activity, says: '', tone: 'text-blue-500' },
@@ -78,12 +78,12 @@ const FEED_WORDS = {
   SUBTASK: { icon: GitBranch, says: 'changed a piece', tone: 'text-ink-faint' },
   SUBMITTED: { icon: Send, says: 'handed it in', tone: 'text-violet-500' },
   APPROVED: { icon: CheckCircle2, says: 'approved it', tone: 'text-emerald-500' },
-  SENT_BACK: { icon: RotateCcw, says: 'sent it back', tone: 'text-amber-500' },
+  SENT_BACK: { icon: RotateCcw, says: 'sent it back', tone: 'more-time-ink text-amber-500' },
   PROGRESS: { icon: TrendingUp, says: 'reported progress', tone: 'text-blue-500' },
   SPLIT: { icon: GitBranch, says: 'split it into pieces', tone: 'text-blue-500' },
   CLAIMED: { icon: UserCheck, says: 'picked it up', tone: 'text-emerald-500' },
   TRANSFERRED: { icon: ArrowRightLeft, says: 'handed it to the right person', tone: 'text-ink-faint' },
-  EXTENSION_ASKED: { icon: Clock, says: 'asked for more time', tone: 'text-amber-500' },
+  EXTENSION_ASKED: { icon: Clock, says: 'asked for more time', tone: 'more-time-ink text-amber-500' },
   EXTENSION_DECIDED: { icon: Clock, says: 'answered the request for more time', tone: 'text-amber-500' },
 };
 
@@ -422,7 +422,6 @@ export function TaskDetailBody({ taskId, initialEdit = false, onChanged, onOpenT
   const [extension, setExtension] = useState(null);
   const [delegating, setDelegating] = useState(false);
   const [transferring, setTransferring] = useState(false);
-  const [savingTemplate, setSavingTemplate] = useState(false);
   const [nudgedAt, setNudgedAt] = useState(null);
   const noteRef = useRef(null);
   const titleRef = useRef(null);
@@ -667,7 +666,6 @@ export function TaskDetailBody({ taskId, initialEdit = false, onChanged, onOpenT
       add(`move-${move.to}`, label, icon, move.to === STATUS.CANCELLED ? 'danger' : move.to === STATUS.COMPLETED ? 'go' : 'ghost', () => ask(answerFor(move.to)));
     }
     if (can.canEdit) add('edit', 'Edit', Pencil, 'ghost', () => setEditing(true), 'Change the details while the terms are open');
-    add('template', 'Save as template', Bookmark, 'ghost', () => setSavingTemplate(true), 'Keep it to set again');
     if (can.canDelete) add('remove', 'Remove', Trash2, 'danger', () => remove(false), 'Archive it');
     if (can.canPurge) add('purge', 'Delete for good', AlertTriangle, 'danger', () => remove(true), 'Super Admin only');
     return out;
@@ -972,7 +970,7 @@ export function TaskDetailBody({ taskId, initialEdit = false, onChanged, onOpenT
             </Fact>
             <Fact icon={Users} label="Assigned to">
               {(task.assignees || []).length === 0 ? (
-                <>Nobody yet — open for {(task.openTo || []).map(personName).filter(Boolean).join(', ') || 'the team'} to pick up</>
+                <>Nobody yet — open for {(task.openTo || []).map(personName).filter(Boolean).join(', ') || 'organization members'} to pick up</>
               ) : (
                 <ul className="space-y-1">
                   {task.assignees.map((a) => (
@@ -1151,7 +1149,7 @@ export function TaskDetailBody({ taskId, initialEdit = false, onChanged, onOpenT
             ))}
           </div>
 
-          <div ref={feedRef} className="max-h-[52vh] min-h-[10rem] flex-1 overflow-y-auto px-4 py-3">
+          <div ref={feedRef} className="max-h-[calc(var(--vv-h,100vh)*0.52)] min-h-[10rem] flex-1 overflow-y-auto px-4 py-3">
             {tab === 'files' ? (
               attachments.length === 0 ? (
                 <Empty>Nothing has been attached yet.</Empty>
@@ -1282,7 +1280,6 @@ export function TaskDetailBody({ taskId, initialEdit = false, onChanged, onOpenT
       <DelegateModal open={delegating} onClose={() => setDelegating(false)} task={task} meta={meta} can={can} onDone={refresh} />
       <TransferModal open={transferring} onClose={() => setTransferring(false)} task={task} meta={meta} onDone={refresh} />
       <AssignTaskModal open={editing} onClose={() => setEditing(false)} meta={meta} editTask={editing ? task : null} onCreated={refresh} />
-      <SaveTemplateModal open={savingTemplate} onClose={() => setSavingTemplate(false)} task={task} meta={meta} />
     </div>
   );
 }

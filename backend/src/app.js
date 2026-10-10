@@ -18,6 +18,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const config = require('./config');
 const product = require('./product');
+const site = require('./site');
 const { notFoundHandler, errorHandler } = require('./platform/errors');
 
 function createApp() {
@@ -32,6 +33,10 @@ function createApp() {
       contentSecurityPolicy: false,
     })
   );
+  app.use(compression());
+  // The public website (site/): its own paths only, before cors() so its
+  // pages carry no `Vary: Origin` and the CDN keeps one copy of each.
+  app.use(site.publicRouter);
   app.use(
     cors({
       origin: config.corsOrigins.length ? config.corsOrigins : true,
@@ -39,7 +44,6 @@ function createApp() {
       maxAge: 7200,
     })
   );
-  app.use(compression());
   app.use(express.json({ limit: '1mb' }));
   // What each request changes is recorded before its answer goes out.
   app.use(live.middleware);
@@ -58,6 +62,7 @@ function createApp() {
   app.use('/api/files', require('./platform/routes/files'));
   app.use('/api/platform', require('./platform/routes/platform'));
   app.use('/api/live', require('./platform/routes/live'));
+  app.use('/api/site', site.adminRouter);
   product.mountRoutes(app);
 
   app.use('/api', notFoundHandler);
@@ -82,11 +87,22 @@ function createApp() {
 let ready = null;
 let serverlessApp = null;
 
+// What a website page shows while the database cannot be reached.
+const STARTING_PAGE = `<!doctype html>
+<html lang="en-IN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex"><title>Karo</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;font:16px/1.5 system-ui,sans-serif;background:#f4f6f9;color:#16325c;text-align:center;padding:16px}@media (prefers-color-scheme:dark){body{background:#0b141a;color:#e9edef}}</style>
+</head><body><main><h1>Karo is starting</h1><p>Please try again in a few seconds.</p></main></body></html>`;
+
 async function handler(req, res) {
   if (!ready) {
     const { connectDB } = require('./platform/db');
     const { ensureSuperAdmin } = require('./platform/seed');
-    ready = connectDB().then(() => ensureSuperAdmin());
+    // The website's starter content; a fault there never stops the API.
+    const siteDefaults = () => site.ensureSiteDefaults().catch((err) => console.error('[site] could not write the starter content:', err));
+    ready = connectDB()
+      .then(() => ensureSuperAdmin())
+      .then(siteDefaults);
   }
   try {
     await ready;
@@ -94,8 +110,15 @@ async function handler(req, res) {
     ready = null; // try again on the next request
     console.error('Failed to start:', err);
     res.statusCode = 503;
-    res.setHeader('Content-Type', 'application/json');
-    return res.end(JSON.stringify({ error: 'Service is starting, please try again.' }));
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Retry-After', '30');
+    if (String(req.url || '').startsWith('/api')) {
+      res.setHeader('Content-Type', 'application/json');
+      return res.end(JSON.stringify({ error: 'Service is starting, please try again.' }));
+    }
+    // A website page (the home page, /privacy): a page, not JSON.
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.end(STARTING_PAGE);
   }
   serverlessApp ??= createApp();
   return serverlessApp(req, res);

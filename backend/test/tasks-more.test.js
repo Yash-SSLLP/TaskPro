@@ -1,59 +1,45 @@
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const ExcelJS = require('exceljs');
-const { DateTime } = require('luxon');
+const mongoose = require('mongoose');
 const h = require('./helpers');
+const Task = require('../src/product/models/Task');
 const { DAY, inMs, give, act, move, detail, crew } = require('./task-helpers');
 
 before(h.start);
 after(h.stop);
 
-describe('templates', () => {
-  test('mine and my teams’; only owners/admins share; prefill drops people I can’t assign', async () => {
-    const owner = await h.signup('TplOwner');
-    const member = await h.signup('TplMember');
-    const ownersContact = await h.signup('OwnersContact');
-    await h.connect(owner, ownersContact);
-    const team = await h.makeTeam(owner, [member]);
+describe('templates are gone', () => {
+  test('old apps get an empty list; a template id on a new task is ignored', async () => {
+    const { boss, a } = await crew('NoTpl');
+    const list = await boss.get('/api/tasks/templates');
+    assert.equal(list.status, 200);
+    assert.deepEqual(list.body, { mine: [], team: [], templates: [] });
+    assert.equal((await boss.post('/api/tasks/templates', { title: 'x' })).status, 404);
 
-    const mine = await owner.post('/api/tasks/templates', { name: 'Month end', title: 'Close the books', dueInDays: 3, priority: 'urgent', defaultAssignees: [ownersContact.id] });
-    assert.equal(mine.status, 201);
-    assert.equal(mine.body.template.priority, 'Urgent');
-    assert.equal(mine.body.template.canEdit, true);
+    const t = await give(boss, { title: 'Plain', assignees: [a.id], template: new mongoose.Types.ObjectId().toString() });
+    assert.equal('template' in t, false);
+    assert.equal((await Task.findById(t._id).lean()).template, undefined);
 
-    const shared = await owner.post('/api/tasks/templates', { title: 'Weekly stock count', team: team.id, defaultAssignees: [owner.id, ownersContact.id] });
-    assert.equal(shared.status, 201);
-    assert.equal((await member.post('/api/tasks/templates', { title: 'x', team: team.id })).status, 403);
+    // A task made from a template before keeps the id in the database, never in the API.
+    await Task.collection.updateOne({ _id: new mongoose.Types.ObjectId(t._id) }, { $set: { template: new mongoose.Types.ObjectId() } });
+    assert.equal('template' in (await detail(boss, t._id)).task, false);
+  });
 
-    const asMember = (await member.get('/api/tasks/templates')).body;
-    assert.deepEqual(asMember.mine, []);
-    assert.deepEqual(asMember.team.map((g) => [g.team.id, g.team.name, g.templates.map((t) => t.title)]), [[team.id, team.name, ['Weekly stock count']]]);
-    assert.equal(asMember.team[0].templates[0].canEdit, false);
-    assert.deepEqual(asMember.team[0].templates[0].can, { edit: false, delete: false });
-    assert.equal((await member.patch(`/api/tasks/templates/${shared.body.template._id}`, { title: 'Hijack' })).status, 403);
-    assert.equal((await member.get(`/api/tasks/templates/${mine.body.template._id}/prefill`)).status, 404);
-
-    const prefill = (await member.get(`/api/tasks/templates/${shared.body.template._id}/prefill`)).body.prefill;
-    assert.deepEqual(prefill.assignees, [owner.id]);
-    assert.equal(prefill.title, 'Weekly stock count');
-    assert.equal(String(prefill.team), team.id);
-
-    const ownerPrefill = (await owner.get(`/api/tasks/templates/${mine.body.template._id}/prefill`)).body.prefill;
-    assert.deepEqual(ownerPrefill.assignees, [ownersContact.id]);
-    const due = DateTime.fromISO(ownerPrefill.dueDate).setZone('Asia/Kolkata');
-    assert.equal(due.toFormat('HH:mm'), '18:00');
-    assert.equal(due.toISODate(), DateTime.now().setZone('Asia/Kolkata').plus({ days: 3 }).toISODate());
-
-    const copy = await member.post(`/api/tasks/templates/${shared.body.template._id}/copy`);
-    assert.equal(copy.status, 201);
-    assert.equal(copy.body.template.team, null);
-    assert.equal((await member.get('/api/tasks/templates')).body.mine.length, 1);
-
-    const t = await give(owner, { title: 'From a task', assignees: [member.id] });
-    const fromTask = await owner.post('/api/tasks/templates', { fromTask: t._id, name: 'Saved' });
-    assert.equal(fromTask.body.template.title, 'From a task');
-    assert.equal((await owner.del(`/api/tasks/templates/${fromTask.body.template._id}`)).body.ok, true);
-    assert.equal((await owner.get('/api/tasks/templates')).body.mine.length, 1);
+  test('deleting an account still clears the templates it saved before', async () => {
+    const me = await h.signup('OldTpl');
+    const other = await h.signup('OldTplOther');
+    const templates = mongoose.connection.collection('tasktemplates');
+    const mine = new mongoose.Types.ObjectId(me.id);
+    const team = new mongoose.Types.ObjectId();
+    await templates.insertMany([
+      { title: 'Mine', createdBy: mine, createdByName: me.name, team: null },
+      { title: 'Shared', createdBy: mine, createdByName: me.name, team },
+      { title: 'Theirs', createdBy: new mongoose.Types.ObjectId(other.id), createdByName: other.name, team: null },
+    ]);
+    assert.equal((await me.post('/api/auth/delete-account', { password: 'password123' })).status, 200);
+    const left = await templates.find({ title: { $in: ['Mine', 'Shared', 'Theirs'] } }).sort({ title: 1 }).toArray();
+    assert.deepEqual(left.map((x) => [x.title, x.createdByName]), [['Shared', 'Deleted user'], ['Theirs', other.name]]);
   });
 });
 
@@ -176,10 +162,8 @@ describe('platform hooks', () => {
     const m = await h.signup('HookMember');
     const team = await h.makeTeam(owner, [m]);
     const t = await give(owner, { title: 'Filed', assignees: [m.id], team: team.id, dueDate: inMs(-DAY) });
-    await owner.post('/api/tasks/templates', { title: 'Shared', team: team.id });
     assert.equal((await owner.del(`/api/teams/${team.id}`)).status, 200);
     assert.equal((await detail(owner, t._id)).task.team, null);
-    assert.equal((await owner.get('/api/tasks/templates')).body.mine.length, 1);
     // Still the member's task, not a team task any more.
     assert.equal((await m.get(`/api/tasks/${t._id}`)).status, 200);
 

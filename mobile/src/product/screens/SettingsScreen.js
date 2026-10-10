@@ -118,7 +118,7 @@ export default function SettingsScreen({ navigation }) {
       <SwitchRow
         label={tr('Ask for a review by default')}
         description={tr('When you give someone a task, finishing it hands it back to you to approve. You can change it on each task.')}
-        value={form?.approvalDefault !== false}
+        value={form?.approvalDefault === true}
         onChange={set('approvalDefault')}
       />
       <Text style={styles.label}>{tr('My default reminders')}</Text>

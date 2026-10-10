@@ -10,6 +10,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Modal, StyleSheet, Text, View } from 'react-native';
+import productConfig from '../../product/config';
 import { tr } from '../../i18n';
 import { Bell } from '../icons';
 import { colors, font, radius, space, type } from '../theme';
@@ -66,7 +67,7 @@ export default function PushPrompt({ onAllowed }) {
           <Text style={styles.title} accessibilityRole="header">
             {tr('Turn on notifications?')}
           </Text>
-          <Text style={styles.message}>{tr('New tasks, updates and reminders on this iPhone.')}</Text>
+          <Text style={styles.message}>{tr('Let {app} send new tasks, updates and reminders to this iPhone.', { app: productConfig.name })}</Text>
           <View style={styles.buttons}>
             <Button title={tr('Not now')} variant="secondary" onPress={later} style={styles.button} />
             <Button title={tr('Allow')} onPress={allow} style={styles.button} />

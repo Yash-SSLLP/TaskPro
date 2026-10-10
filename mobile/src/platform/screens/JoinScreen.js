@@ -62,7 +62,7 @@ export default function JoinScreen({ navigation, route }) {
         <Text style={styles.text}>
           {own
             ? tr('Send it to someone so they can join you.')
-            : tr('Give each other tasks, follow them up and get reminders. Task Pin {pin}.', { pin: inviter.pinDisplay })}
+            : tr('In {app}, you give each other tasks, follow them up and get reminders. Task Pin {pin}.', { app: productConfig.name, pin: inviter.pinDisplay })}
         </Text>
         {whatsapp && !own ? (
           <View style={styles.wa}>

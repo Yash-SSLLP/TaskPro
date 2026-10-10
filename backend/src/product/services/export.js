@@ -14,13 +14,31 @@ const { listParam } = require('./inputs');
 const { zoneOf, sheetCell, inZone } = require('./time');
 const { STATUS, SORTS, idOf } = require('../config');
 
-const PILES = { mine: 'Assigned to me', delegated: 'Assigned by me', loop: 'In the loop', team: 'My teams', all: 'All tasks' };
+const PILES = { mine: 'Assigned to me', delegated: 'Assigned by me', loop: 'In the loop', team: 'Organization tasks', all: 'All tasks' };
 const RANGES = { today: 'Today', yesterday: 'Yesterday', week: 'This week', month: 'This month', nextWeek: 'Next week', all: 'All time' };
 const FIGURES = { total: 'Total (open work)', pending: 'Not Accepted Yet', overdue: 'Overdue', inProgress: 'In Progress', inReview: 'Under Review', completed: 'Completed' };
 const MAX_ROWS = 5000;
 
+/**
+ * The organization tab (or the older `team` filter) in words: "General",
+ * "Sales", or '' for all of them. One I'm not in is named from the rows it
+ * shows (only the Super Admin's is looked up), so an id never reveals a name.
+ */
+async function orgWords(q, who, rows) {
+  const tab = String(q.org || '').trim();
+  if (tab === 'general') return 'General';
+  const id = (tab && tab !== 'all' ? tab : String(q.team || '').trim()).toLowerCase();
+  if (!id) return '';
+  if (who.memberTeams.has(id)) return who.memberTeams.get(id).name;
+  const shown = rows.find((r) => r.team && idOf(r.team) === id)?.team?.name;
+  if (shown) return shown;
+  if (!who.superAdmin || !/^[a-f\d]{24}$/.test(id)) return 'Another organization';
+  const Team = require('../../platform/models/Team');
+  return (await Team.findById(id).select('name').lean())?.name || 'A deleted organization';
+}
+
 async function exportTasks(req, res) {
-  await access.actor(req);
+  const who = await access.actor(req);
   const tz = zoneOf(req);
   const filter = await buildQuery(req);
   const { sort, key: sortKey, dir: sortDir } = resolveSort(req.query);
@@ -32,7 +50,7 @@ async function exportTasks(req, res) {
   const loopNames = await people.namesOf(rows.flatMap((r) => (r.loopUsers || []).map(idOf)));
 
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'KARO';
+  wb.creator = require('..').name;
   wb.created = new Date();
 
   const ws = wb.addWorksheet('Tasks');
@@ -116,7 +134,8 @@ async function exportTasks(req, res) {
   line('Pile', pile);
   line('Figure', FIGURES[q.figure] || (q.status || q.overdue ? 'Filtered by status' : 'Every status'));
   line('Due', range);
-  if (q.team) line('Team', String(q.team));
+  const org = await orgWords(q, who, rows);
+  if (org) line('Organization', org);
   if (q.priority) line('Priority', listParam(q.priority).join(', '));
   if (q.category) line('Category', listParam(q.category).join(', '));
   if (say(q.assignedTo)) line('Assigned to', say(q.assignedTo));

@@ -10,15 +10,18 @@
  */
 import { AlarmClock, AlertCircle, BellRing, CheckCircle2, Clock, Eye, PlayCircle } from 'lucide-react';
 
-/** Order = the legend's, and what survives when a day holds more than fits. */
+/**
+ * Order = the legend's, and what survives when a day holds more than fits.
+ * The colours are CSS variables (src/index.css --cal-k-*), one set per theme.
+ */
 export const KINDS = {
-  overdue: { label: 'Overdue', chip: 'Overdue', color: '#ef4444', fg: '#ffffff', icon: AlertCircle },
-  reminder: { label: 'My reminder', chip: 'My reminders', color: '#6366f1', fg: '#ffffff', icon: AlarmClock },
-  sharedReminder: { label: 'Reminder for me', chip: 'Reminders for me', color: '#f97316', fg: '#ffffff', icon: BellRing },
-  pending: { label: 'Due · to do', chip: 'To do', color: '#f59e0b', fg: '#1f2937', icon: Clock },
-  inProgress: { label: 'Due · in progress', chip: 'In progress', color: '#0ea5e9', fg: '#ffffff', icon: PlayCircle },
-  inReview: { label: 'Due · in review', chip: 'In review', color: '#8b5cf6', fg: '#ffffff', icon: Eye },
-  done: { label: 'Completed', chip: 'Completed', color: '#10b981', fg: '#06281f', icon: CheckCircle2 },
+  overdue: { label: 'Overdue', chip: 'Overdue', color: 'var(--cal-k-overdue)', fg: 'var(--cal-k-overdue-fg)', icon: AlertCircle },
+  reminder: { label: 'My reminder', chip: 'My reminders', color: 'var(--cal-k-reminder)', fg: 'var(--cal-k-reminder-fg)', icon: AlarmClock },
+  sharedReminder: { label: 'Reminder for me', chip: 'Reminders for me', color: 'var(--cal-k-shared-reminder)', fg: 'var(--cal-k-shared-reminder-fg)', icon: BellRing },
+  pending: { label: 'Due · to do', chip: 'To do', color: 'var(--cal-k-pending)', fg: 'var(--cal-k-pending-fg)', icon: Clock },
+  inProgress: { label: 'Due · in progress', chip: 'In progress', color: 'var(--cal-k-in-progress)', fg: 'var(--cal-k-in-progress-fg)', icon: PlayCircle },
+  inReview: { label: 'Due · in review', chip: 'In review', color: 'var(--cal-k-in-review)', fg: 'var(--cal-k-in-review-fg)', icon: Eye },
+  done: { label: 'Completed', chip: 'Completed', color: 'var(--cal-k-done)', fg: 'var(--cal-k-done-fg)', icon: CheckCircle2 },
 };
 export const KIND_ORDER = Object.keys(KINDS);
 export const kindMeta = (kind) => KINDS[kind] || KINDS.pending;
@@ -68,7 +71,7 @@ export function monthCells(y, m) {
 export const longDate = (y, m, d) => new Date(y, m - 1, d).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
 export const PRIORITIES = ['Low', 'Normal', 'High'];
-export const SCOPE_LABELS = { self: 'Just me', users: 'Specific people', team: 'A team', everyone: 'Everyone' };
+export const SCOPE_LABELS = { self: 'Just me', users: 'Specific people', team: 'An organization', everyone: 'Everyone' };
 
 /** The label/value lines an entry's detail shows, by kind. */
 export function detailRows(e) {

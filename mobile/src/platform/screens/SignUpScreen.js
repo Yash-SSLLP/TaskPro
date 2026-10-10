@@ -37,7 +37,7 @@ export default function SignUpScreen({ navigation }) {
   return (
     <Screen header={<Header back title={tr('Create your account')} />} scroll keyboard>
       <Text style={styles.intro}>
-        {tr('Sign up for {name}. You get your own Task Pin: share it, and people can add you and give you tasks.', { name: productConfig.name })}
+        {tr('Join {app}. In {app}, you get your own Task Pin: share it, and people can add you and give you tasks.', { app: productConfig.name })}
       </Text>
       <TextField
         label={tr('Your name')}

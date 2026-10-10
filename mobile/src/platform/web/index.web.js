@@ -1,7 +1,7 @@
 /**
  * The iPhone web build's adaptations (the phone app loads index.js).
  *
- * iPhones have no KARO build in the App Store, so the same app is exported
+ * iPhones have no Karo build in the App Store, so the same app is exported
  * for the web into the website's /iphone/ (scripts/build-iphone.js) and added
  * to the home screen from Safari, where it opens full screen like an app.
  *

@@ -66,5 +66,5 @@ export function advertiseIphoneApp() {
   add('link', { rel: 'manifest', href: '/iphone/manifest.json' });
   add('meta', { name: 'apple-mobile-web-app-capable', content: 'yes' });
   add('meta', { name: 'mobile-web-app-capable', content: 'yes' });
-  add('meta', { name: 'apple-mobile-web-app-title', content: 'KARO' });
+  add('meta', { name: 'apple-mobile-web-app-title', content: 'Karo' });
 }

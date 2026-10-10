@@ -189,7 +189,7 @@ export default function ReminderFormSheet({ seed, aim, onClose, onSaved }) {
       return;
     }
     if (form.scope === 'team' && !form.team) {
-      setError(tr('Pick a team, or change who sees this reminder.'));
+      setError(tr('Pick an organization, or change who sees this reminder.'));
       return;
     }
     const body = { title, date: form.date, time: form.time || form.rawTime || '', notes: form.notes.trim(), priority: form.priority };
@@ -381,7 +381,7 @@ export default function ReminderFormSheet({ seed, aim, onClose, onSaved }) {
 
           {form.scope === 'team' ? (
             <View style={styles.group}>
-              <FieldLabel>{tr('Team')}</FieldLabel>
+              <FieldLabel>{tr('Organization')}</FieldLabel>
               <ChipRow>
                 {teams.map((t) => (
                   <Chip key={t.id} label={t.name} selected={String(form.team) === t.id} onPress={() => set({ team: t.id, teamName: t.name })} />

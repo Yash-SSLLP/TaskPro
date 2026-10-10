@@ -98,7 +98,7 @@ export function TransferModal({ task, meta, open, onClose, onDone }) {
             onChange={(e) => setReason(e.target.value)}
             rows={3}
             maxLength={1000}
-            placeholder="e.g. This belongs to the accounts team, not ours."
+            placeholder="e.g. This belongs to the Accounts organization, not ours."
             className="block w-full resize-y rounded-xl border border-line bg-card px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
           />
         </div>

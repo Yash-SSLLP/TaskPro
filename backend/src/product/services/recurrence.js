@@ -157,7 +157,7 @@ async function mintOccurrence(schedule, dueDate, { key, appear, now = new Date()
   await TaskUpdate.create({
     task: task._id,
     kind: 'CREATED',
-    byName: 'System',
+    byName: require('..').name,
     to: task.status,
     note: routine
       ? 'Raised automatically: today’s routine. Mark it done when it is done.'

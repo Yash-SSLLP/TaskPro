@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import clsx from 'clsx';
 import { Copy, KeyRound, Link2, Share2 } from 'lucide-react';
+import { product } from '../../product/config';
 import { copyText, pinOf } from '../pin';
 import { inviteMessage, useInviteLink, whatsappShareUrl } from '../invite';
 import { Button } from './Button';
@@ -35,7 +36,7 @@ function InviteLink({ person }) {
       <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
         <Link2 className="h-4 w-4 text-brand" aria-hidden /> Invite link
       </p>
-      <p className="mt-0.5 text-sm text-ink-soft">One link: they get the app, sign up and become your contact. No pin to type.</p>
+      <p className="mt-0.5 text-sm text-ink-soft">One link: they get {product.name}, sign up and become your contact. No pin to type.</p>
       <label className="mt-3 flex cursor-pointer items-start gap-2.5">
         <input
           type="checkbox"
@@ -75,7 +76,7 @@ function InviteLink({ person }) {
 export function PinCard({
   person,
   title = 'My Task Pin',
-  text = 'Share it so people can add you as a contact or invite you to a team.',
+  text = 'Share it so people can add you as a contact or invite you to an organization.',
   className,
   compact = false,
   invite = true,

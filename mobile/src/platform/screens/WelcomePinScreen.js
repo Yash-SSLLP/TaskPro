@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import productConfig from '../../product/config';
 import { tr } from '../../i18n';
 import { PinCard } from '../components/PinCard';
 import { CircleCheck } from '../icons';
@@ -34,10 +35,10 @@ export default function WelcomePinScreen() {
       <Text style={styles.title}>{first ? tr('Welcome, {name}!', { name: first }) : tr('Welcome!')}</Text>
       <Text style={styles.intro}>{tr('Your account is ready. This is your Task Pin — it never changes.')}</Text>
       <PinCard user={user} />
-      <Text style={styles.howTitle}>{tr('How it works')}</Text>
+      <Text style={styles.howTitle}>{tr('How {app} works', { app: productConfig.name })}</Text>
       <Step n="1" text={tr('Share your pin with the people you work with.')} />
       <Step n="2" text={tr('They add you by your pin, and you accept.')} />
-      <Step n="3" text={tr('Now you can give each other tasks, or work together in a team.')} />
+      <Step n="3" text={tr('In {app}, you can now give each other tasks, or work together in an organization.', { app: productConfig.name })} />
       <Text style={styles.later}>{tr('You can find your pin any time under More.')}</Text>
     </Screen>
   );

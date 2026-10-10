@@ -13,6 +13,7 @@ import clsx from 'clsx';
 import { AlertCircle, Mic, Pause, Play, Square, Trash2 } from 'lucide-react';
 import { api, apiUrl } from '../../platform/api';
 import { duration as fmtDuration } from '../lifecycle';
+import { product } from '../config';
 
 function pickMimeType() {
   const wanted = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
@@ -119,7 +120,7 @@ export function VoiceRecorder({ value, onChange, disabled = false, compact = fal
     } catch (err) {
       release();
       setRecording(false);
-      setError(err?.name === 'NotAllowedError' ? 'The microphone is blocked. Allow it for this site and try again.' : 'Could not start recording.');
+      setError(err?.name === 'NotAllowedError' ? `The microphone is blocked. Allow it for ${product.name} in your browser and try again.` : 'Could not start recording.');
     }
   }, [release, watchLevels]);
 

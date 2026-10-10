@@ -6,6 +6,7 @@
  * ignored) — the server normalises too; this only helps the input look right.
  */
 import { toast } from 'sonner';
+import { product } from '../product/config';
 
 const ALPHABET = /[^23456789ABCDEFGHJKLMNPQRSTUVWXYZ]/g;
 
@@ -23,7 +24,8 @@ export const isFullPin = (text) => cleanPin(text).length === 8;
 /** The pin to show for a person or user object. */
 export const pinOf = (person) => person?.pinDisplay || (person?.pin ? formatPin(person.pin) : '');
 
-export const shareMessage = (pinDisplay) => `Add me on KARO. My Task Pin is ${pinDisplay}`;
+// `product` is read when called: product/config imports pages that import this file.
+export const shareMessage = (pinDisplay) => `Add me on ${product.name}. My Task Pin is ${pinDisplay}`;
 
 export const whatsappUrl = (pinDisplay) => `https://wa.me/?text=${encodeURIComponent(shareMessage(pinDisplay))}`;
 

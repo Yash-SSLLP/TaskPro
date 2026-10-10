@@ -2,8 +2,8 @@
  * Who knows whom: the one place that decides who a person may give work to.
  *
  * You may give a task to yourself, to anyone who accepted you as a contact,
- * and to the active members of any team you are an active member of. The
- * Super Admin may give one to anyone. Every people picker in both apps is fed
+ * and to the active members of any organization (a Team in the code) you are
+ * an active member of. The Super Admin may give one to anyone. Every people picker in both apps is fed
  * from assignablePeople(), and every task route checks assertAssignable(), so
  * the two can't drift apart.
  */
@@ -24,29 +24,16 @@ async function contactIds(userId) {
   return links.map((l) => (String(l.a) === String(uid) ? l.b : l.a));
 }
 
-/** The teams this person is an active member of: [{ id, name, role }]. */
+/**
+ * The teams this person is an active member of: [{ id, name, role }], by
+ * name. One read, and only their own member entry comes back.
+ */
 async function teamsOf(userId) {
   const uid = oid(userId);
-  const teams = await Team.find({ members: { $elemMatch: { user: uid, status: 'active' } } })
-    .select('name members')
+  const teams = await Team.find({ members: { $elemMatch: { user: uid, status: 'active' } } }, { name: 1, members: { $elemMatch: { user: uid, status: 'active' } } })
     .sort({ name: 1 })
     .lean();
-  return teams.map((t) => ({
-    id: String(t._id),
-    name: t.name,
-    role: t.members.find((m) => String(m.user) === String(uid)).role,
-  }));
-}
-
-/** Teams where this person is owner or admin. */
-async function adminTeamIds(userId) {
-  const uid = oid(userId);
-  const teams = await Team.find({
-    members: { $elemMatch: { user: uid, status: 'active', role: { $in: ['owner', 'admin'] } } },
-  })
-    .select('_id')
-    .lean();
-  return teams.map((t) => t._id);
+  return teams.map((t) => ({ id: String(t._id), name: t.name, role: t.members[0].role }));
 }
 
 async function teamRole(userId, teamId) {
@@ -117,7 +104,7 @@ async function assertAssignable(user, ids) {
   if (!allowed) return;
   const stranger = list.find((id) => !allowed.has(id));
   if (stranger) {
-    throw badRequest(`${byId.get(stranger).name} isn't in your contacts or teams yet. Add them by their Task Pin first.`);
+    throw badRequest(`${byId.get(stranger).name} isn't in your contacts or organizations yet. Add them by their Task Pin first.`);
   }
 }
 
@@ -189,7 +176,6 @@ module.exports = {
   contactIds,
   whatsappContacts,
   teamsOf,
-  adminTeamIds,
   teamRole,
   isActiveMember,
   teamMemberIds,

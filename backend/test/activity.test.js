@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const h = require('./helpers');
 const { give, act, move } = require('./task-helpers');
 const { describe: words } = require('../src/platform/services/describe');
+const activity = require('../src/platform/services/activity');
 
 before(h.start);
 after(h.stop);
@@ -30,7 +31,7 @@ describe('describe()', () => {
     assert.equal(accepted.actorLabel, 'Asha Rao');
 
     const login = words({ action: 'auth.login', actorName: 'Ravi Test', platform: 'android', meta: { platform: 'android', appVersion: '1.0.3' } });
-    assert.equal(login.summary, 'Ravi Test signed in on Android (KARO 1.0.3).');
+    assert.equal(login.summary, 'Ravi Test signed in on Android (Karo 1.0.3).');
     const web = words({ action: 'auth.login', actorName: 'Ravi Test', meta: { platform: 'web', deviceName: 'Chrome on Windows', appVersion: '1.0.0' } });
     assert.equal(web.summary, 'Ravi Test signed in on the web (Chrome on Windows).');
 
@@ -46,11 +47,32 @@ describe('describe()', () => {
     assert.equal(moved.summary, 'Asha moved the task “TSK-1 Go” from Pending to In progress.');
     const system = words({ action: 'task.overdue', meta: { kind: 'OVERDUE', system: true }, target: { kind: 'task', id: 't', label: 'TSK-1 Go' } });
     assert.equal(system.summary, 'The task “TSK-1 Go” is now overdue.');
-    assert.equal(system.actorLabel, 'KARO');
+    assert.equal(system.actorLabel, 'Karo');
 
     const profile = words({ action: 'profile.updated', actor: 'u', actorName: 'Ravi', target: { kind: 'user', id: 'u', label: 'Ravi' }, meta: { changes: [{ field: 'name', before: 'Ravi', after: 'Ravi K' }] } });
     assert.equal(profile.summary, 'Ravi changed their name from “Ravi” to “Ravi K”.');
     assert.match(words({ action: 'something.new', actorName: 'X' }).summary, /^X: something new\.$/);
+
+    // Rows saved before the rename still say the product's name.
+    assert.equal(words({ action: 'task.reminder', actorName: 'KARO', meta: { kind: 'REMINDER', system: true }, target: { kind: 'task', id: 't', label: 'TSK-1 Go' } }).summary,
+      'Karo sent a reminder about the task “TSK-1 Go”.');
+    assert.equal(words({ action: 'team.left', actorName: 'Asha', target: { kind: 'team', id: 'o', label: 'Sales' } }).summary, 'Asha left the organization “Sales”.');
+  });
+
+  test('the website’s changes, in the same voice', () => {
+    const say = (action, target, meta) => words({ action, actorName: 'Super Admin', target: { kind: 'site', id: 's', ...target }, meta }).summary;
+    assert.equal(say('admin.site_settings_changed', { label: 'Website' }), 'Super Admin changed the website settings.');
+    assert.equal(say('admin.site_page_published', { label: 'Features' }, { path: '/features' }), 'Super Admin published the page /features.');
+    assert.equal(say('admin.site_page_saved', { label: 'Features' }, { path: '/features' }), 'Super Admin saved a draft of the page /features.');
+    assert.equal(say('admin.site_page_unpublished', {}, { path: '/for/offices' }), 'Super Admin took the page /for/offices off the website.');
+    assert.equal(say('admin.site_page_deleted', {}, { path: '/for/offices' }), 'Super Admin deleted the page /for/offices.');
+    assert.equal(say('admin.site_post_published', { label: 'What is a Task Pin?' }, { slug: 'what-is-a-task-pin' }), 'Super Admin published the blog post “What is a Task Pin?”.');
+    assert.equal(say('admin.site_post_saved', {}, { slug: 'draft-one' }), 'Super Admin saved a draft of the blog post /blog/draft-one.');
+    assert.equal(say('admin.site_post_unpublished', { label: 'Old news' }), 'Super Admin took the blog post “Old news” off the blog.');
+    assert.equal(say('admin.site_post_deleted', { label: 'Old news' }), 'Super Admin deleted the blog post “Old news”.');
+    assert.equal(say('admin.site_media_uploaded', {}, { name: 'shop.webp' }), 'Super Admin uploaded the image “shop.webp” to the website.');
+    assert.equal(say('admin.site_media_deleted', {}, { name: 'shop.webp' }), 'Super Admin deleted the image “shop.webp” from the website.');
+    assert.deepEqual(words({ action: 'admin.site_page_deleted', actorName: 'S', meta: { path: '/x' } }).badge, { text: 'Page deleted', tone: 'bad' });
   });
 });
 
@@ -71,7 +93,7 @@ describe('the activity log', () => {
     assert.ok(actions.includes('auth.login'));
     assert.ok(actions.includes('auth.logout'));
     const login = mine.find((r) => r.action === 'auth.login');
-    assert.equal(login.summary, `${me.name} signed in on Android (KARO 1.0.3).`);
+    assert.equal(login.summary, `${me.name} signed in on Android (Karo 1.0.3).`);
     assert.equal(login.platform, 'android');
 
     const wrong = mine.find((r) => r.action === 'auth.login_failed');
@@ -115,8 +137,8 @@ describe('the activity log', () => {
     assert.equal(byAction['task.accepted'].actorRole, 'user');
 
     // The welcome task is the system's own.
-    const welcome = (await feed(root, `?group=tasks&q=${encodeURIComponent('Welcome to KARO')}`))[0];
-    assert.equal(welcome.actorLabel, 'KARO');
+    const welcome = (await feed(root, `?group=tasks&q=${encodeURIComponent('Welcome to Karo')}`))[0];
+    assert.equal(welcome.actorLabel, 'Karo');
     assert.equal(welcome.actor, null);
 
     // The detail view brings the task's other rows.
@@ -144,6 +166,18 @@ describe('the activity log', () => {
     for (const x of ['contact.requested', 'team.created', 'team.invited', 'team.deleted']) assert.ok(actions.includes(x), x);
     assert.ok((await feed(root, `?user=${b.id}`)).some((r) => r.action === 'contact.accepted' && r.target.id === a.id));
     assert.ok((await feed(root, `?user=${b.id}`)).some((r) => r.action === 'team.joined'));
+  });
+
+  test('website rows sit under admin and can be found by page address', async () => {
+    const root = await h.root();
+    const actor = { _id: root.id, name: root.name, role: 'superadmin' };
+    await activity.record({ action: 'admin.site_page_published', actor, target: { kind: 'site', id: 'p1', name: 'Features' }, meta: { path: '/features' } });
+    const rows = await feed(root, `?group=admin&q=${encodeURIComponent('/features')}`);
+    const row = rows.find((r) => r.action === 'admin.site_page_published');
+    assert.ok(row, 'found by its path');
+    assert.equal(row.group, 'admin');
+    assert.deepEqual(row.target, { kind: 'site', id: 'p1', label: 'Features' });
+    assert.equal(row.summary, `${actor.name} published the page /features.`);
   });
 
   test('profile photos are logged, and rows carry the actor\'s photo', async () => {

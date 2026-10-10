@@ -8,7 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { Check, CheckCircle2, RotateCcw, Send, ThumbsDown, ThumbsUp } from 'lucide-react';
-import { Button, Modal } from '../../platform/ui';
+import { Button, Modal, finePointer } from '../../platform/ui';
 import { VoiceRecorder } from './VoiceNote';
 
 const COPY = {
@@ -106,7 +106,7 @@ export function TaskActionDialog({ action, task, onClose, onConfirm, requireRema
       <textarea
         id="task-action-note"
         ref={boxRef}
-        autoFocus
+        autoFocus={finePointer()}
         value={note}
         onChange={(e) => {
           setNote(e.target.value);

@@ -6,6 +6,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LANGUAGES, setLanguage, tr, useLang } from '../i18n';
+import productConfig from '../product/config';
 import { settingsApi } from './endpoints';
 import { Check, Languages } from './icons';
 import { useSession } from './session';
@@ -29,7 +30,7 @@ export async function chooseLanguage(code) {
 export function LanguageSheet({ visible, onClose }) {
   const lang = useLang();
   return (
-    <BottomSheet visible={visible} onClose={onClose} title={tr('Language')} subtitle={tr('Choose the language for the app.')}>
+    <BottomSheet visible={visible} onClose={onClose} title={tr('Language')} subtitle={tr('Choose the language for {app}.', { app: productConfig.name })}>
       {LANGUAGES.map((l) => {
         const on = l.code === lang;
         return (

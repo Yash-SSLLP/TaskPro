@@ -1,8 +1,8 @@
 {
-  "versionName": "1.0.6",
-  "versionCode": 7,
-  "fileName": "taskpro-1.0.6-7.apk",
-  "size": 43815480,
-  "notes": "KARO now works on iPhone",
-  "publishedAt": "2026-10-10T12:04:24.132Z"
+  "versionName": "1.0.7",
+  "versionCode": 8,
+  "fileName": "karo-1.0.7-8.apk",
+  "size": 49073933,
+  "notes": "Organizations: tabs for All, General and each organization on Tasks, in the order you choose (Filter → Tab order)\nInvite people to an organization by Task Pin or from your connections; they accept the invite\n\"I want to review this\" is now off when you give a task\nTask templates are gone\nThe keyboard no longer covers what you are typing\nA new dark theme, easier on the eyes\nThe app is called Karo everywhere",
+  "publishedAt": "2026-10-10T23:45:47.342Z"
 }

@@ -18,13 +18,21 @@ import { useQuery } from '@tanstack/react-query';
 import { tr } from '../../i18n';
 import { usePullRefresh } from '../../platform/hooks';
 import { useIsSuperAdmin } from '../../platform/session';
-import { colors, font, radius, space, type } from '../../platform/theme';
+import { colors, font, radius, space, theme, type } from '../../platform/theme';
 import { Card, Chip, ChipRow, DateField, EmptyState, ErrorState, Header, Screen, Segmented, SkeletonCards } from '../../platform/ui';
 import { dashboard, overdueReport, taskKeys, useTaskMeta } from '../api';
-import { ChartColumn, CircleAlert, Users } from '../icons';
-import { dayLabel, monthShort, priorityColor, rangeLabel } from '../taskStatus';
+import { Building, ChartColumn, CircleAlert } from '../icons';
+import { DARK_HUES, dayLabel, monthShort, priorityColor, rangeLabel } from '../taskStatus';
 
 const RANGES = ['week', 'month', 'all', 'custom'];
+
+/**
+ * A row's bar, between in time (success) and overdue (danger): pale tints in
+ * light; in dark the status violet, with green and sky dimmed toward the card.
+ */
+const BAR = theme.dark
+  ? { delayed: '#2B8B61', inReview: DARK_HUES.violet.ink, open: '#397C9A' }
+  : { delayed: '#86efac', inReview: '#a78bfa', open: '#93c5fd' };
 
 function rowLabel(r, view) {
   if (view === 'mine') return tr('You');
@@ -113,9 +121,9 @@ export default function DashboardScreen() {
       ) : null}
       {(meta?.teams || []).length ? (
         <ChipRow scroll style={styles.teamScroll}>
-          <Chip label={tr('All teams')} selected={!team} onPress={() => setTeam('')} />
+          <Chip label={tr('All organizations')} selected={!team} onPress={() => setTeam('')} />
           {(meta?.teams || []).map((t) => (
-            <Chip key={t.id} label={t.name} icon={Users} selected={String(team) === String(t.id)} onPress={() => setTeam(t.id)} />
+            <Chip key={t.id} label={t.name} icon={Building} selected={String(team) === String(t.id)} onPress={() => setTeam(t.id)} />
           ))}
         </ChipRow>
       ) : null}
@@ -211,9 +219,9 @@ function ScoreRow({ row: r, label }) {
       </View>
       <View style={styles.bar}>
         <View style={[styles.barPart, { flex: Number(r.inTime) || 0, backgroundColor: colors.success }]} />
-        <View style={[styles.barPart, { flex: Number(r.delayed) || 0, backgroundColor: '#86efac' }]} />
-        <View style={[styles.barPart, { flex: Number(r.inReview) || 0, backgroundColor: '#a78bfa' }]} />
-        <View style={[styles.barPart, { flex: Math.max(0, open - (Number(r.overdue) || 0) - (Number(r.inReview) || 0)), backgroundColor: '#93c5fd' }]} />
+        <View style={[styles.barPart, { flex: Number(r.delayed) || 0, backgroundColor: BAR.delayed }]} />
+        <View style={[styles.barPart, { flex: Number(r.inReview) || 0, backgroundColor: BAR.inReview }]} />
+        <View style={[styles.barPart, { flex: Math.max(0, open - (Number(r.overdue) || 0) - (Number(r.inReview) || 0)), backgroundColor: BAR.open }]} />
         <View style={[styles.barPart, { flex: Number(r.overdue) || 0, backgroundColor: colors.danger }]} />
       </View>
       <View style={styles.counts}>

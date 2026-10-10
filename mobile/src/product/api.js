@@ -27,7 +27,6 @@ export const taskKeys = {
   overdue: (params) => ['tasks', 'overdue', params],
   meta: ['taskMeta'],
   categories: ['taskCategories'],
-  templates: ['taskTemplates'],
 };
 
 // ---------------------------------------------------------------- multipart
@@ -158,15 +157,6 @@ export const transferTask = (id, to, reason) => api.post(`${T}/${id}/transfer`, 
 
 export const listCategories = () => api.get(`${T}/categories`).then((r) => r.categories || []);
 export const createCategory = (name, team) => api.post(`${T}/categories`, { name, ...(team ? { team } : {}) }).then((r) => r.category);
-
-// ---------------------------------------------------------------- templates
-
-/** @returns {Promise<{ mine: object[], team: Array<{ team: { id, name }, templates: object[] }> }>} */
-export const listTemplates = () => api.get(`${T}/templates`);
-export const templatePrefill = (id) => api.get(`${T}/templates/${id}/prefill`).then((r) => r.prefill);
-export const copyTemplate = (id) => api.post(`${T}/templates/${id}/copy`).then((r) => r.template);
-export const createTemplate = (body) => api.post(`${T}/templates`, body).then((r) => r.template);
-export const deleteTemplate = (id) => api.del(`${T}/templates/${id}`);
 
 // ---------------------------------------------------------------- recurring
 

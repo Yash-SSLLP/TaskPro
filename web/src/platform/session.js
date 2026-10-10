@@ -13,11 +13,14 @@ const KEY = 'taskpro.session.v2';
 const DEFAULT_SETTINGS = {
   timezone: 'Asia/Kolkata',
   workdayStart: '09:00',
-  approvalDefault: true,
+  // "I want to review this before it is marked done" on a new task: off unless turned on.
+  approvalDefault: false,
   defaultReminders: [],
   dailyDigest: true,
   dailyDigestAt: '18:00',
   lang: 'en',
+  // The Tasks screen's organization tabs, in my order (the first opens).
+  orgTabs: [],
 };
 
 function load() {

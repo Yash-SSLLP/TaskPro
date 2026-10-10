@@ -3,9 +3,9 @@
  * people as removable chips (the HRMS PeoplePicker, on Task Pins).
  *
  * The list is `/api/tasks/meta` → `people`: who you may assign to, each with a
- * `relation` (self · team · contact · other) and the ids of the `teams` you
- * share. An empty box opens on Myself, then the chosen team, team-mates and
- * contacts; typing searches name and Task Pin. `onAddByPin` adds a footer
+ * `relation` (self · team · contact · other) and the ids of the `teams`
+ * (organizations) you share. An empty box opens on Myself, then the chosen
+ * organization, organization members and contacts; typing searches name and Task Pin. `onAddByPin` adds a footer
  * link for somebody who is not in the list yet.
  *
  * Drawn as the HRMS draws it: a 12px grey label, a 40px field, the chosen as
@@ -44,7 +44,7 @@ export function PeoplePicker({
   /** Offer "Myself" at the top. */
   allowSelf = false,
   selfId = '',
-  /** Put the members of this team first. */
+  /** Put the members of this organization first. */
   teamId = '',
   teamName = '',
   /** Footer: "Not in the list? Add by Task Pin". */
@@ -87,8 +87,8 @@ export function PeoplePicker({
     const rest = others.filter((p) => p.relation !== 'team' && p.relation !== 'contact' && !shown.has(idOf(p)));
     return [
       ['Myself', self, 0],
-      [teamName ? `In ${teamName}` : 'In this team', ...cut(inTeam)],
-      ['Team-mates', ...cut(mates)],
+      [teamName ? `In ${teamName}` : 'In this organization', ...cut(inTeam)],
+      ['Organization members', ...cut(mates)],
       ['Contacts', ...cut(contacts)],
       ['Everyone', ...cut(rest)],
     ].filter(([, rows]) => rows.length);

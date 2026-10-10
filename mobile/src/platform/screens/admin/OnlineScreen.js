@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Wifi from 'lucide-react-native/icons/wifi';
+import productConfig from '../../../product/config';
 import { tr } from '../../../i18n';
 import { platformApi, platformKeys } from '../../endpoints';
 import { usePullRefresh } from '../../hooks';
@@ -31,7 +32,7 @@ export default function OnlineScreen({ navigation }) {
   const signOut = async (s) => {
     const ok = await confirm({
       title: tr('Sign {name} out on {device}?', { name: s.user.name, device: deviceLine(s) }),
-      message: tr('That device goes back to the sign-in screen the next time it opens KARO. Their other devices stay signed in.'),
+      message: tr('That device goes back to the sign-in screen the next time it opens {app}. Their other devices stay signed in.', { app: productConfig.name }),
       confirmLabel: tr('Sign out'),
       destructive: true,
     });

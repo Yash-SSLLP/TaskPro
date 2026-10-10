@@ -16,6 +16,7 @@ import { createPortal } from 'react-dom';
 import { NavLink } from 'react-router-dom';
 import clsx from 'clsx';
 import { ChevronLeft, Copy, LogOut, PanelLeftClose, PanelLeftOpen, Smartphone } from 'lucide-react';
+import { product } from '../product/config';
 import { Logo, Wordmark } from './Logo';
 import { copyText } from './pin';
 
@@ -213,12 +214,12 @@ export function Sidebar({ rail, onToggle, sections, isOn, badgeOf, user, pin, ad
 
       <div className="side-foot">
 
-        <NavLink to="/get-app" className="side-app" {...bind('Get the app')}>
+        <NavLink to="/get-app" className="side-app" {...bind(`Get the ${product.name} app`)}>
           <span className="side-app-icon">
             <Smartphone className="h-4 w-4" aria-hidden />
           </span>
           <span className="side-fade min-w-0 flex-1 leading-tight">
-            <span className="block truncate text-[12.5px] font-semibold text-ink">Get the app</span>
+            <span className="block truncate text-[12.5px] font-semibold text-ink">Get the {product.name} app</span>
             <span className="block truncate text-[11px] text-ink-faint">Android and iPhone</span>
           </span>
         </NavLink>

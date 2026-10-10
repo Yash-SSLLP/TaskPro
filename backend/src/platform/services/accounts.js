@@ -46,7 +46,7 @@ async function leaveTeams(user) {
     team.members = others;
     await team.save();
     notify([heir.user], {
-      title: `You now own the team "${team.name}"`,
+      title: `You now own the organization "${team.name}"`,
       body: 'Its owner deleted their account.',
       link: `/teams/${team._id}`,
       kind: 'team',

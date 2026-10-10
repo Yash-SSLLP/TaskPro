@@ -59,7 +59,8 @@ async function deliver(task, to, { title, body }, channel) {
         noEmail.push(String(u._id));
         continue;
       }
-      const text = `Hi ${u.name},\n\n${body}\n\n${notify.taskName(task)}${task.description ? `\n\n${String(task.description).slice(0, 500)}` : ''}`;
+      const text = `Hi ${u.name},\n\n${body}\n\n${notify.taskName(task)}${task.description ? `\n\n${String(task.description).slice(0, 500)}` : ''}` +
+        `\n\n— Sent by ${require('..').name}`;
       await sendMail({ to: u.email, subject: title, text });
     }
     if (noEmail.length) await notify.reminder(task, noEmail, { title, body });

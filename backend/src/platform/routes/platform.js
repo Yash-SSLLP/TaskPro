@@ -289,7 +289,7 @@ router.patch('/users/:id/settings', async (req, res) => {
 
   const states = await sessions.appStateOf([user]);
   const devices = await Device.countDocuments({ user: user._id });
-  res.json({ settings, notifications: notificationsOf(user, states.get(String(user._id)), devices) });
+  res.json({ settings: product.settings.read(settings), notifications: notificationsOf(user, states.get(String(user._id)), devices) });
 });
 
 /**
@@ -456,13 +456,13 @@ router.get('/teams', async (req, res) => {
 
 router.get('/teams/:id', async (req, res) => {
   const team = await Team.findById(idParam(req.params.id));
-  if (!team) throw notFound('Team not found');
+  if (!team) throw notFound('Organization not found');
   res.json({ team: await teamView(team, req.user) });
 });
 
 router.delete('/teams/:id', async (req, res) => {
   const team = await Team.findById(idParam(req.params.id));
-  if (!team) throw notFound('Team not found');
+  if (!team) throw notFound('Organization not found');
   await deleteTeam(team, req.user);
   res.json({ ok: true });
 });

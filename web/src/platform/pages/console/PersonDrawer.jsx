@@ -228,7 +228,7 @@ export function PersonDrawer({ id, onClose, onSeeActivity }) {
   const signOutDevice = async (s) => {
     const ok = await confirm({
       title: `Sign ${user.name} out on ${deviceLine(s)}?`,
-      text: 'That device goes back to the sign-in screen the next time it talks to KARO. Their other devices stay signed in.',
+      text: 'That device goes back to the sign-in screen the next time it opens Karo. Their other devices stay signed in.',
       confirmLabel: 'Sign out',
       tone: 'warning',
     });
@@ -251,7 +251,7 @@ export function PersonDrawer({ id, onClose, onSeeActivity }) {
       text: 'This cannot be undone. Gone at once:',
       details: [
         'Their logins, Task Pin, profile and settings',
-        'Their contacts, and their place in every team (teams they own pass to an admin or member)',
+        'Their contacts, and their place in every organization (organizations they own pass to an admin or member)',
         'Their devices, alerts and reminders',
         'Tasks nobody else is on, with their files',
         'Work shared with others stays with them, showing "Deleted user"',
@@ -336,7 +336,7 @@ export function PersonDrawer({ id, onClose, onSeeActivity }) {
           </div>
 
           <div>
-            <SectionTitle>Teams ({data.teams?.length || 0})</SectionTitle>
+            <SectionTitle>Organizations ({data.teams?.length || 0})</SectionTitle>
             {data.teams?.length ? (
               <div className="divide-y divide-line rounded-xl border border-line">
                 {data.teams.map((t) => (
@@ -347,7 +347,7 @@ export function PersonDrawer({ id, onClose, onSeeActivity }) {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-ink-soft">Not in any team.</p>
+              <p className="text-sm text-ink-soft">Not in any organization.</p>
             )}
           </div>
 

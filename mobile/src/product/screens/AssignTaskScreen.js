@@ -8,13 +8,18 @@
  *   recurring   `recurring` (+ `scheduleId` to edit): the pattern, the time,
  *               the start and end, and the reminders
  *
- * WHO: the picker is fed by GET /tasks/meta (me, team-mates, contacts; the
- * Super Admin sees everyone) and has an "Add someone by Task Pin" shortcut
+ * WHO: the picker is fed by GET /tasks/meta (me, people in my organizations,
+ * contacts; the Super Admin sees everyone) and has an "Add someone by Task Pin" shortcut
  * that sends a contact request. An empty "Assign to" means the task is mine.
  * The Super Admin can set it "On behalf of" somebody (onBehalfOf).
  *
  * The deadline is two strings ('YYYY-MM-DD', 'HH:mm'), joined into a real
  * timestamp once, on submit.
+ *
+ * ORGANIZATION: General (none) or one of mine; opened from an organization's
+ * tab on Tasks (a `team` param) it starts on that one. REVIEW starts off on
+ * a new task unless the person turned "Ask for a review by default" on; an
+ * edit keeps the task's own.
  *
  * LAID OUT AS THE HRMS APP'S FORM (2026-10-08): the fields in framed cards —
  * the task · who · how it is handled · when — the Repeats and Reminders
@@ -28,7 +33,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tr } from '../../i18n';
 import { useSettings } from '../../platform/session';
-import { colors, font, radius, space, type } from '../../platform/theme';
+import { colors, font, radius, space } from '../../platform/theme';
 import {
   BottomSheet,
   Button,
@@ -36,7 +41,6 @@ import {
   DateField,
   EmptyState,
   Header,
-  ListRow,
   Notice,
   Screen,
   Segmented,
@@ -56,20 +60,19 @@ import {
   getTask,
   invalidateTasks,
   listCategories,
-  listTemplates,
   taskKeys,
-  templatePrefill,
   updateRecurring,
   updateTask,
   useTaskMeta,
 } from '../api';
+import productConfig from '../config';
 import { AttachSheet, FileGrid } from '../components/Files';
 import ReminderEditor from '../components/ReminderEditor';
 import ReminderPatternPicker, { remindersFor, repeatingRule, splitReminders } from '../components/ReminderPatternPicker';
 import Stepper from '../components/Stepper';
 import TaskPeoplePicker from '../components/TaskPeoplePicker';
 import { VoiceRecorder } from '../components/VoiceNote';
-import { Bell, Check, ChevronDown, ChevronRight, Clock, Eye, FileText, Link, Paperclip, Plus, Repeat, Tag, User, Users, X } from '../icons';
+import { Bell, Building, Check, ChevronDown, Clock, Eye, Link, Paperclip, Plus, Repeat, Tag, User, Users, X } from '../icons';
 import {
   DEFAULT_LEAD_DAYS,
   NTH_WEEK_KEYS,
@@ -163,7 +166,8 @@ export default function AssignTaskScreen() {
   const [category, setCategory] = useState('');
   const [newCategory, setNewCategory] = useState(null);
   const [priority, setPriority] = useState('Medium');
-  const [requiresApproval, setRequiresApproval] = useState(settings?.approvalDefault !== false);
+  // Off on a new task unless the person asked for reviews by default (Settings).
+  const [requiresApproval, setRequiresApproval] = useState(settings?.approvalDefault === true);
   const [dueDay, setDueDay] = useState(ymdOf(start));
   const [dueTime, setDueTime] = useState(hmOf(start));
   const [links, setLinks] = useState([]);
@@ -172,8 +176,6 @@ export default function AssignTaskScreen() {
   const [files, setFiles] = useState([]);
   const [attachOpen, setAttachOpen] = useState(false);
   const [picking, setPicking] = useState(null);
-  const [templatesOpen, setTemplatesOpen] = useState(false);
-  const [templateId, setTemplateId] = useState('');
   const [error, setError] = useState('');
 
   // The recurring pattern
@@ -296,7 +298,13 @@ export default function AssignTaskScreen() {
   const people = useMemo(() => meta?.people || [], [meta]);
   const byId = useMemo(() => new Map(people.map((p) => [idOf(p), p])), [people]);
   const myId = String(meta?.me || people.find((p) => p.relation === 'self')?._id || '');
-  const teams = meta?.teams || [];
+  const teams = useMemo(() => meta?.teams || [], [meta]);
+
+  // A new task opened on an organization I am no longer in starts in General.
+  const routeTeam = route.params?.team;
+  useEffect(() => {
+    if (mode === 'assign' && meta && routeTeam && !teams.some((t) => String(t.id) === String(routeTeam))) setTeam('');
+  }, [mode, meta, routeTeam, teams]);
 
   const onBehalf = mode !== 'edit' && !scheduleId && meta?.canAssignOnBehalf && onBehalfOf && String(onBehalfOf) !== myId ? String(onBehalfOf) : '';
   const onBehalfName = onBehalf ? byId.get(onBehalf)?.name || tr('them') : '';
@@ -369,34 +377,6 @@ export default function AssignTaskScreen() {
     if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
     setLinks((l) => [...l, { url, label: linkDraft.label.trim() }].slice(0, 20));
     setLinkDraft({ url: '', label: '' });
-  };
-
-  const applyTemplate = async (tpl) => {
-    setTemplatesOpen(false);
-    try {
-      const p = await templatePrefill(tpl._id || tpl.id);
-      if (!p) return;
-      setTitle(p.title || '');
-      setDescription(p.description || '');
-      if (p.category) setCategory(typeof p.category === 'string' ? p.category : p.category?.name || '');
-      if (p.priority) setPriority(p.priority);
-      if (p.dueDate) {
-        setDueDay(ymdOf(new Date(p.dueDate)));
-        setDueTime(hmOf(new Date(p.dueDate)));
-      }
-      setAssignees((p.assignees || []).map(String).filter((x) => byId.has(x) || x === myId));
-      setLoopUsers((p.loopUsers || []).map(String).filter((x) => byId.has(x)));
-      setLinks(p.links || []);
-      if (p.team) setTeam(idOf(p.team));
-      if ((p.reminders || []).length) {
-        setTaskReminders(p.reminders);
-        setRemindOpen(true);
-      }
-      setTemplateId(String(p.template || tpl._id || tpl.id || ''));
-      toast.success(tr('Filled in from the template.'));
-    } catch (e) {
-      toast.error(e.message);
-    }
   };
 
   /**
@@ -489,7 +469,7 @@ export default function AssignTaskScreen() {
       loopUsers,
       category,
       priority,
-      // Filed under a team: sent when chosen; an edit also sends "none" to take it off.
+      // Filed under an organization: sent when chosen; an edit also sends "none" (General) to take it off.
       ...(team ? { team } : mode === 'edit' || scheduleId ? { team: null } : {}),
       ...(mode === 'edit' && !reviewShown ? {} : { requiresApproval: reviewShown ? requiresApproval : false }),
     };
@@ -546,7 +526,6 @@ export default function AssignTaskScreen() {
           repeat: { frequency: 'ONCE' },
           ...(remindOpen && sentReminders.length ? { reminders: sentReminders } : {}),
           ...(links.length ? { links } : {}),
-          ...(templateId ? { template: templateId } : {}),
           ...(onBehalf ? { onBehalfOf: onBehalf } : {}),
         },
         { voice, files }
@@ -617,19 +596,6 @@ export default function AssignTaskScreen() {
         </Notice>
       ) : null}
 
-      {mode === 'assign' ? (
-        <Pressable onPress={() => setTemplatesOpen(true)} style={({ pressed }) => [styles.templateRow, pressed && styles.pressed]} accessibilityRole="button">
-          <View style={styles.templateIcon}>
-            <FileText size={19} color={colors.primary} />
-          </View>
-          <View style={styles.flex}>
-            <Text style={styles.templateTitle}>{tr('Start from a template')}</Text>
-            <Text style={styles.templateHint}>{templateId ? tr('Filled in from a template. Change anything you like.') : tr('Fill this form from a saved task')}</Text>
-          </View>
-          <ChevronRight size={17} color={colors.textFaint} />
-        </Pressable>
-      ) : null}
-
       {/* The task: the title is the first thing and the biggest. */}
       <View style={styles.group}>
         <Field label={tr('Task title')}>
@@ -694,11 +660,11 @@ export default function AssignTaskScreen() {
         </Field>
 
         {teams.length ? (
-          <Field label={tr('Team')} optional hint={tr("Filed under a team, it shows on the team's list for its owner and admins.")}>
+          <Field label={tr('Organization')} optional hint={tr("In {app}, a task filed under an organization shows in that organization's tab. Its owner and admins see it too.", { app: productConfig.name })}>
             <View style={styles.chipRow}>
-              <Chip label={tr('No team')} selected={!team} onPress={() => setTeam('')} />
+              <Chip label={tr('General')} selected={!team} onPress={() => setTeam('')} />
               {teams.map((t) => (
-                <Chip key={t.id} label={t.name} icon={Users} selected={String(team) === String(t.id)} onPress={() => setTeam(t.id)} />
+                <Chip key={t.id} label={t.name} icon={Building} selected={String(team) === String(t.id)} onPress={() => setTeam(t.id)} />
               ))}
             </View>
           </Field>
@@ -853,7 +819,7 @@ export default function AssignTaskScreen() {
           />
         ) : null}
 
-        <Field label={tr('Category')} optional hint={newCategory !== null && team ? tr('It is shared with the team you picked above.') : null}>
+        <Field label={tr('Category')} optional hint={newCategory !== null && team ? tr('It is shared with the organization you picked above.') : null}>
           <View style={styles.chipRow}>
             <Chip label={tr('None')} selected={!category} onPress={() => setCategory('')} />
             {categories.map((c) => (
@@ -1052,7 +1018,6 @@ export default function AssignTaskScreen() {
         {picking === 'loop' ? <TaskPeoplePicker people={people} value={loopUsers} onChange={setLoopUsers} autoFocus maxListHeight={360} allowAddByPin={!meta.isAdmin} /> : null}
       </BottomSheet>
 
-      <TemplateSheet visible={templatesOpen} onClose={() => setTemplatesOpen(false)} onPick={applyTemplate} />
       <AttachSheet
         visible={attachOpen}
         onClose={() => setAttachOpen(false)}
@@ -1141,35 +1106,6 @@ function ToggleRow({ label, description, value, onChange }) {
   );
 }
 
-/** Mine, then each team's shared templates. Picking one fills the form. */
-function TemplateSheet({ visible, onClose, onPick }) {
-  const q = useQuery({ queryKey: taskKeys.templates, queryFn: listTemplates, enabled: visible, staleTime: 60 * 1000 });
-  const mine = q.data?.mine || q.data?.templates || [];
-  const groups = q.data?.team || [];
-  const empty = !q.isPending && !mine.length && !groups.some((g) => (g.templates || []).length);
-  return (
-    <BottomSheet visible={visible} onClose={onClose} title={tr('Start from a template')}>
-      {q.isPending ? <SkeletonCards count={3} height={52} /> : null}
-      {q.isError ? <Notice tone="danger">{q.error?.message}</Notice> : null}
-      {empty ? <Text style={styles.blockHint}>{tr('No templates yet. Templates saved on the web show up here.')}</Text> : null}
-      {mine.length ? <Text style={styles.groupTitle}>{tr('My templates')}</Text> : null}
-      {mine.map((t) => (
-        <ListRow key={t._id || t.id} icon={FileText} title={t.name || t.title} subtitle={t.name && t.title !== t.name ? t.title : undefined} onPress={() => onPick(t)} style={styles.sheetRow} />
-      ))}
-      {groups.map((g) =>
-        (g.templates || []).length ? (
-          <View key={g.team?.id || g.team?.name}>
-            <Text style={styles.groupTitle}>{g.team?.name || tr('Team')}</Text>
-            {g.templates.map((t) => (
-              <ListRow key={t._id || t.id} icon={FileText} title={t.name || t.title} subtitle={t.name && t.title !== t.name ? t.title : undefined} onPress={() => onPick(t)} style={styles.sheetRow} />
-            ))}
-          </View>
-        ) : null
-      )}
-    </BottomSheet>
-  );
-}
-
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   top: { marginTop: space(3) },
@@ -1194,24 +1130,6 @@ const styles = StyleSheet.create({
   flat: { marginBottom: 0 },
   titleInput: { fontSize: 17, fontWeight: '700', lineHeight: 23, minHeight: 34 },
   detailsInput: { fontSize: 14, lineHeight: 20 },
-
-  // "Start from a template": the same row as the detail screen's Edit.
-  templateRow: {
-    minHeight: 64,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: space(3.5),
-    paddingVertical: space(3),
-    marginBottom: space(3),
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-  },
-  templateIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: colors.primaryBorder },
-  templateTitle: { color: colors.text, fontSize: 15, fontWeight: font.bold },
-  templateHint: { color: colors.textSecondary, fontSize: 12.5, lineHeight: 17, marginTop: 2 },
 
   picker: {
     minHeight: 48,
@@ -1348,6 +1266,4 @@ const styles = StyleSheet.create({
     borderColor: colors.primaryBorder,
     backgroundColor: colors.primarySoft,
   },
-  groupTitle: { ...type.overline, marginTop: space(3), marginBottom: space(1) },
-  sheetRow: { paddingHorizontal: space(1) },
 });

@@ -26,7 +26,9 @@ const ROOT = path.join(__dirname, '..');
 const RELEASE_DIR = path.join(ROOT, '..', 'web', 'public', 'app');
 const OUT_DIR = path.join(ROOT, 'android', 'app', 'build', 'outputs', 'apk', 'release');
 const APK = path.join(OUT_DIR, 'app-release.apk');
-const APK_RE = /^taskpro-(\d+\.\d+\.\d+)-(\d+)\.apk$/i;
+// Builds up to 1.0.6 are taskpro-…, newer ones karo-…: both count as
+// published, so the first karo- build replaces the last taskpro- one.
+const APK_RE = /^(?:taskpro|karo)-(\d+\.\d+\.\d+)-(\d+)\.apk$/i;
 
 const problems = [];
 const fail = (m) => problems.push(m);
@@ -71,7 +73,9 @@ if (problems.length) {
   process.exit(1);
 }
 
-const fileName = `taskpro-${VERSION}-${CODE}.apk`;
+// Installed apps download whatever release.json names, so the name is free
+// to change; it is what people see in their downloads.
+const fileName = `karo-${VERSION}-${CODE}.apk`;
 if (!PUBLISH) {
   console.log(`\n  Dry run: all checks pass. Would put web/public/app/${fileName}`);
   if (existing.length) console.log(`  and remove ${existing.join(', ')}`);

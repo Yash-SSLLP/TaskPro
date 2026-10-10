@@ -33,8 +33,7 @@ const taskUpload = multer({
   },
 }).any();
 
-const JSON_FIELDS = ['assignees', 'loopUsers', 'reminders', 'repeat', 'links', 'mentions', 'items', 'openTo',
-  'weekdays', 'defaultAssignees', 'defaultLoopUsers'];
+const JSON_FIELDS = ['assignees', 'loopUsers', 'reminders', 'repeat', 'links', 'mentions', 'items', 'openTo', 'weekdays'];
 
 /** The body however it arrived; multipart arrays/objects are JSON-decoded. */
 function parseBody(req) {

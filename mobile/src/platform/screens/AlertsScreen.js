@@ -106,7 +106,7 @@ export default function AlertsScreen() {
           <EmptyState
             icon={Bell}
             title={tr('No alerts yet')}
-            message={tr("You'll see here when someone gives you a task, asks to add you, invites you to a team, or a task is due.")}
+            message={tr("You'll see here when someone gives you a task, asks to add you, invites you to an organization, or a task is due.")}
           />
         }
         ListFooterComponent={

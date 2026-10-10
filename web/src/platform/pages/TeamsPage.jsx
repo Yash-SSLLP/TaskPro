@@ -1,26 +1,27 @@
 /**
- * Teams: the teams I'm in, invites waiting for me, and one team's page
- * (members, invites by Task Pin, roles, leaving, transferring and deleting).
+ * Organizations (teams in the code and the API): the ones I'm in, invites
+ * waiting for me, and one organization's page (members, invites by Task Pin or
+ * from my connections, roles, leaving, transferring and deleting).
  *
  * Roles: the owner does everything; admins invite members, remove people
- * (never the owner) and see the team's tasks; members just belong. The Super
- * Admin can look at any team and delete it.
+ * (never the owner) and see the organization's tasks; members just belong.
+ * The Super Admin can look at any organization and delete it.
  */
 import { useEffect, useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import clsx from 'clsx';
 import {
-  ArrowLeft, Check, ChevronRight, Crown, ListChecks, LogOut, Mail, MoreVertical, Pencil, Plus, Shield, Trash2, UserMinus,
+  ArrowLeft, Check, ChevronRight, Crown, ListChecks, LogOut, Mail, MoreVertical, Pencil, Plus, Search, Shield, Trash2, UserMinus,
   UserPlus, Users, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { api } from '../api';
+import { api, qs } from '../api';
 import { formatDate, timeAgo } from '../format';
 import { isSuperAdmin, useSession, useTz } from '../session';
 import {
-  Badge, Button, Card, EmptyState, ErrorState, Input, Modal, PageHeader, PersonLine, PinLookup, Select, Skeleton,
-  Textarea, useConfirm,
+  Badge, Button, Card, EmptyState, ErrorState, Input, Modal, PageHeader, PersonLine, PinLookup, Segmented, Select, Skeleton,
+  Textarea, finePointer, useConfirm,
 } from '../ui';
 
 export const ROLE_LABEL = { owner: 'Owner', admin: 'Admin', member: 'Member' };
@@ -49,7 +50,7 @@ function useTeamRefresh() {
   };
 }
 
-/** Name + description form, for a new team and for editing one. */
+/** Name + description form, for a new organization and for editing one. */
 function TeamFormModal({ open, onClose, title, initial, submitLabel, onSubmit }) {
   const [name, setName] = useState(initial?.name || '');
   const [description, setDescription] = useState(initial?.description || '');
@@ -91,8 +92,8 @@ function TeamFormModal({ open, onClose, title, initial, submitLabel, onSubmit })
       }
     >
       <form onSubmit={submit} className="space-y-4">
-        <Input label="Team name" placeholder="e.g. Accounts, Site B crew" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} autoFocus />
-        <Textarea label="Description" optional rows={3} placeholder="What this team works on" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} />
+        <Input label="Organization name" placeholder="e.g. Sharma Traders, Site B crew" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} autoFocus={finePointer()} />
+        <Textarea label="Description" optional rows={3} placeholder="What this organization works on" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={500} />
         <button type="submit" className="hidden" aria-hidden tabIndex={-1} />
       </form>
     </Modal>
@@ -128,7 +129,7 @@ function Invites({ invites, tz }) {
       <div className="flex items-center gap-2 border-b border-amber-100 bg-amber-50/70 px-4 py-3">
         <Mail className="h-4 w-4 text-amber-700" aria-hidden />
         <h2 className="text-sm font-semibold text-amber-900">
-          {invites.length === 1 ? 'You have a team invite' : `You have ${invites.length} team invites`}
+          {invites.length === 1 ? 'You have an organization invite' : `You have ${invites.length} organization invites`}
         </h2>
       </div>
       <div className="divide-y divide-line">
@@ -197,7 +198,7 @@ export function TeamsPage() {
     const data = await api.post('/api/teams', body);
     qc.setQueryData(['team', data.team.id], data);
     refresh(data.team.id);
-    toast.success('Team created. Invite people by their Task Pin.');
+    toast.success('Organization created. Invite people by their Task Pin or from your connections.');
     setCreating(false);
     navigate(`/teams/${data.team.id}`);
   };
@@ -205,11 +206,11 @@ export function TeamsPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader
-        title="Teams"
+        title="Organizations"
         subtitle="Groups of people who give each other tasks"
         actions={
           <Button icon={Plus} onClick={() => setCreating(true)}>
-            New team
+            New organization
           </Button>
         }
       />
@@ -235,11 +236,11 @@ export function TeamsPage() {
         <Card>
           <EmptyState
             icon={Users}
-            title="No teams yet"
-            text="Create a team for your shop, office or project, then invite people by their Task Pin. Team-mates can give each other tasks."
+            title="No organizations yet"
+            text="Create one for your shop, office or project, then invite people by their Task Pin or from your contacts. Its members can give each other tasks."
             action={
               <Button icon={Plus} onClick={() => setCreating(true)}>
-                Create a team
+                Create organization
               </Button>
             }
           />
@@ -253,7 +254,7 @@ export function TeamsPage() {
         </div>
       )}
 
-      <TeamFormModal open={creating} onClose={() => setCreating(false)} title="New team" submitLabel="Create team" onSubmit={create} />
+      <TeamFormModal open={creating} onClose={() => setCreating(false)} title="New organization" submitLabel="Create organization" onSubmit={create} />
     </div>
   );
 }
@@ -324,6 +325,16 @@ function memberSub(m, tz) {
   return m.joinedAt ? `joined ${formatDate(m.joinedAt, tz)}` : undefined;
 }
 
+/** The owner invites as a member or as an admin; an admin invites members. */
+function RoleSelect({ value, onChange }) {
+  return (
+    <Select className="w-40" value={value} onChange={(e) => onChange(e.target.value)} aria-label="Role">
+      <option value="member">As member</option>
+      <option value="admin">As admin</option>
+    </Select>
+  );
+}
+
 function InviteByPin({ team, isOwner, onInvited }) {
   const [role, setRole] = useState('member');
   const [busy, setBusy] = useState(false);
@@ -345,38 +356,161 @@ function InviteByPin({ team, isOwner, onInvited }) {
   };
 
   return (
-    <Card className="p-5 sm:p-6">
-      <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
-        <UserPlus className="h-4 w-4 text-brand" aria-hidden /> Invite by Task Pin
-      </h2>
-      <p className="mt-0.5 text-sm text-ink-soft">They get an invite to accept. They don't need to be your contact.</p>
-      <PinLookup
-        className="mt-4"
-        label="Their Task Pin"
-        action={({ person, relation, pin, reset }) => {
-          if (relation === 'self') return <p className="text-sm text-ink-soft">That's you.</p>;
-          const already = members.find((m) => m.person?.id === person.id);
-          if (already)
-            return (
-              <p className="text-sm text-ink-soft">
-                {already.status === 'invited' ? `${person.name} is already invited.` : `${person.name} is already in this team.`}
-              </p>
-            );
+    <PinLookup
+      className="mt-4"
+      label="Their Task Pin"
+      action={({ person, relation, pin, reset }) => {
+        if (relation === 'self') return <p className="text-sm text-ink-soft">That's you.</p>;
+        const already = members.find((m) => m.person?.id === person.id);
+        if (already)
           return (
-            <div className="flex w-full flex-wrap items-end gap-2">
-              {isOwner && (
-                <Select className="w-40" value={role} onChange={(e) => setRole(e.target.value)} aria-label="Role">
-                  <option value="member">As member</option>
-                  <option value="admin">As admin</option>
-                </Select>
-              )}
-              <Button icon={UserPlus} loading={busy} onClick={() => invite(pin, reset)}>
-                Invite
-              </Button>
-            </div>
+            <p className="text-sm text-ink-soft">
+              {already.status === 'invited' ? `${person.name} is already invited.` : `${person.name} is already in this organization.`}
+            </p>
           );
-        }}
-      />
+        return (
+          <div className="flex w-full flex-wrap items-end gap-2">
+            {isOwner && <RoleSelect value={role} onChange={setRole} />}
+            <Button icon={UserPlus} loading={busy} onClick={() => invite(pin, reset)}>
+              Invite
+            </Button>
+          </div>
+        );
+      }}
+    />
+  );
+}
+
+const SKIPPED_WHY = { already: 'already in or invited', 'not-connected': 'not connected to you' };
+
+/**
+ * Pick people I am already connected with (GET /:id/candidates: my contacts
+ * and the people I share another organization with) and invite them in one go
+ * (POST /:id/members { userIds, role }). People already in are not offered;
+ * those already invited show as Invited.
+ */
+function InviteFromConnections({ team, isOwner, onInvited }) {
+  const [text, setText] = useState('');
+  const [q, setQ] = useState('');
+  const [picked, setPicked] = useState([]);
+  const [role, setRole] = useState('member');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setQ(text.trim()), 300);
+    return () => clearTimeout(t);
+  }, [text]);
+
+  const query = useQuery({
+    queryKey: ['team', team.id, 'candidates', q],
+    queryFn: () => api.get(`/api/teams/${team.id}/candidates${qs({ q })}`),
+    placeholderData: (prev) => prev,
+  });
+  const people = (query.data?.people || []).filter((p) => p.membership !== 'active');
+  const toggle = (id) => setPicked((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+
+  const invite = async () => {
+    setBusy(true);
+    try {
+      const data = await api.post(`/api/teams/${team.id}/members`, { userIds: picked, role: isOwner ? role : 'member' });
+      onInvited(data);
+      const invited = data.invited || [];
+      const skipped = data.skipped || [];
+      const sent = invited.length === 1 ? `Invite sent to ${invited[0].name}` : `${invited.length} invites sent`;
+      const why = [...new Set(skipped.map((s) => SKIPPED_WHY[s.reason] || s.reason))].join(', ');
+      const left = skipped.length ? `${skipped.length} skipped (${why})` : '';
+      if (invited.length) toast.success(left ? `${sent}. ${left}.` : sent);
+      else toast.error(`No invites sent. ${left}.`);
+      setPicked([]);
+      setRole('member');
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 space-y-3">
+      <label className="flex h-10 items-center gap-2 rounded-xl border border-line bg-card px-3 transition focus-within:border-slate-300">
+        <Search className="h-4 w-4 shrink-0 text-ink-faint" aria-hidden />
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Search a name or Task Pin…"
+          aria-label="Search your connections"
+          className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-faint"
+        />
+      </label>
+      <div className={clsx('max-h-80 divide-y divide-line overflow-y-auto rounded-xl border border-line', query.isFetching && query.isPlaceholderData && 'opacity-60')}>
+        {query.error ? (
+          <ErrorState error={query.error} onRetry={query.refetch} />
+        ) : query.isLoading ? (
+          Array.from({ length: 3 }, (_, i) => (
+            <div key={i} className="flex items-center gap-3 p-3">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-4 flex-1" />
+            </div>
+          ))
+        ) : people.length === 0 ? (
+          <p className="px-3 py-3 text-sm text-ink-soft">{q ? 'Nobody matches that.' : 'No one to add yet. Your contacts, and the people in your other organizations, show here.'}</p>
+        ) : (
+          people.map((p) => {
+            const invited = p.membership === 'invited';
+            return (
+              <label key={p.id} className={clsx('flex items-center gap-3 px-3 py-2.5', invited ? 'opacity-70' : 'cursor-pointer hover:bg-well')}>
+                <input
+                  type="checkbox"
+                  checked={invited || picked.includes(p.id)}
+                  disabled={invited}
+                  onChange={() => toggle(p.id)}
+                  aria-label={p.name}
+                  className="h-4 w-4 shrink-0 accent-[rgb(var(--brand))]"
+                />
+                <div className="min-w-0 flex-1">
+                  <PersonLine person={p} size="sm" right={invited ? <Badge tone="amber">Invited</Badge> : p.contact ? <Badge>Contact</Badge> : null} />
+                </div>
+              </label>
+            );
+          })
+        )}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {isOwner && <RoleSelect value={role} onChange={setRole} />}
+        <Button icon={UserPlus} loading={busy} disabled={!picked.length} onClick={invite}>
+          {picked.length ? `Invite ${picked.length}` : 'Invite'}
+        </Button>
+        {picked.length > 0 && (
+          <button type="button" onClick={() => setPicked([])} className="px-1 text-sm font-medium text-ink-soft hover:text-ink">
+            Clear
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const INVITE_MODES = [
+  { value: 'pin', label: 'By Task Pin' },
+  { value: 'connections', label: 'From your connections' },
+];
+
+/** Invite people: by their Task Pin, or picked from the people I am connected with. They join once they accept. */
+function InvitePanel({ team, isOwner, onInvited }) {
+  const [mode, setMode] = useState('pin');
+  return (
+    <Card className="p-5 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
+          <UserPlus className="h-4 w-4 text-brand" aria-hidden /> Invite people
+        </h2>
+        <Segmented className="max-w-full overflow-x-auto" value={mode} onChange={setMode} options={INVITE_MODES} />
+      </div>
+      <p className="mt-1 text-sm text-ink-soft">
+        {mode === 'pin'
+          ? "They get an invite to accept. They don't need to be your contact."
+          : 'Your contacts, and people you share another organization with. They get an invite to accept.'}
+      </p>
+      {mode === 'pin' ? <InviteByPin team={team} isOwner={isOwner} onInvited={onInvited} /> : <InviteFromConnections team={team} isOwner={isOwner} onInvited={onInvited} />}
     </Card>
   );
 }
@@ -441,7 +575,7 @@ export function TeamDetailPage() {
       title: invited ? `Cancel ${m.person.name}'s invite?` : `Remove ${m.person.name} from ${team.name}?`,
       text: invited
         ? 'The invite disappears for them.'
-        : "Their tasks stay as they are. They can't be given team tasks unless they're invited again.",
+        : "Their tasks stay as they are. They can't be given tasks through this organization unless they're invited again.",
       confirmLabel: invited ? 'Cancel invite' : 'Remove',
       cancelLabel: invited ? 'Keep invite' : undefined,
       tone: 'danger',
@@ -463,7 +597,7 @@ export function TeamDetailPage() {
     const ok = await confirm({
       title: `Leave ${team.name}?`,
       text: 'Your tasks stay as they are. To come back, someone has to invite you again.',
-      confirmLabel: 'Leave team',
+      confirmLabel: 'Leave organization',
       tone: 'danger',
     });
     if (!ok) return;
@@ -476,12 +610,12 @@ export function TeamDetailPage() {
   const deleteTeam = async () => {
     const ok = await confirm({
       title: `Delete ${team.name}?`,
-      text: 'Its tasks stay, just no longer filed under a team. Everyone is removed from it. This cannot be undone.',
-      confirmLabel: 'Delete team',
+      text: 'Its tasks stay, just no longer filed under an organization. Everyone is removed from it. This cannot be undone.',
+      confirmLabel: 'Delete organization',
       tone: 'danger',
     });
     if (!ok) return;
-    if (await run('delete', () => api.del(`/api/teams/${id}`), 'Team deleted')) {
+    if (await run('delete', () => api.del(`/api/teams/${id}`), 'Organization deleted')) {
       qc.removeQueries({ queryKey: ['team', id] });
       navigate(backTo);
     }
@@ -499,23 +633,23 @@ export function TeamDetailPage() {
   const save = async (body) => {
     const data = await api.patch(`/api/teams/${id}`, body);
     setTeam(data);
-    toast.success('Team saved');
+    toast.success('Organization saved');
     setEditing(false);
   };
 
   const back = (
     <Link to={backTo} className="mb-2 inline-flex items-center gap-1 text-sm font-medium text-ink-soft hover:text-brand">
-      <ArrowLeft className="h-4 w-4" aria-hidden /> {superAdmin ? 'Console' : 'Teams'}
+      <ArrowLeft className="h-4 w-4" aria-hidden /> {superAdmin ? 'Console' : 'Organizations'}
     </Link>
   );
 
   if (query.error) {
     return (
       <div className="mx-auto max-w-4xl">
-        <PageHeader title="Team" back={back} />
+        <PageHeader title="Organization" back={back} />
         <Card>
           {query.error.status === 404 || query.error.status === 403 ? (
-            <EmptyState icon={Users} title="Team not found" text="It may have been deleted, or you're no longer in it." action={<Button to={backTo}>Back</Button>} />
+            <EmptyState icon={Users} title="Organization not found" text="It may have been deleted, or you're no longer in it." action={<Button to={backTo}>Back</Button>} />
           ) : (
             <ErrorState error={query.error} onRetry={query.refetch} />
           )}
@@ -554,7 +688,7 @@ export function TeamDetailPage() {
     if (canManage) {
       items.push(
         isActive
-          ? { label: 'Remove from team', icon: UserMinus, onClick: () => removeMember(m), danger: true }
+          ? { label: 'Remove from organization', icon: UserMinus, onClick: () => removeMember(m), danger: true }
           : { label: 'Cancel invite', icon: X, onClick: () => removeMember(m), danger: true }
       );
     }
@@ -579,8 +713,8 @@ export function TeamDetailPage() {
         actions={
           <>
             {(canManage || superAdmin) && (
-              <Button variant="soft" icon={ListChecks} to={superAdmin ? `/tasks?scope=all&team=${team.id}` : `/tasks?scope=team&team=${team.id}`}>
-                Team tasks
+              <Button variant="soft" icon={ListChecks} to={`/tasks?scope=${superAdmin ? 'all' : 'team'}&org=${team.id}`}>
+                Organization tasks
               </Button>
             )}
             {canManage && (
@@ -601,7 +735,7 @@ export function TeamDetailPage() {
               <p className="text-[15px] font-semibold text-amber-900">You're invited to join {team.name}</p>
               <p className="mt-0.5 text-sm text-amber-800">
                 {mine.invitedBy?.name ? `${mine.invitedBy.name} invited you` : 'You were invited'}
-                {mine.role === 'admin' ? ' as an admin' : ''}. Team-mates can give each other tasks.
+                {mine.role === 'admin' ? ' as an admin' : ''}. Its members can give each other tasks.
               </p>
             </div>
             <div className="flex shrink-0 gap-2">
@@ -616,12 +750,12 @@ export function TeamDetailPage() {
         </Card>
       )}
 
-      {canManage && <InviteByPin team={team} isOwner={isOwner} onInvited={setTeam} />}
+      {canManage && <InvitePanel team={team} isOwner={isOwner} onInvited={setTeam} />}
 
       <div>
         <h2 className="mb-3 text-base font-semibold text-ink">Members</h2>
         <Card className="divide-y divide-line">
-          {members.length === 0 && <p className="p-5 text-[15px] text-ink-soft">No one is in this team yet.</p>}
+          {members.length === 0 && <p className="p-5 text-[15px] text-ink-soft">No one is in this organization yet.</p>}
           {members.map((m) => {
             const isMe = m.person?.id === me?.id;
             const rowBusy = busy && busy.endsWith(`:${m.person?.id}`);
@@ -653,29 +787,29 @@ export function TeamDetailPage() {
 
       {(active || superAdmin) && (
         <Card className="p-5">
-          <h2 className="text-base font-semibold text-ink">{isOwner || superAdmin ? 'Delete team' : 'Leave team'}</h2>
+          <h2 className="text-base font-semibold text-ink">{isOwner || superAdmin ? 'Delete organization' : 'Leave organization'}</h2>
           {isOwner || superAdmin ? (
             <>
               <p className="mt-0.5 text-sm text-ink-soft">
-                Its tasks stay, just no longer filed under a team.
+                Its tasks stay, just no longer filed under an organization.
                 {isOwner && ' To leave instead, make someone else the owner first.'}
               </p>
               <Button className="mt-4" variant="danger-soft" icon={Trash2} loading={busy === 'delete'} onClick={deleteTeam}>
-                Delete team
+                Delete organization
               </Button>
             </>
           ) : (
             <>
               <p className="mt-0.5 text-sm text-ink-soft">Your tasks stay as they are.</p>
               <Button className="mt-4" variant="danger-soft" icon={LogOut} loading={busy === 'leave'} onClick={leave}>
-                Leave team
+                Leave organization
               </Button>
             </>
           )}
         </Card>
       )}
 
-      <TeamFormModal open={editing} onClose={() => setEditing(false)} title="Edit team" initial={team} submitLabel="Save" onSubmit={save} />
+      <TeamFormModal open={editing} onClose={() => setEditing(false)} title="Edit organization" initial={team} submitLabel="Save" onSubmit={save} />
     </div>
   );
 }

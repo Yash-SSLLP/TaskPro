@@ -50,14 +50,14 @@ function QrCode({ value }) {
     };
   }, [value]);
   if (!src) return <div className="h-36 w-36 shrink-0 rounded-xl bg-slate-100" aria-hidden />;
-  return <img src={src} alt="QR code to download the Android app" width={144} height={144} className="h-36 w-36 shrink-0 rounded-xl border border-line" />;
+  return <img src={src} alt={`QR code to download ${product.name} for Android`} width={144} height={144} className="h-36 w-36 shrink-0 rounded-xl border border-line" />;
 }
 
 /** Version, QR code, download button, and the link to share. */
 export function AndroidAppDetails() {
   const { data: release, isLoading, error } = useRelease();
   if (isLoading) return <Skeleton className="h-36" />;
-  if (error) return <p className="text-sm text-red-700">Couldn't load the app version. {error.message}</p>;
+  if (error) return <p className="text-sm text-red-700">Couldn't load the {product.name} app version. {error.message}</p>;
   if (!release) return <p className="text-sm text-ink-soft">No Android build has been published yet.</p>;
 
   const downloadUrl = `${window.location.origin}/app/${encodeURIComponent(release.fileName)}`;
@@ -105,7 +105,7 @@ export function AndroidAppDetails() {
             value={shareUrl}
             onFocus={(e) => e.target.select()}
             className="h-10 min-w-0 flex-1 rounded-xl border border-line bg-slate-50 px-3 font-mono text-sm text-ink"
-            aria-label="Link to the app download page"
+            aria-label={`Link to the ${product.name} download page`}
           />
           <Button variant="secondary" size="sm" icon={Copy} className="h-10" onClick={() => copyText(shareUrl, 'Link copied')}>
             Copy
@@ -116,7 +116,7 @@ export function AndroidAppDetails() {
           <li>Open the downloaded file. Android asks whether to allow installs from your browser: allow it.</li>
           <li>Tap Install, then sign in with your {product.name} account.</li>
         </ol>
-        <p className="mt-3 text-sm text-ink-soft">Once installed, the app offers new versions itself (More → App updates).</p>
+        <p className="mt-3 text-sm text-ink-soft">Once installed, {product.name} offers new versions itself (More → App updates).</p>
       </div>
     </div>
   );
@@ -132,7 +132,7 @@ export function IphoneAppDetails() {
     <div className="space-y-4">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">iPhone</p>
-        <p className="mt-1 text-sm text-ink-soft">The same app as Android, added from Safari. Nothing to download.</p>
+        <p className="mt-1 text-sm text-ink-soft">The same {product.name} app as on Android, added from Safari. Nothing to download.</p>
       </div>
       <div className="flex gap-2">
         <input
@@ -140,7 +140,7 @@ export function IphoneAppDetails() {
           value={url}
           onFocus={(e) => e.target.select()}
           className="h-10 min-w-0 flex-1 rounded-xl border border-line bg-slate-50 px-3 font-mono text-sm text-ink"
-          aria-label="Link to the iPhone app"
+          aria-label={`Link to ${product.name} for iPhone`}
         />
         <Button variant="secondary" size="sm" icon={Copy} className="h-10" onClick={() => copyText(url, 'Link copied')}>
           Copy
@@ -165,7 +165,7 @@ export function GetAppPage() {
   return (
     <LegalShell>
       <h1 className="text-3xl font-bold tracking-tight text-ink">Get {product.name} on your phone</h1>
-      <p className="mt-2 text-[15px] text-ink-soft">Your tasks, reminders and alerts on Android and iPhone.</p>
+      <p className="mt-2 text-[15px] text-ink-soft">In {product.name}, your tasks, reminders and alerts go with you on Android and iPhone.</p>
       <div className="mt-8 rounded-2xl border border-line bg-card p-5 shadow-card sm:p-6">
         <AndroidAppDetails />
       </div>

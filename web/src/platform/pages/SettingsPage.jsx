@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LogOut, Monitor, Moon, ShieldCheck, Sun, Trash2, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
+import { product } from '../../product/config';
 import { api } from '../api';
 import { isSuperAdmin, useSession, useSettings } from '../session';
 import { signOutEverywhere } from '../signOut';
@@ -158,7 +159,7 @@ function PreferencesSection() {
   };
 
   return (
-    <Section title="Preferences" description="How KARO works for you. Others don't see these.">
+    <Section title="Preferences" description={`How ${product.name} works for you. Others don't see these.`}>
       {query.isLoading && !query.data ? (
         <div className="space-y-4">
           <Skeleton className="h-11" />
@@ -185,7 +186,7 @@ function PreferencesSection() {
 
           <div className="border-t border-line pt-5">
             <Switch
-              checked={!!form.approvalDefault}
+              checked={form.approvalDefault === true}
               onChange={(v) => set('approvalDefault', v)}
               label="I'll check it before it's done"
               description="New tasks you give others ask you to approve them before they count as done"
@@ -215,7 +216,7 @@ function PreferencesSection() {
           </div>
 
           <div className="border-t border-line pt-5">
-            <Select className="max-w-xs" label="Language" hint="The mobile app uses this." value={form.lang || 'en'} onChange={(e) => set('lang', e.target.value)}>
+            <Select className="max-w-xs" label="Language" hint={`The ${product.name} phone app uses this.`} value={form.lang || 'en'} onChange={(e) => set('lang', e.target.value)}>
               {LANGUAGES.map((l) => (
                 <option key={l.value} value={l.value}>
                   {l.label}
@@ -257,7 +258,7 @@ const THEME_OPTIONS = [
 function AppearanceSection() {
   const mode = useTheme((s) => s.mode);
   return (
-    <Section title="Appearance" description="How KARO looks on this device. System follows your computer or phone.">
+    <Section title="Appearance" description={`How ${product.name} looks on this device. System follows your computer or phone.`}>
       <div className="seg-track inline-flex rounded-xl p-0.5" role="radiogroup" aria-label="Appearance">
         {THEME_OPTIONS.map((o) => (
           <button
@@ -302,7 +303,7 @@ export function SettingsPage() {
       <PasswordSection />
       <PreferencesSection />
       <AppearanceSection />
-      <Section title="Phone app" description="KARO on your phone, with reminders and alerts.">
+      <Section title="Phone app" description={`${product.name} on your phone, with reminders and alerts.`}>
         <AndroidAppDetails />
         <div className="mt-5 border-t border-line pt-5">
           <IphoneAppDetails />
@@ -310,7 +311,8 @@ export function SettingsPage() {
       </Section>
       <Section title="Privacy and your account" description="How we handle your information, and how to leave.">
         <div className="flex flex-wrap gap-3">
-          <Button variant="secondary" icon={ShieldCheck} to="/privacy">
+          {/* The server renders /privacy (the public site), so a full page load. */}
+          <Button variant="secondary" icon={ShieldCheck} to="/privacy" reloadDocument>
             Privacy policy
           </Button>
           {!superAdmin && (

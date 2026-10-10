@@ -34,8 +34,8 @@ const SETTLE_MS = 1000;
 const MAX_BACKOFF_MS = 60_000;
 const PAUSE_MS = 10 * 60_000;
 
-/** Under ['tasks'] but not task data (the forms' people, categories, templates). */
-const TASK_SIDE_DATA = new Set(['meta', 'categories', 'templates']);
+/** Under ['tasks'] but not task data (the forms' people and categories). */
+const TASK_SIDE_DATA = new Set(['meta', 'categories']);
 const UNREAD_KEY = ['notifications', 'unread'];
 
 /** What a moved number refetches. */

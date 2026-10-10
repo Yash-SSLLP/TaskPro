@@ -10,7 +10,6 @@ const router = express.Router();
 router.use(protect);
 
 router.use('/', require('./meta'));
-router.use('/', require('./templates'));
 router.use('/recurring', require('./recurring'));
 router.use('/dashboard', require('./dashboard'));
 router.use('/', require('./tasks'));

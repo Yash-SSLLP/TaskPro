@@ -143,7 +143,7 @@ async function presentOne(who, id) {
 async function loadSchedule(who, id, { manage = false } = {}) {
   const s = mongoose.isValidObjectId(id) ? await RecurringTask.findById(id) : null;
   if (!s || !maySee(who, s)) throw notFound('That schedule is gone.');
-  if (manage && !mayManage(who, s)) throw forbidden('Only whoever set this up, a team owner or admin, or the Super Admin can change it.');
+  if (manage && !mayManage(who, s)) throw forbidden('Only whoever set this up, an organization owner or admin, or the Super Admin can change it.');
   return s;
 }
 

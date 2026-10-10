@@ -5,14 +5,15 @@
 // LIGHT AND DARK: every colour the pages use is a CSS variable, so one class
 // on <html> (`dark`, set by src/platform/theme.js) re-themes the whole app
 // without a `dark:` variant on each element. The neutrals (slate) are
-// Salesforce's greys, with a navy dark scale of their own. On the other hues the dark theme works the way the HRMS
+// Salesforce's greys, with WhatsApp's dark greys in the dark. On the other hues the dark theme works the way the HRMS
 // web app does (its index.css "Dark mode COLOUR accuracy"): the pale tints
 // (50-300, the washes behind chips, banners and selected tiles) become a soft
 // wash of the hue over the dark card instead of a deep, muddy block; the inks
 // (700-950) turn light so coloured text reads; 400-600 stay, so a solid button
 // keeps its white label. Text set in 500/600 is lifted to 400 on its own (see
 // the remap below), since the same step also fills buttons; a 700/800 FILL (a
-// button's hover) keeps its light value for the same reason.
+// button's hover) keeps its light value for the same reason. The status hues
+// go further (DARK_INKS): one WhatsApp-style ink per meaning.
 import plugin from 'tailwindcss/plugin';
 import palette from 'tailwindcss/colors';
 
@@ -27,7 +28,7 @@ const mix = (a, b, t) => {
 };
 
 // The dark card (src/index.css --card): the surface the washes are mixed into.
-const DARK_CARD = '#04224c';
+const DARK_CARD = '#111b21';
 
 const SHADES = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900', '950'];
 const HUES = ['red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'pink', 'rose'];
@@ -47,24 +48,56 @@ const LIGHT_SLATE = {
   900: '#242424',
   950: '#181818',
 };
-// The navy of Salesforce's dark panels, stepping up to its pale blue.
+// WhatsApp's dark greys, from its raised surfaces up to its text.
 const DARK_SLATE = {
-  50: '#0a2a57',
-  100: '#0d2f5e',
-  200: '#1c3d6b',
-  300: '#2b4f80',
-  400: '#3e6194',
-  500: '#6f84a6',
-  600: '#a8b8d0',
-  700: '#c9d4e5',
-  800: '#dfe6f1',
-  900: '#eef4ff',
-  950: '#f7faff',
+  50: '#182229',
+  100: '#202c33',
+  200: '#2a3942',
+  300: '#374248',
+  400: '#54656f',
+  500: '#8696a0',
+  600: '#aebac1',
+  700: '#d1d7db',
+  800: '#e1e5e8',
+  900: '#e9edef',
+  950: '#f7f8fa',
+};
+
+// The status hues' inks in the dark, one per meaning: amber waiting (not
+// accepted yet, medium), sky in progress, violet under review, green done, red
+// overdue / declined / urgent, orange more time asked / sent back. Blue chips
+// are In progress, so blue takes the sky ink too.
+const DARK_INKS = {
+  amber: '#ffd279',
+  sky: '#53bdeb',
+  blue: '#53bdeb',
+  violet: '#a791ff',
+  green: '#3dd68c',
+  red: '#ff6b78',
+  orange: '#ffa056',
 };
 
 /** One hue's dark scale. */
 function darkHue(hue) {
   const p = palette[hue];
+  const ink = DARK_INKS[hue];
+  if (ink) {
+    // The chip's wash (16%), an icon's circle (20%), its edge (45%); the ink
+    // for text, dots and lifted 500/600 text; 600 stays a fill under white.
+    return {
+      50: mix(ink, DARK_CARD, 0.16),
+      100: mix(ink, DARK_CARD, 0.2),
+      200: mix(ink, DARK_CARD, 0.45),
+      300: mix(ink, DARK_CARD, 0.6),
+      400: rgb(ink),
+      500: rgb(ink),
+      600: rgb(p[600]),
+      700: rgb(ink),
+      800: mix('#ffffff', ink, 0.3),
+      900: mix('#ffffff', ink, 0.55),
+      950: mix('#ffffff', ink, 0.8),
+    };
+  }
   return {
     50: mix(p[500], DARK_CARD, 0.12),
     100: mix(p[500], DARK_CARD, 0.18),

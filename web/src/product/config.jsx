@@ -1,5 +1,5 @@
 /**
- * KARO, as the shared web shell sees it: its name, pitch, navigation and
+ * Karo, as the shared web shell sees it: its name, pitch, navigation and
  * routes.
  */
 import { BarChart3, CalendarDays, CheckSquare, Repeat } from 'lucide-react';
@@ -11,11 +11,11 @@ import { CalendarPage } from './pages/CalendarPage';
 
 export const product = {
   key: 'taskpro',
-  name: 'KARO',
-  tagline: 'Give tasks to anyone — by their Task Pin.',
+  name: 'Karo',
+  tagline: 'In Karo, you give tasks to anyone by their Task Pin.',
   pitch: [
-    'Your own Task Pin — share it, and people add you in a tap',
-    'Give tasks to yourself, your contacts and your teams',
+    'You get your own Task Pin: share it, and people add you in a tap',
+    'Give tasks to yourself, your contacts and your organizations',
     'Reminders, reviews and repeating jobs on autopilot',
   ],
   homePath: '/tasks',

@@ -1,5 +1,5 @@
 /**
- * The console's first tab: people (and who is online right now), teams,
+ * The console's first tab: people (and who is online right now), organizations,
  * tasks, and how many people are on the newest app.
  */
 import { useQuery } from '@tanstack/react-query';
@@ -48,14 +48,14 @@ export function Overview({ onTab }) {
           <Stat label="Active this week" value={data?.activeWeek} />
           <Stat label="New this week" value={data?.newWeek} />
           <Stat label="Disabled" value={data?.disabled} tone={data?.disabled ? 'text-red-600' : undefined} />
-          <Stat label="Teams" value={data?.teams} onClick={() => onTab('teams')} />
+          <Stat label="Organizations" value={data?.teams} onClick={() => onTab('teams')} />
         </div>
       </section>
 
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-soft">The app</h2>
-          {release && <p className="text-xs text-ink-soft">Latest release: KARO {release.versionName} (build {release.versionCode})</p>}
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-soft">Karo app</h2>
+          {release && <p className="text-xs text-ink-soft">Latest release: Karo {release.versionName} (build {release.versionCode})</p>}
         </div>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Stat label="On the latest" icon={Smartphone} value={latest ?? (data ? app.app : undefined)} tone={latest ? 'text-emerald-700' : undefined} onClick={() => onTab('versions', 'latest')} />

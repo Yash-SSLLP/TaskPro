@@ -97,7 +97,7 @@ describe('reminders', () => {
 
     const res = await boss.post('/api/reminders', { title: 'Nope', date: day, scope: 'users', recipients: [stranger.id] });
     assert.equal(res.status, 400);
-    assert.match(res.body.error, /contacts or teams/);
+    assert.match(res.body.error, /contacts or organizations/);
     await remind(boss, { title: 'Nobody', date: day, scope: 'users', recipients: [] }, 400);
   });
 
@@ -126,7 +126,7 @@ describe('reminders', () => {
     assert.equal(notified, 2);
     const forMember = (await member.get('/api/reminders')).body.reminders;
     assert.equal(forMember.length, 1);
-    assert.equal(forMember[0].audience, `A team · ${team.name}`);
+    assert.equal(forMember[0].audience, `An organization · ${team.name}`);
 
     const res = await member.post('/api/reminders', { title: 'Not mine to send', date: day, scope: 'team', team: team.id });
     assert.equal(res.status, 403);

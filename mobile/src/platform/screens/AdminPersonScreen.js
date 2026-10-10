@@ -16,7 +16,7 @@ import { tr } from '../../i18n';
 import { platformApi, platformKeys } from '../endpoints';
 import { formatDate, formatDateTime, relativeTime } from '../format';
 import { usePullRefresh } from '../hooks';
-import { KeyRound, LayoutDashboard, LogOut, Plus, Power, RefreshCw, Share as ShareIcon, Trash, Users, X } from '../icons';
+import { Building, KeyRound, LayoutDashboard, LogOut, Plus, Power, RefreshCw, Share as ShareIcon, Trash, X } from '../icons';
 import { pinOf, roleLabel, roleTone } from '../pin';
 import { colors, font, radius, space, type } from '../theme';
 import {
@@ -229,7 +229,7 @@ export default function AdminPersonScreen({ navigation, route }) {
   const signOutDevice = async (s) => {
     const ok = await confirm({
       title: tr('Sign {name} out on {device}?', { name: u.name, device: deviceLine(s) }),
-      message: tr('That device goes back to the sign-in screen the next time it opens KARO. Their other devices stay signed in.'),
+      message: tr('That device goes back to the sign-in screen the next time it opens {app}. Their other devices stay signed in.', { app: productConfig.name }),
       confirmLabel: tr('Sign out'),
       destructive: true,
     });
@@ -408,9 +408,9 @@ export default function AdminPersonScreen({ navigation, route }) {
       ) : null}
 
       {teams.length ? (
-        <Section title={tr('Teams')}>
+        <Section title={tr('Organizations')}>
           {teams.map((t) => (
-            <ListRow key={t.id} icon={Users} title={t.name} right={<Badge label={roleLabel(t.role)} tone={roleTone(t.role)} style={styles.badge} />} onPress={() => navigation.navigate('TeamDetail', { id: t.id })} />
+            <ListRow key={t.id} icon={Building} title={t.name} right={<Badge label={roleLabel(t.role)} tone={roleTone(t.role)} style={styles.badge} />} onPress={() => navigation.navigate('TeamDetail', { id: t.id })} />
           ))}
         </Section>
       ) : null}
@@ -444,7 +444,22 @@ export default function AdminPersonScreen({ navigation, route }) {
         {u.role !== 'superadmin' ? <ListRow icon={Trash} title={tr('Delete permanently')} danger chevron={false} onPress={openDelete} /> : null}
       </Section>
 
-      <BottomSheet visible={resetOpen} onClose={() => setResetOpen(false)} title={tr('Reset password')}>
+      {/* The buttons sit in the sheets' footers, which stay above the keyboard. */}
+      <BottomSheet
+        visible={resetOpen}
+        onClose={() => setResetOpen(false)}
+        title={tr('Reset password')}
+        footer={
+          resetDone ? null : (
+            <>
+              <Notice tone="danger" style={styles.footNotice}>
+                {resetError}
+              </Notice>
+              <Button title={tr('Reset password')} size="lg" onPress={doReset} />
+            </>
+          )
+        }
+      >
         {resetDone ? (
           <View>
             <Notice tone="success">{tr('Done. {name} must choose a new password at the next sign-in.', { name: u.name })}</Notice>
@@ -467,18 +482,26 @@ export default function AdminPersonScreen({ navigation, route }) {
               autoCorrect={false}
               right={<Button title={tr('New')} icon={RefreshCw} size="sm" variant="ghost" full={false} onPress={() => setPassword(tempPassword())} />}
             />
-            <Notice tone="danger">{resetError}</Notice>
-            <Button title={tr('Reset password')} size="lg" onPress={doReset} />
           </View>
         )}
       </BottomSheet>
 
-      <BottomSheet visible={deleteOpen} onClose={() => setDeleteOpen(false)} title={tr('Delete {name}’s account for good?', { name: u.name })}>
+      <BottomSheet
+        visible={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        title={tr('Delete {name}’s account for good?', { name: u.name })}
+        footer={
+          <>
+            <Notice tone="danger" style={styles.footNotice}>
+              {deleteError}
+            </Notice>
+            <Button title={tr('Delete for good')} variant="danger" size="lg" disabled={typed.trim() !== 'DELETE'} onPress={doDelete} />
+          </>
+        }
+      >
         <View>
-          <Text style={styles.intro}>{tr('This cannot be undone. Gone at once: their logins, Task Pin, profile and settings; their contacts and team places (teams they own pass to someone else); their devices, alerts and reminders; and tasks nobody else is on. Work shared with others stays with them, showing "Deleted user".')}</Text>
+          <Text style={styles.intro}>{tr('This cannot be undone. Gone at once: their logins, Task Pin, profile and settings; their contacts and organization memberships (organizations they own pass to someone else); their devices, alerts and reminders; and tasks nobody else is on. Work shared with others stays with them, showing "Deleted user".')}</Text>
           <TextField label={tr('Type DELETE to confirm')} value={typed} onChangeText={setTyped} autoCapitalize="characters" autoCorrect={false} placeholder="DELETE" />
-          <Notice tone="danger">{deleteError}</Notice>
-          <Button title={tr('Delete for good')} variant="danger" size="lg" disabled={typed.trim() !== 'DELETE'} onPress={doDelete} />
         </View>
       </BottomSheet>
     </Screen>
@@ -520,4 +543,5 @@ const styles = StyleSheet.create({
   temp: { padding: space(4), borderRadius: radius.input, backgroundColor: colors.muted, marginBottom: space(4), alignItems: 'center' },
   tempLabel: { ...type.caption },
   tempValue: { fontSize: 24, fontWeight: font.bold, color: colors.text, letterSpacing: 1, marginTop: space(1) },
+  footNotice: { marginBottom: 0 },
 });

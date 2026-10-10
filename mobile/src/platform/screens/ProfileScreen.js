@@ -23,6 +23,7 @@ import { Camera, ImageIcon, Trash } from '../icons';
 import { useSession } from '../session';
 import { colors, font, radius, shadow, shadowRaised, space, type } from '../theme';
 import { Avatar, BottomSheet, Button, confirm, Header, ListRow, Notice, Screen, Section, TextButton, TextField, toast } from '../ui';
+import productConfig from '../../product/config';
 import { tr } from '../../i18n';
 
 const PHOTO_SIZE = 512;
@@ -72,7 +73,7 @@ async function pickPhoto(source) {
   if (source === 'camera') {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
-      const message = tr('Allow camera access for KARO in your phone settings to take photos.');
+      const message = tr('Allow camera access for {app} in your phone settings to take photos.', { app: productConfig.name });
       if (perm.canAskAgain) {
         toast.error(message);
       } else if (await confirm({ title: tr('Camera access is off'), message, confirmLabel: tr('Open settings') })) {

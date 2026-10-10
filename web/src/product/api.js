@@ -1,6 +1,6 @@
 /**
  * Every call the task module makes, in one place — the HRMS `api/tasks.js`
- * client on KARO's fetch client. Calls that can carry a voice note and
+ * client on Karo's fetch client. Calls that can carry a voice note and
  * files (create, edit, move, remark, submit/approve/reject, recurring) go
  * through `api.send`, which builds the multipart body the HRMS way.
  */
@@ -59,13 +59,6 @@ export const listCategories = (params = {}) => api.get(`${T}/categories${qs(para
 export const createCategory = (name, team) => api.post(`${T}/categories`, team ? { name, team } : { name });
 export const renameCategory = (id, name) => api.patch(`${T}/categories/${id}`, { name });
 export const deleteCategory = (id) => api.del(`${T}/categories/${id}`);
-
-// ===== Templates =====
-export const listTemplates = () => api.get(`${T}/templates`);
-export const createTemplate = (body) => api.post(`${T}/templates`, body);
-export const copyTemplate = (id) => api.post(`${T}/templates/${id}/copy`);
-export const templatePrefill = (id) => api.get(`${T}/templates/${id}/prefill`);
-export const deleteTemplate = (id) => api.del(`${T}/templates/${id}`);
 
 // ===== Recurring =====
 export const listRecurring = (params = {}) => api.get(`${T}/recurring${qs(params)}`);

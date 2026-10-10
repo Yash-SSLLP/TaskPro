@@ -4,29 +4,30 @@
  *
  * The title is the only thing always required. An empty "Assign to" means the
  * task is yours (the server assigns it to its setter). The people picker is
- * fed by `/api/tasks/meta` → people (you, team-mates, contacts); somebody not
- * there yet is one "Add by Task Pin" away — a contact request they accept,
- * after which they can be given tasks. Everybody else gets the task as
- * "awaiting acceptance".
+ * fed by `/api/tasks/meta` → people (you, organization members, contacts);
+ * somebody not there yet is one "Add by Task Pin" away — a contact request
+ * they accept, after which they can be given tasks. Everybody else gets the
+ * task as "awaiting acceptance".
  *
  * "Assign more tasks" keeps the form open after a save and clears only what
  * differs between tasks (title, details, recording, files).
  *
  * Laid out as the HRMS lays it out: 12px grey labels over 40px fields, in its
- * order — who, priority, review, pieces, then when — with KARO's team and
- * category before the priority.
+ * order — who, priority, review, pieces, then when — with Karo's organization
+ * and category before the priority. Opened from an organization's tab, the
+ * task is filed under that organization (`presetTeam`).
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import {
-  Bell, Bookmark, CalendarDays, Check, Eye, Flag, GitBranch, ImageIcon, KeyRound, Link2, Paperclip, Plus, Tag, Trash2, UserCheck, Users, X,
+  Bell, CalendarDays, Check, Eye, Flag, GitBranch, ImageIcon, KeyRound, Link2, Paperclip, Plus, Tag, Trash2, UserCheck, Users, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../platform/api';
 import { dayKey, fromLocalInput, toLocalInput } from '../../platform/format';
 import { useSettings } from '../../platform/session';
-import { Button, Modal, PinLookup, usePrompt } from '../../platform/ui';
+import { Button, Modal, PinLookup, finePointer, usePrompt } from '../../platform/ui';
 import * as T from '../api';
 import { useCategories } from '../hooks';
 import { TASK_PRIORITY, idOf, priorityColor, reminderLabel, sizeLabel, tintStyle } from '../lifecycle';
@@ -34,7 +35,6 @@ import { PeoplePicker } from './PeoplePicker';
 import { ReminderEditor } from './Reminders';
 import { VoiceRecorder } from './VoiceNote';
 import { PieceEditor, emptyPiece, filledPieces, pieceItems } from './DelegateModal';
-import { TemplatesDrawer } from './TaskTemplates';
 
 /* Shared with RecurringFormModal: the HRMS's form vocabulary. */
 export const inputCls = 'block h-10 w-full rounded-xl border border-line bg-card px-3 text-sm text-ink placeholder:text-ink-faint focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30';
@@ -62,9 +62,9 @@ export function PriorityPills({ value, onChange }) {
             aria-pressed={on}
             // Weight and border on the base class: picking one cannot resize the pill.
             className="inline-flex min-h-[32px] items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition"
-            style={on ? { backgroundColor: colour.solid, borderColor: colour.solid, color: '#fff' } : tintStyle(colour)}
+            style={on ? { backgroundColor: colour.solid, borderColor: colour.solid, color: 'rgb(var(--on-solid))' } : tintStyle(colour)}
           >
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: on ? '#fff' : colour.solid }} />
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: on ? 'rgb(var(--on-solid))' : colour.solid }} />
             {p}
           </button>
         );
@@ -80,6 +80,47 @@ export function ReviewCheck({ checked, onChange }) {
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-line accent-brand" />
       <span>I want to review this before it is marked done</span>
     </label>
+  );
+}
+
+/**
+ * Where it is filed: General (no organization) or one of mine, as chips. An
+ * organization I am not in (an older task's) shows as `otherName`, chosen.
+ */
+export function OrgField({ teams = [], value = '', onChange, otherName = '' }) {
+  const labelId = useId();
+  const pill = (on) =>
+    clsx('inline-flex h-8 min-w-0 max-w-full items-center rounded-lg border px-3 text-xs font-semibold transition', on ? 'border-brand bg-brand text-on-brand' : 'border-line bg-card text-ink-soft hover:border-slate-300');
+  const known = !value || teams.some((t) => String(t.id) === String(value));
+  return (
+    <div>
+      <p className={labelCls} id={labelId}>
+        <Users className="h-3 w-3" /> Organization
+      </p>
+      <div role="radiogroup" aria-labelledby={labelId} className="flex flex-wrap gap-1.5">
+        <button type="button" role="radio" aria-checked={!value} onClick={() => onChange('')} className={pill(!value)}>
+          General
+        </button>
+        {teams.map((t) => {
+          const on = String(t.id) === String(value);
+          return (
+            <button key={t.id} type="button" role="radio" aria-checked={on} onClick={() => onChange(String(t.id))} className={pill(on)}>
+              <span className="truncate">{t.name}</span>
+            </button>
+          );
+        })}
+        {!known && (
+          <button type="button" role="radio" aria-checked className={pill(true)}>
+            <span className="truncate">{otherName || 'Another organization'}</span>
+          </button>
+        )}
+      </div>
+      <p className="mt-1 text-[11px] text-ink-faint">
+        {teams.length
+          ? "In Karo, a task filed under an organization shows in that organization's tab. Its owner and admins see it too."
+          : 'Create an organization on the Organizations page to file tasks under it.'}
+      </p>
+    </div>
   );
 }
 
@@ -100,12 +141,11 @@ const EMPTY = {
   team: '',
   category: '',
   priority: 'Medium',
-  requiresApproval: true,
+  requiresApproval: false,
   startDate: '',
   dueDate: '',
   reminders: [],
   links: [],
-  template: '',
 };
 
 /** "Add by Task Pin" from inside the form: lookup → contact request (or straight in). */
@@ -146,7 +186,7 @@ function AddByPinModal({ open, onClose, onReady }) {
   };
 
   return (
-    <Modal open onClose={onClose} title="Add by Task Pin" subtitle="You can give tasks to your contacts and team-mates.">
+    <Modal open onClose={onClose} title="Add by Task Pin" subtitle="You can give tasks to your contacts and organization members.">
       {sent ? (
         <div className="space-y-3">
           <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800">
@@ -158,7 +198,7 @@ function AddByPinModal({ open, onClose, onReady }) {
         </div>
       ) : (
         <PinLookup
-          autoFocus
+          autoFocus={finePointer()}
           hint="Ask them for their Task Pin — it is on their Contacts page."
           action={({ person, relation, pin, reset }) => {
             if (relation === 'contact') {
@@ -190,7 +230,7 @@ function AddByPinModal({ open, onClose, onReady }) {
   );
 }
 
-export function AssignTaskModal({ open, onClose, onCreated, meta, prefill = null, presetAssignees = null, presetOnBehalf = '', editTask = null }) {
+export function AssignTaskModal({ open, onClose, onCreated, meta, presetAssignees = null, presetOnBehalf = '', presetTeam = '', editTask = null }) {
   const settings = useSettings();
   const tz = settings.timezone;
   const prompt = usePrompt();
@@ -212,29 +252,11 @@ export function AssignTaskModal({ open, onClose, onCreated, meta, prefill = null
   const [pieces, setPieces] = useState([]);
   const [pinOpen, setPinOpen] = useState(false);
   const [pinFor, setPinFor] = useState('assignees');
-  const [templatesOpen, setTemplatesOpen] = useState(false);
   const fileRef = useRef(null);
   const imageRef = useRef(null);
   // Edit: the task's updatedAt when the form was filled in (the server's conflict check).
   const baseRef = useRef(null);
   const set = useCallback((patch) => setForm((f) => ({ ...f, ...patch })), []);
-
-  const fromPrefill = useCallback(
-    (p) => ({
-      ...(p.title !== undefined ? { title: p.title || '' } : {}),
-      ...(p.description !== undefined ? { description: p.description || '' } : {}),
-      ...(p.category !== undefined ? { category: p.category || '' } : {}),
-      ...(p.priority ? { priority: p.priority } : {}),
-      ...(p.dueDate ? { dueDate: toLocalInput(p.dueDate, tz) } : {}),
-      ...(Array.isArray(p.reminders) ? { reminders: p.reminders } : {}),
-      ...(Array.isArray(p.links) ? { links: p.links.map((l) => ({ url: l.url, label: l.label || '' })) } : {}),
-      ...(Array.isArray(p.assignees) ? { assignees: p.assignees.map(idOf) } : {}),
-      ...(Array.isArray(p.loopUsers) ? { loopUsers: p.loopUsers.map(idOf) } : {}),
-      ...(p.team ? { team: String(p.team?.id || p.team) } : {}),
-      ...(p.template ? { template: String(p.template) } : {}),
-    }),
-    [tz]
-  );
 
   /** The form filled in from a task as it stands (edit). */
   const seedOf = useCallback(
@@ -270,11 +292,12 @@ export function AssignTaskModal({ open, onClose, onCreated, meta, prefill = null
     } else {
       setForm({
         ...EMPTY,
-        requiresApproval: settings.approvalDefault !== false,
+        // Review starts unticked unless I turned it on in Settings.
+        requiresApproval: settings.approvalDefault === true,
         dueDate: defaultDue(tz),
         assignees: presetAssignees || [],
         onBehalfOf: presetOnBehalf || '',
-        ...(prefill ? fromPrefill(prefill) : {}),
+        team: presetTeam || '',
       });
       setOriginal(null);
       setShowStart(false);
@@ -288,7 +311,7 @@ export function AssignTaskModal({ open, onClose, onCreated, meta, prefill = null
     setPieces([]);
     setMore(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, editTask?._id, prefill, presetAssignees, presetOnBehalf]);
+  }, [open, editTask?._id, presetAssignees, presetOnBehalf]);
 
   const people = meta?.people || [];
   const myId = String(meta?.me || people.find((p) => p.relation === 'self')?._id || '');
@@ -353,7 +376,6 @@ export function AssignTaskModal({ open, onClose, onCreated, meta, prefill = null
         ...body,
         repeat: { frequency: 'ONCE' },
         ...(onBehalf ? { onBehalfOf: onBehalf } : {}),
-        ...(form.template ? { template: form.template } : {}),
       };
     }
     // Edit: only the fields that moved, so the edit trail says what changed.
@@ -448,7 +470,7 @@ export function AssignTaskModal({ open, onClose, onCreated, meta, prefill = null
       }
       onCreated?.(task);
       if (more) {
-        setForm((f) => ({ ...f, title: '', description: '', links: [], template: '' }));
+        setForm((f) => ({ ...f, title: '', description: '', links: [] }));
         setVoice(null);
         setFiles([]);
         setPieces([]);
@@ -492,17 +514,10 @@ export function AssignTaskModal({ open, onClose, onCreated, meta, prefill = null
         <div className="space-y-4">
           {/* ── Title & details ── */}
           <div>
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <label className="text-xs font-medium text-ink-soft" htmlFor="task-title">
-                Task title
-              </label>
-              {!editing && (
-                <button type="button" onClick={() => setTemplatesOpen(true)} className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline">
-                  <Bookmark className="h-3 w-3" /> {form.template ? 'From a template ✓' : 'Use a template'}
-                </button>
-              )}
-            </div>
-            <input id="task-title" autoFocus value={form.title} onChange={(e) => set({ title: e.target.value })} placeholder="e.g. Send the March sales report" maxLength={300} className={inputCls} />
+            <label className={labelCls} htmlFor="task-title">
+              Task title
+            </label>
+            <input id="task-title" autoFocus={finePointer()} value={form.title} onChange={(e) => set({ title: e.target.value })} placeholder="e.g. Send the March sales report" maxLength={300} className={inputCls} />
           </div>
           <textarea value={form.description} onChange={(e) => set({ description: e.target.value })} placeholder="A short description…" rows={3} maxLength={5000} className={textareaCls} />
 
@@ -551,21 +566,8 @@ export function AssignTaskModal({ open, onClose, onCreated, meta, prefill = null
           />
 
           {/* ── Where it is filed ── */}
+          <OrgField teams={teams} value={form.team} onChange={(id) => set({ team: id })} otherName={editTask?.team?.name || editTask?.teamName || ''} />
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className={labelCls} htmlFor="task-team">
-                <Users className="h-3 w-3" /> Team <span className="font-normal text-ink-faint">(optional)</span>
-              </label>
-              <select id="task-team" value={form.team} onChange={(e) => set({ team: e.target.value })} className={inputCls}>
-                <option value="">No team</option>
-                {teams.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-              {!teams.length && <p className="mt-1 text-[11px] text-ink-faint">Create a team on the Teams page to file tasks under it.</p>}
-            </div>
             <div>
               <label className={labelCls} htmlFor="task-category">
                 <Tag className="h-3 w-3" /> Category <span className="font-normal text-ink-faint">(optional)</span>
@@ -780,14 +782,6 @@ export function AssignTaskModal({ open, onClose, onCreated, meta, prefill = null
         onReady={(person) => {
           const id = String(person.id || person._id);
           setForm((f) => ({ ...f, [pinFor]: f[pinFor].includes(id) ? f[pinFor] : [...f[pinFor], id] }));
-        }}
-      />
-      <TemplatesDrawer
-        open={templatesOpen}
-        onClose={() => setTemplatesOpen(false)}
-        onUse={(p) => {
-          setForm((f) => ({ ...f, ...fromPrefill(p) }));
-          toast.success('Filled in from the template.');
         }}
       />
     </>

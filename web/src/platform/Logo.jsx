@@ -1,13 +1,13 @@
 /**
- * The product mark (the tile in /public/logo.svg) and wordmark. KARO's
- * wordmark is set in capitals with a little air between them.
+ * The product mark (the tile in /public/logo.svg) and wordmark. "Karo" is
+ * set bold and a little tight, like the phone app's sign-in screen.
  */
 import clsx from 'clsx';
 import { product } from '../product/config';
 
 /** The name, set as a wordmark. */
 export function Wordmark({ className }) {
-  return <span className={clsx('font-bold tracking-[0.06em]', className)}>{product.name || ''}</span>;
+  return <span className={clsx('font-bold tracking-tight', className)}>{product.name || ''}</span>;
 }
 
 export function Logo({ size = 32, withName = true, className, nameClassName }) {

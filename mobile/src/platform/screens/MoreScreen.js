@@ -1,6 +1,6 @@
 /**
  * More: me (name and Task Pin), the places that are not tabs (Contacts,
- * Teams, Dashboard; Recurring for the Super Admin), my settings, language,
+ * Organizations, Dashboard; Recurring for the Super Admin), my settings, language,
  * appearance, account, about and sign out.
  */
 import React, { useState } from 'react';
@@ -9,7 +9,7 @@ import productConfig from '../../product/config';
 import { languageName, tr, useLang } from '../../i18n';
 import { useContacts, useTeams } from '../hooks';
 import { themeLabel, ThemeSheet } from '../appearance';
-import { BookUser, Download, Info, KeyRound, Languages, LayoutDashboard, LogOut, RefreshCw, Settings, ShieldCheck, SunMoon, Trash, User, Users } from '../icons';
+import { BookUser, Building, Download, Info, KeyRound, Languages, LayoutDashboard, LogOut, RefreshCw, Settings, ShieldCheck, SunMoon, Trash, User } from '../icons';
 import { LanguageSheet } from '../language';
 import { pinOf, roleLabel } from '../pin';
 import { isSuperAdmin, useSession } from '../session';
@@ -61,7 +61,7 @@ export default function MoreScreen({ navigation }) {
             right={<Count n={contacts?.incoming?.length} />}
             onPress={() => navigation.navigate('Contacts')}
           />
-          <ListRow icon={Users} title={tr('Teams')} subtitle={tr('Work together and share tasks')} right={<Count n={teams?.invites?.length} />} onPress={() => navigation.navigate('Teams')} />
+          <ListRow icon={Building} title={tr('Organizations')} subtitle={tr('Work together and share tasks')} right={<Count n={teams?.invites?.length} />} onPress={() => navigation.navigate('Teams')} />
         </Section>
       ) : null}
 

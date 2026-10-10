@@ -19,10 +19,10 @@ export default function DeleteAccountScreen({ navigation }) {
 
   const points = [
     tr('Your name, email, mobile number, password, Task Pin and settings are deleted.'),
-    tr('Your contacts, team memberships and alerts are deleted.'),
+    tr('Your contacts, organization memberships and alerts are deleted.'),
     tr('Tasks only you were on are deleted, with their files and voice notes.'),
     tr('Tasks you shared stay with the other people, with your name shown as "Deleted user".'),
-    tr('Teams you own pass to an admin or member.'),
+    tr('Organizations you own pass to an admin or member.'),
   ];
 
   const submit = async () => {

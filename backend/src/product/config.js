@@ -152,7 +152,7 @@ const EDIT_FIELD_LABELS = {
   links: 'Links',
   loopUsers: 'Kept in the loop',
   assignees: 'Assigned to',
-  team: 'Team',
+  team: 'Organization',
   attachments: 'Files',
   voiceNote: 'Voice note',
 };

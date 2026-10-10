@@ -37,7 +37,7 @@ export function useInviteLink(whatsapp) {
 export function inviteMessage(user, url, whatsapp) {
   const lines = [
     tr('{name} invited you to {app}, so we can give each other tasks.', { name: user?.name || '', app: productConfig.name }),
-    tr('Tap to join (it gets you the app too): {url}', { url }),
+    tr('Tap to join (you get the {app} app too): {url}', { app: productConfig.name, url }),
   ];
   if (pinOf(user)) lines.push(tr('Or add my Task Pin: {pin}', { pin: pinOf(user) }));
   if (whatsapp) lines.push(tr('We can also WhatsApp each other about our tasks.'));

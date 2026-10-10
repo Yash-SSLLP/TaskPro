@@ -2,7 +2,7 @@
   "name": "taskpro-web",
   "private": true,
   "version": "1.0.0",
-  "description": "KARO web app",
+  "description": "Karo web app",
   "type": "module",
   "scripts": {
     "dev": "vite",

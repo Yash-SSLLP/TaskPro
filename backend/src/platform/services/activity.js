@@ -22,7 +22,12 @@
  *           team.created|updated|invited|joined|declined|left|member_removed|
  *           role_changed|transferred|deleted
  *   admin   admin.user_created|user_deleted|user_disabled|user_enabled|
- *           password_reset|signed_out|session_revoked|team_deleted|settings_changed
+ *           password_reset|signed_out|session_revoked|team_deleted|settings_changed,
+ *           the website: admin.site_settings_changed,
+ *           admin.site_page_saved|page_published|page_unpublished|page_deleted,
+ *           admin.site_post_saved|post_published|post_unpublished|post_deleted,
+ *           admin.site_media_uploaded|media_deleted
+ *           (target { kind: 'site', id, label or name }, meta { path | slug | name })
  *   tasks   task.<kind> for every task history row (product/models/TaskUpdate.js)
  *
  * Never put a password, a token or anything secret in `meta`.
@@ -53,6 +58,8 @@ const idOf = (x) => (x && (x._id || x.id) ? String(x._id || x.id) : x ? String(x
 const personTarget = (u) => (u ? { kind: 'user', id: idOf(u), label: u.name || '' } : undefined);
 /** A team as a row's target. */
 const teamTarget = (t) => (t ? { kind: 'team', id: idOf(t), label: t.name || '' } : undefined);
+/** A target as stored: `name` is taken as the label (the website's rows say `name`). */
+const targetOf = (t) => (t && t.label === undefined && t.name !== undefined ? { kind: t.kind, id: t.id, label: t.name } : t);
 
 const SECRET_KEY = /password|passwd|token|secret|hash/i;
 
@@ -97,11 +104,12 @@ async function record({ action, req, actor, actorName, system = false, target, m
     const row = {
       at: at || new Date(),
       actor: who?._id || who?.id || null,
-      actorName: actorName || who?.name || (system ? 'KARO' : undefined),
+      // Lazy: the product module loads models that write here.
+      actorName: actorName || who?.name || (system ? require('../../product').name : undefined),
       actorRole: role,
       action,
       group: groupOf(action),
-      target: target || (action.startsWith('profile.') && who ? personTarget(who) : undefined),
+      target: targetOf(target) || (action.startsWith('profile.') && who ? personTarget(who) : undefined),
       meta: scrub(meta),
       ip: r?.ip || undefined,
       platform: platformOf(r),
@@ -168,7 +176,9 @@ function buildFilter(query = {}, { tz = 'Asia/Kolkata' } = {}) {
   const q = one(query.q, 'q');
   if (q) {
     const rx = new RegExp(escapeRe(q.slice(0, 100)), 'i');
-    and.push({ $or: [{ actorName: rx }, { 'target.label': rx }, { 'meta.identifier': rx }, { 'meta.person.name': rx }] });
+    and.push({
+      $or: [{ actorName: rx }, { 'target.label': rx }, { 'meta.identifier': rx }, { 'meta.person.name': rx }, { 'meta.path': rx }, { 'meta.slug': rx }],
+    });
   }
   const from = one(query.from, 'from');
   const to = one(query.to, 'to');

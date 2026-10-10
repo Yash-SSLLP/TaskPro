@@ -1,14 +1,17 @@
 /**
  * The panel behind the Filter button: due date (incl. custom), category,
  * people, priority, status, the overdue / late / more-time flags, sub-tasks,
- * team, and the order. Changes apply on "Show tasks"; Escape leaves the list
- * as it was. Every filter runs on the server.
+ * and the order. Changes apply on "Show tasks"; Escape leaves the list as it
+ * was. Every filter runs on the server.
+ *
+ * The order of the organization tabs is here too, but it is no filter: each
+ * move is saved at once (`onTabOrder(keys)`, `[]` for the default order).
  */
 import { useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
-import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, Flag, Layers, Tag, User, Users } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, Flag, Layers, ListOrdered, Tag, User } from 'lucide-react';
 import { Button, Modal, Switch } from '../../platform/ui';
-import { RANGES, STATUS_STYLES, TASK_PRIORITY, TASK_STATUS, priorityColor, statusLabel, tintStyle } from '../lifecycle';
+import { RANGES, STATUS_STYLES, TASK_PRIORITY, TASK_STATUS, orgTabLabel, priorityColor, statusLabel, tintStyle } from '../lifecycle';
 import { PeoplePicker } from './PeoplePicker';
 
 export const DEFAULT_FILTERS = {
@@ -24,7 +27,6 @@ export const DEFAULT_FILTERS = {
   late: '',
   moreTime: '',
   includeSubtasks: '',
-  team: '',
   sort: 'due',
   dir: 'desc',
 };
@@ -52,8 +54,7 @@ export function activeFilterCount(f = {}) {
     (f.overdue ? 1 : 0) +
     (f.late ? 1 : 0) +
     (f.moreTime ? 1 : 0) +
-    (f.includeSubtasks ? 1 : 0) +
-    (f.team ? 1 : 0)
+    (f.includeSubtasks ? 1 : 0)
   );
 }
 
@@ -71,6 +72,56 @@ function Section({ icon: Icon, title, hint, children }) {
   );
 }
 
+/** All, General and each organization, with ↑/↓: the first row is the tab Tasks opens on. */
+function TabOrder({ tabs, reordered, onOrder }) {
+  const move = (i, by, e) => {
+    const pressed = e.currentTarget;
+    const keys = tabs.map((t) => t.key);
+    [keys[i], keys[i + by]] = [keys[i + by], keys[i]];
+    onOrder(keys);
+    // Moved to the top or the bottom, the pressed arrow turns off: keep the keyboard on that row's other arrow.
+    setTimeout(() => {
+      if (pressed.disabled) pressed.parentElement?.querySelector('button:not(:disabled)')?.focus();
+    });
+  };
+  const arrow = 'grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-line text-ink-soft transition hover:border-slate-300 hover:text-brand disabled:opacity-40';
+  return (
+    <>
+      <ol className="divide-y divide-line overflow-hidden rounded-xl border border-line">
+        {tabs.map((t, i) => {
+          const label = orgTabLabel(t);
+          return (
+            <li key={t.key} className="flex min-h-[44px] items-center gap-2 py-1.5 pl-3 pr-1.5">
+              <span className="min-w-0 flex-1 truncate text-sm text-ink">{label}</span>
+              {i === 0 && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-semibold text-brand">Opens first</span>}
+              <button type="button" disabled={i === 0} onClick={(e) => move(i, -1, e)} aria-label={`Move ${label} up`} className={arrow}>
+                <ArrowUp className="h-4 w-4" />
+              </button>
+              <button type="button" disabled={i === tabs.length - 1} onClick={(e) => move(i, 1, e)} aria-label={`Move ${label} down`} className={arrow}>
+                <ArrowDown className="h-4 w-4" />
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+      {reordered && (
+        <button
+          type="button"
+          onClick={(e) => {
+            const list = e.currentTarget.previousElementSibling;
+            onOrder([]);
+            // The button goes with the custom order: keep the keyboard in the list.
+            setTimeout(() => list?.querySelector('button:not(:disabled)')?.focus());
+          }}
+          className="mt-2 min-h-[28px] text-xs font-medium text-brand hover:underline"
+        >
+          Reset order
+        </button>
+      )}
+    </>
+  );
+}
+
 function Pill({ on, onClick, children, style }) {
   return (
     <button
@@ -85,7 +136,7 @@ function Pill({ on, onClick, children, style }) {
   );
 }
 
-export function TaskFilters({ open, onClose, meta, categories = [], scope = 'mine', value = DEFAULT_FILTERS, onApply }) {
+export function TaskFilters({ open, onClose, meta, categories = [], scope = 'mine', value = DEFAULT_FILTERS, onApply, tabs = null, tabsReordered = false, onTabOrder }) {
   const [draft, setDraft] = useState(value);
   useEffect(() => {
     if (open) setDraft({ ...DEFAULT_FILTERS, ...value });
@@ -100,7 +151,6 @@ export function TaskFilters({ open, onClose, meta, categories = [], scope = 'min
   const sorts = (meta?.sorts?.length ? meta.sorts : FALLBACK_SORTS).filter((s) => s.key !== 'points');
   const dir = draft.dir || naturalDir(sorts, draft.sort);
   const count = useMemo(() => activeFilterCount(draft), [draft]);
-  const teams = meta?.teams || [];
 
   if (!open) return null;
 
@@ -178,8 +228,8 @@ export function TaskFilters({ open, onClose, meta, categories = [], scope = 'min
               const colour = priorityColor(p);
               const on = split(draft.priority).includes(p);
               return (
-                <Pill key={p} on={on} onClick={() => toggleIn('priority', p)} style={on ? { backgroundColor: colour.solid, borderColor: colour.solid, color: '#fff' } : tintStyle(colour)}>
-                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: on ? '#fff' : colour.solid }} />
+                <Pill key={p} on={on} onClick={() => toggleIn('priority', p)} style={on ? { backgroundColor: colour.solid, borderColor: colour.solid, color: 'rgb(var(--on-solid))' } : tintStyle(colour)}>
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: on ? 'rgb(var(--on-solid))' : colour.solid }} />
                   {p}
                 </Pill>
               );
@@ -206,18 +256,9 @@ export function TaskFilters({ open, onClose, meta, categories = [], scope = 'min
           </div>
         </Section>
 
-        {teams.length > 0 && scope !== 'team' && (
-          <Section icon={Users} title="Team">
-            <div className="flex flex-wrap gap-1.5">
-              <Pill on={!draft.team} onClick={() => set({ team: '' })}>
-                Any
-              </Pill>
-              {teams.map((t) => (
-                <Pill key={t.id} on={draft.team === String(t.id)} onClick={() => set({ team: String(t.id) })}>
-                  {t.name}
-                </Pill>
-              ))}
-            </div>
+        {tabs?.length > 1 && onTabOrder && (
+          <Section icon={ListOrdered} title="Tab order" hint="Saved as you move them. Tasks opens on the first tab.">
+            <TabOrder tabs={tabs} reordered={tabsReordered} onOrder={onTabOrder} />
           </Section>
         )}
 

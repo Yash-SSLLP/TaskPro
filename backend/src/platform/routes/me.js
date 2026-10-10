@@ -23,7 +23,7 @@ router.patch('/settings', async (req, res) => {
   const settings = product.settings.merge(current?.settings, req.body);
   await User.updateOne({ _id: req.user._id }, { $set: { settings } });
   await require('../services/activity').record({ req, action: 'profile.settings_changed', meta: { fields: Object.keys(req.body || {}).slice(0, 12) } });
-  res.json({ settings });
+  res.json({ settings: product.settings.read(settings) });
 });
 
 // ---------------------------------------------------------------- profile photo

@@ -209,7 +209,7 @@ export function freshness(s, latest) {
   return null;
 }
 
-/** "KARO 1.0.3 (4)" with a badge saying whether it is the latest. */
+/** "Karo 1.0.3 (4)" with a badge saying whether it is the latest. */
 export function VersionTag({ s, latest, compact = false }) {
   const phone = s?.platform === 'android' || s?.platform === 'ios';
   if (!phone) {

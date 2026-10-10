@@ -18,7 +18,7 @@ self.addEventListener('push', (event) => {
   }
   const data = p.data || {};
   event.waitUntil((async () => {
-    await self.registration.showNotification(p.title || 'KARO', {
+    await self.registration.showNotification(p.title || 'Karo', {
       body: p.body || '',
       data,
       icon: 'icons/icon-192.png',

@@ -1,5 +1,5 @@
 /**
- * Everyone on KARO: search, filter by status, add someone, and open one
+ * Everyone on Karo: search, filter by status, add someone, and open one
  * to see and change everything about them (PersonDrawer).
  */
 import { useState } from 'react';

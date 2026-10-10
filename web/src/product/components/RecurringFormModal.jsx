@@ -11,13 +11,13 @@ import { CalendarDays, Eye, Link2, Plus, Repeat, Tag, UserCheck, Users, X } from
 import { toast } from 'sonner';
 import { dayKey } from '../../platform/format';
 import { useSettings } from '../../platform/session';
-import { Button, Modal } from '../../platform/ui';
+import { Button, Modal, finePointer } from '../../platform/ui';
 import * as T from '../api';
 import { useCategories } from '../hooks';
 import {
   DEFAULT_LEAD_DAYS, FREQUENCY_LABELS, MAX_LEAD_DAYS, MONTH_NAMES, NTH_WEEKS, RECUR_FREQUENCIES, WEEKDAY_NAMES, idOf, ordinal, patternLabel,
 } from '../lifecycle';
-import { PriorityPills, ReviewCheck, iconBtn, inputCls, labelCls, textareaCls } from './AssignTaskModal';
+import { OrgField, PriorityPills, ReviewCheck, iconBtn, inputCls, labelCls, textareaCls } from './AssignTaskModal';
 import { PeoplePicker } from './PeoplePicker';
 import { ReminderEditor, Stepper, WeekdayPicker, chipCls, segOption, segTrack } from './Reminders';
 import { VoiceRecorder } from './VoiceNote';
@@ -37,9 +37,12 @@ function emptyForm(tz, approvalDefault) {
     onBehalfOf: '',
     loopUsers: [],
     team: '',
+    // An organization I am not in (an older schedule's): its name, shown as chosen.
+    teamName: '',
     category: '',
     priority: 'Medium',
-    requiresApproval: approvalDefault !== false,
+    // Review starts unticked unless I turned it on in Settings.
+    requiresApproval: approvalDefault === true,
     links: [],
     reminders: [],
     frequency: 'DAILY',
@@ -87,6 +90,7 @@ export function RecurringFormModal({ open, onClose, onSaved, meta, scheduleId = 
           assignees: (sc.assignees || []).map(idOf).filter(Boolean),
           loopUsers: (sc.loopUsers || []).map(idOf).filter(Boolean),
           team: idOf(sc.team) || '',
+          teamName: sc.team?.name || sc.teamName || '',
           category: sc.category || '',
           priority: sc.priority || 'Medium',
           requiresApproval: sc.requiresApproval !== false,
@@ -211,7 +215,7 @@ export function RecurringFormModal({ open, onClose, onSaved, meta, scheduleId = 
           <label className={labelCls} htmlFor="rec-title">
             Task title
           </label>
-          <input id="rec-title" autoFocus value={form.title} onChange={(e) => set({ title: e.target.value })} placeholder="e.g. Count and lock the cash" maxLength={300} className={inputCls} />
+          <input id="rec-title" autoFocus={finePointer()} value={form.title} onChange={(e) => set({ title: e.target.value })} placeholder="e.g. Count and lock the cash" maxLength={300} className={inputCls} />
         </div>
         <textarea value={form.description} onChange={(e) => set({ description: e.target.value })} rows={2} maxLength={5000} placeholder="A short description…" className={textareaCls} />
 
@@ -221,20 +225,8 @@ export function RecurringFormModal({ open, onClose, onSaved, meta, scheduleId = 
         )}
         <PeoplePicker label="Keep in the loop" icon={Eye} people={people} value={form.loopUsers} onChange={(ids) => set({ loopUsers: ids })} placeholder="Nobody" />
 
+        <OrgField teams={teams} value={form.team} onChange={(id) => set({ team: id })} otherName={form.teamName} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className={labelCls} htmlFor="rec-team">
-              <Users className="h-3 w-3" /> Team <span className="font-normal text-ink-faint">(optional)</span>
-            </label>
-            <select id="rec-team" value={form.team} onChange={(e) => set({ team: e.target.value })} className={inputCls}>
-              <option value="">No team</option>
-              {teams.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </div>
           <div>
             <label className={labelCls} htmlFor="rec-category">
               <Tag className="h-3 w-3" /> Category <span className="font-normal text-ink-faint">(optional)</span>

@@ -2,7 +2,7 @@
  * Recurring — the schedules (not the tasks they raise). Each occurrence is an
  * ordinary task that lands in the doer's Tasks when it is due to appear.
  * Pause / resume, run now, edit, delete. Open to everyone; the server decides
- * who may change which (creator, the team's owner/admin, the Super Admin).
+ * who may change which (creator, the organization's owner/admin, the Super Admin).
  *
  * The cards are the HRMS's (TaskRecurring there): a brand tile, the title and
  * its pattern, a small on/off switch, who and when, and labelled small buttons.

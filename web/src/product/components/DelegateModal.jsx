@@ -139,8 +139,8 @@ export function PieceEditor({ rows, onRows, people = [], defaultOpenTo = [], max
                   people={people}
                   value={row.openTo}
                   onChange={(ids) => set(i, { openTo: ids })}
-                  placeholder="Your team-mates"
-                  hint={(row.openTo || []).length ? 'The first to pick it up gets it.' : 'Left empty, it goes to your team-mates — the first to pick it up gets it.'}
+                  placeholder="Your organization members"
+                  hint={(row.openTo || []).length ? 'The first to pick it up gets it.' : 'Left empty, it goes to your organization members — the first to pick it up gets it.'}
                 />
               </div>
             )}

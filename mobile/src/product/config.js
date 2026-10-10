@@ -1,5 +1,5 @@
 /**
- * KARO, as the shared app shell sees it.
+ * Karo, as the shared app shell sees it.
  *
  * This is the one file the platform code reads to learn which product it is
  * running: its name, logo, storage keys, the health check it expects from
@@ -9,7 +9,7 @@
 
 const productConfig = {
   key: 'taskpro',
-  name: 'KARO',
+  name: 'Karo',
   tagline: 'Give tasks to anyone by their Task Pin',
   logo: require('../../assets/logo.png'),
 
@@ -22,7 +22,7 @@ const productConfig = {
   /**
    * Turn an alert link into a navigation target:
    *   /tasks/<id>   task detail          /contacts     contacts and requests
-   *   /teams/<id>   team detail          /recurring    Recurring
+   *   /teams/<id>   organization detail  /recurring    Recurring
    *   /alerts       Alerts               /tasks        the task list
    *   /calendar     Calendar; ?date=YYYY-MM-DD opens that day (a reminder's alert)
    * @returns {{ name: string, params?: object } | null}

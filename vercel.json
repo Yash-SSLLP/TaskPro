@@ -24,6 +24,30 @@
       }
     },
     {
+      "source": "/",
+      "destination": {
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/(features|for|about|contact|privacy|terms|blog|rss\\.xml|sitemap\\.xml|robots\\.txt|llms\\.txt)",
+      "destination": {
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/(about|contact|privacy|terms)/",
+      "destination": {
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/(features|for|blog|media)/(.*)",
+      "destination": {
+        "service": "backend"
+      }
+    },
+    {
       "source": "/(.*)",
       "destination": {
         "service": "web"

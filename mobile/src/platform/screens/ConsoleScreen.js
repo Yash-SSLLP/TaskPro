@@ -2,11 +2,11 @@
  * The Super Admin console:
  *   Overview   who is online now, people (active this week, new this week,
  *              switched off), the app (on the latest, out of date, web only,
- *              never reported), teams, tasks; and the ways in to Who is
+ *              never reported), organizations, tasks; and the ways in to Who is
  *              online, App versions and the Activity log
  *   People     search by name, pin, email, phone or username; filter by status;
  *              add a person; open one for everything about them
- *   Teams      search; open one to see its members or delete it
+ *   Organizations  search; open one to see its members or delete it
  * All tasks is its own tab.
  */
 import React, { useEffect, useState } from 'react';
@@ -14,14 +14,15 @@ import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { useQuery } from '@tanstack/react-query';
 import Logs from 'lucide-react-native/icons/logs';
 import Wifi from 'lucide-react-native/icons/wifi';
+import productConfig from '../../product/config';
 import { tr } from '../../i18n';
 import { platformApi, platformKeys } from '../endpoints';
 import { relativeTime } from '../format';
 import { usePullRefresh, useRefetchOnFocus } from '../hooks';
-import { LayoutDashboard, Search, Smartphone, User, UserPlus, Users, X } from '../icons';
+import { Building, LayoutDashboard, Search, Smartphone, User, UserPlus, X } from '../icons';
 import { pinOf } from '../pin';
 import { colors, font, radius, space, type } from '../theme';
-import { Badge, Button, Card, Chip, ChipRow, EmptyState, ErrorState, Header, HeaderIcon, ListRow, Screen, Segmented, SkeletonList } from '../ui';
+import { Badge, Button, Card, Chip, ChipRow, EmptyState, ErrorState, Header, HeaderIcon, ListRow, Screen, ScrollSegmented, SkeletonList } from '../ui';
 import { freshness, PersonAvatar, useLivePolling, useRelease } from './admin/shared';
 
 function useDebounced(value, ms = 350) {
@@ -99,9 +100,9 @@ function Overview({ navigation, onTab }) {
             <Tile label={tr('Active this week')} value={d.activeWeek} />
             <Tile label={tr('New this week')} value={d.newWeek} />
             <Tile label={tr('Switched off')} value={d.disabled} tint={d.disabled ? colors.danger : undefined} onPress={() => onTab('people', 'disabled')} />
-            <Tile label={tr('Teams')} value={d.teams} onPress={() => onTab('teams')} />
+            <Tile label={tr('Organizations')} value={d.teams} onPress={() => onTab('teams')} />
           </View>
-          <Text style={styles.group}>{tr('The app')}</Text>
+          <Text style={styles.group}>{tr('{app} app', { app: productConfig.name })}</Text>
           <View style={styles.tiles}>
             <Tile label={tr('On the latest')} value={latest} tint={latest ? colors.success : undefined} onPress={() => versions('latest')} />
             <Tile label={tr('Out of date')} value={behind} tint={behind ? colors.warning : undefined} onPress={() => versions('behind')} />
@@ -118,7 +119,7 @@ function Overview({ navigation, onTab }) {
           </View>
           <Card padded={false} style={styles.entries}>
             <ListRow icon={Wifi} title={tr('Who is online')} subtitle={tr('Every device signed in, now, today or this week')} onPress={() => navigation.navigate('AdminOnline')} />
-            <ListRow icon={Smartphone} title={tr('App versions')} subtitle={tr('Which KARO each person is on')} onPress={() => navigation.navigate('AdminAppVersions')} style={styles.rule} />
+            <ListRow icon={Smartphone} title={tr('App versions')} subtitle={tr('Which {app} version each person is on', { app: productConfig.name })} onPress={() => navigation.navigate('AdminAppVersions')} style={styles.rule} />
             <ListRow icon={Logs} title={tr('Activity log')} subtitle={tr('Sign-ins, task moves and every change')} onPress={() => navigation.navigate('AdminActivity')} style={styles.rule} />
             <ListRow icon={LayoutDashboard} title={tr('Dashboard')} subtitle={tr('Who finished what, and on time')} onPress={() => navigation.navigate('Dashboard')} style={styles.rule} />
           </Card>
@@ -210,16 +211,16 @@ function Teams({ navigation }) {
       keyboardShouldPersistTaps="handled"
       ListHeaderComponent={
         <View style={styles.gap}>
-          <SearchBox value={term} onChange={setTerm} placeholder={tr('Search teams')} />
+          <SearchBox value={term} onChange={setTerm} placeholder={tr('Search organizations')} />
           {q.isPending ? <SkeletonList rows={5} /> : null}
           {q.isError ? <ErrorState compact error={q.error} onRetry={q.refetch} /> : null}
         </View>
       }
-      ListEmptyComponent={!q.isPending && !q.isError ? <EmptyState compact icon={Users} title={tr('No teams found')} /> : null}
+      ListEmptyComponent={!q.isPending && !q.isError ? <EmptyState compact icon={Building} title={tr('No organizations found')} /> : null}
       renderItem={({ item: t }) => (
         <Card padded={false} style={styles.rowCard}>
           <ListRow
-            icon={Users}
+            icon={Building}
             title={t.name}
             subtitle={[tr('Owner: {name}', { name: t.owner?.name || '—' }), t.memberCount === 1 ? tr('1 member') : tr('{n} members', { n: t.memberCount || 0 })].join(' · ')}
             onPress={() => navigation.navigate('TeamDetail', { id: t.id })}
@@ -256,11 +257,12 @@ export default function ConsoleScreen({ navigation }) {
       }
     >
       <View style={styles.tabs}>
-        <Segmented
+        {/* Sized to its words: "Organizations" (and its Tamil or Malayalam) is cut off in a third of a 360 dp screen. */}
+        <ScrollSegmented
           options={[
             { value: 'overview', label: tr('Overview') },
             { value: 'people', label: tr('People') },
-            { value: 'teams', label: tr('Teams') },
+            { value: 'teams', label: tr('Organizations') },
           ]}
           value={tab}
           onChange={(v) => go(v)}

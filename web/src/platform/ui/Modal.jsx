@@ -2,6 +2,13 @@
  * Dialogs. `Modal` is centred on desktop and slides up from the bottom on a
  * phone; `Drawer` slides in from the right (details panels). Both close on
  * Escape and on a click outside, and keep focus inside while open.
+ *
+ * THE PHONE KEYBOARD: iOS Safari lays it over the page without shrinking
+ * anything, so a sheet sits `--kb-inset` up from the bottom and is no taller
+ * than `--vv-h` allows (both kept by main.jsx from the visual viewport), and
+ * a field scrolls into view inside the sheet once the keyboard is up. On a
+ * touch screen the sheet does not focus its first field itself, so the
+ * keyboard does not cover a sheet nobody has read yet.
  */
 import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -11,6 +18,13 @@ import { X } from 'lucide-react';
 // Open dialogs, innermost last: only the top one answers Escape and Tab, so a
 // prompt opened over a form closes alone instead of taking the form with it.
 const stack = [];
+
+/**
+ * A mouse or trackpad: a field in a dialog may focus itself. On a touch screen
+ * that pops the keyboard over a sheet nobody has read yet, so a field's own
+ * `autoFocus` is `autoFocus={finePointer()}`.
+ */
+export const finePointer = () => window.matchMedia?.('(pointer: fine)').matches ?? true;
 
 function useDialogBehaviour(open, onClose, panelRef, focusFirst = true) {
   // The latest onClose, read at key time: a parent passing an inline function
@@ -47,13 +61,28 @@ function useDialogBehaviour(open, onClose, panelRef, focusFirst = true) {
     document.addEventListener('keydown', onKey);
     const overflow = stack.length > 1 ? 'hidden' : document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    // Focus the first field (or the panel) once it has rendered.
+    // Focus the first field (or the panel) once it has rendered; on a touch
+    // screen only the panel, unless a field has already taken focus itself.
+    const panel = panelRef.current;
+    const fine = finePointer();
+    const typeFirst = focusFirst && fine;
     const t = setTimeout(() => {
-      const el = (focusFirst && panelRef.current?.querySelector('[autofocus],input:not([type=hidden]),textarea,select')) || panelRef.current;
-      el?.focus?.({ preventScroll: !focusFirst });
+      if (!fine && panel?.contains(document.activeElement)) return;
+      const el = (typeFirst && panel?.querySelector('[autofocus],input:not([type=hidden]),textarea,select')) || panel;
+      el?.focus?.({ preventScroll: !typeFirst });
     }, 30);
+    // Touch screens: once the keyboard has come up, bring the field being typed in into view.
+    let reveal = 0;
+    const onFocusIn = (e) => {
+      if (fine || !e.target.matches?.('input,textarea,select,[contenteditable="true"]')) return;
+      clearTimeout(reveal);
+      reveal = setTimeout(() => e.target.scrollIntoView?.({ block: 'nearest' }), 250);
+    };
+    panel?.addEventListener('focusin', onFocusIn);
     return () => {
       clearTimeout(t);
+      clearTimeout(reveal);
+      panel?.removeEventListener('focusin', onFocusIn);
       const at = stack.indexOf(id);
       if (at >= 0) stack.splice(at, 1);
       document.removeEventListener('keydown', onKey);
@@ -104,7 +133,7 @@ export function Modal({ open, onClose, title, subtitle, actions, compact = false
   if (!open) return null;
   const width = { sm: 'sm:max-w-sm', md: 'sm:max-w-lg', lg: 'sm:max-w-2xl', xl: 'sm:max-w-5xl' }[size];
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="presentation">
+    <div className="fixed inset-0 bottom-[var(--kb-inset,0px)] z-50 flex items-end justify-center sm:items-center sm:p-4" role="presentation">
       <div className="modal-backdrop absolute inset-0 bg-black/40" onClick={onClose} aria-hidden />
       <div
         ref={panelRef}
@@ -112,7 +141,7 @@ export function Modal({ open, onClose, title, subtitle, actions, compact = false
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
         tabIndex={-1}
-        className={clsx('modal-panel relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl bg-card outline-none sm:rounded-[1.1rem]', width)}
+        className={clsx('modal-panel relative flex max-h-[calc(var(--vv-h,100vh)*0.92)] w-full flex-col overflow-hidden rounded-t-3xl bg-card outline-none sm:rounded-[1.1rem]', width)}
       >
         {tone && <div className={clsx('h-1.5 w-full', tone)} />}
         <Header id={titleId} title={title} subtitle={subtitle} onClose={onClose} actions={actions} compact={compact} />
@@ -130,7 +159,7 @@ export function Drawer({ open, onClose, title, subtitle, children, footer, wide 
   useDialogBehaviour(open, onClose, panelRef);
   if (!open) return null;
   return createPortal(
-    <div className="fixed inset-0 z-50 flex justify-end" role="presentation">
+    <div className="fixed inset-0 bottom-[var(--kb-inset,0px)] z-50 flex justify-end" role="presentation">
       <div className="modal-backdrop absolute inset-0 bg-black/30" onClick={onClose} aria-hidden />
       <div
         ref={panelRef}

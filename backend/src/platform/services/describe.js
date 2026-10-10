@@ -3,7 +3,7 @@
  * what happened, and a short coloured badge.
  *
  *   "Asha Rao accepted the task “TSK-2026-00008 Check delivery schedule”."
- *   "Ravi Test signed in on Android (KARO 1.0.3)."
+ *   "Ravi Test signed in on Android (Karo 1.0.3)."
  *   "Someone tried to sign in as ra…@example.com — there is no such account."
  *   "Super Admin deleted Priya Shah's account."
  *
@@ -12,7 +12,8 @@
  * (something is pending), info, neutral.
  *
  * The words are written from what the row itself carries (names and labels as
- * they were at the time), never looked up again.
+ * they were at the time), never looked up again. Teams are "organizations"
+ * to the people reading this.
  */
 
 const quote = (s) => `“${s}”`;
@@ -28,20 +29,23 @@ function listWords(items) {
 
 const badge = (text, tone = 'neutral') => ({ text, tone });
 
-/** Who did it, as the sentence names them. */
+// The product's name (product/index.js), read when needed: no load cycle.
+const appName = () => require('../../product').name;
+
+/** Who did it, as the sentence names them. The system goes by the product's name (older rows saved another). */
 function actorLabel(row) {
-  if (row?.actorName) return row.actorName;
-  return row?.meta?.system ? 'KARO' : 'Someone';
+  if (row?.meta?.system) return appName();
+  return row?.actorName || 'Someone';
 }
 
 const PLATFORM_WORDS = { web: 'the web', android: 'Android', ios: 'iPhone' };
 
-/** " on Android (Pixel 7, KARO 1.0.3)", " on the web (Chrome on Windows)", or ''. */
+/** " on Android (Pixel 7, Karo 1.0.3)", " on the web (Chrome on Windows)", or ''. */
 function onDevice(row) {
   const m = row.meta || {};
   const platform = m.platform || row.platform;
   const where = PLATFORM_WORDS[platform];
-  const details = platform === 'web' ? [m.deviceName] : [m.deviceName, m.appVersion ? `KARO ${m.appVersion}` : ''];
+  const details = platform === 'web' ? [m.deviceName] : [m.deviceName, m.appVersion ? `${appName()} ${m.appVersion}` : ''];
   const detail = details.filter(Boolean).join(', ');
   if (!where) return detail ? ` on ${detail}` : '';
   return ` on ${where}${detail ? ` (${detail})` : ''}`;
@@ -112,7 +116,7 @@ function taskWords(row, who) {
   const note = String(m.note || '');
   switch (kind) {
     case 'CREATED': {
-      if (m.system) return [`KARO raised ${task}.`, badge('Created', 'info')];
+      if (m.system) return [`${who} raised ${task}.`, badge('Created', 'info')];
       const forWhom = nameAfter(note, /on behalf of (.+?)\.?$/);
       return [`${who} created ${task}${forWhom ? ` on behalf of ${forWhom}` : ''}.`, badge('Created', 'info')];
     }
@@ -132,7 +136,7 @@ function taskWords(row, who) {
     case 'ASSIGNED':
       return [`${who} assigned ${task}.`, badge('Assigned', 'info')];
     case 'REMINDER':
-      return [m.system ? `KARO sent a reminder about ${task}.` : `${who} sent a reminder about ${task}.`, badge('Reminder')];
+      return [`${who} sent a reminder about ${task}.`, badge('Reminder')];
     case 'ACCEPTED':
       return [`${who} accepted ${task}.`, badge('Accepted', 'good')];
     case 'REJECTED':
@@ -176,6 +180,24 @@ function taskWords(row, who) {
   }
 }
 
+// ---------------------------------------------------------------- website
+
+/** "the page /features" (from the row's meta or target). */
+const pageName = (row) => `the page ${row.meta?.path || row.target?.label || ''}`.trim();
+
+/** "the blog post “What is a Task Pin?”", or by its address when it has no title yet. */
+function postName(row) {
+  const title = row.target?.label;
+  if (title) return `the blog post ${quote(title)}`;
+  return row.meta?.slug ? `the blog post /blog/${row.meta.slug}` : 'a blog post';
+}
+
+/** "the image “shop-front.webp”" */
+function mediaName(row) {
+  const name = row.meta?.name || row.target?.label;
+  return name ? `the image ${quote(name)}` : 'an image';
+}
+
 // ---------------------------------------------------------------- the table
 
 const SENTENCES = {
@@ -211,33 +233,33 @@ const SENTENCES = {
   ],
   'contact.whatsapp_off': (row, who) => [`${who} switched off WhatsApp reminders with ${row.target?.label || 'someone'}.`, badge('WhatsApp off')],
 
-  'team.created': (row, who) => [`${who} created the team ${quote(row.target?.label)}.`, badge('Team created', 'good')],
+  'team.created': (row, who) => [`${who} created the organization ${quote(row.target?.label)}.`, badge('Organization created', 'good')],
   'team.updated': (row, who) => {
     const renamed = (row.meta?.changes || []).find((c) => c.field === 'name');
-    if (renamed) return [`${who} renamed the team ${quote(renamed.before)} to ${quote(renamed.after)}.`, badge('Team edited')];
-    return [`${who} changed the description of the team ${quote(row.target?.label)}.`, badge('Team edited')];
+    if (renamed) return [`${who} renamed the organization ${quote(renamed.before)} to ${quote(renamed.after)}.`, badge('Organization edited')];
+    return [`${who} changed the description of the organization ${quote(row.target?.label)}.`, badge('Organization edited')];
   },
   'team.invited': (row, who) => [
-    `${who} invited ${row.meta?.person?.name || 'someone'} to the team ${quote(row.target?.label)}${row.meta?.role === 'admin' ? ' as an admin' : ''}.`,
+    `${who} invited ${row.meta?.person?.name || 'someone'} to the organization ${quote(row.target?.label)}${row.meta?.role === 'admin' ? ' as an admin' : ''}.`,
     badge('Invited', 'wait'),
   ],
-  'team.joined': (row, who) => [`${who} joined the team ${quote(row.target?.label)}.`, badge('Joined', 'good')],
-  'team.declined': (row, who) => [`${who} declined the invite to the team ${quote(row.target?.label)}.`, badge('Declined')],
-  'team.left': (row, who) => [`${who} left the team ${quote(row.target?.label)}.`, badge('Left')],
+  'team.joined': (row, who) => [`${who} joined the organization ${quote(row.target?.label)}.`, badge('Joined', 'good')],
+  'team.declined': (row, who) => [`${who} declined the invite to the organization ${quote(row.target?.label)}.`, badge('Declined')],
+  'team.left': (row, who) => [`${who} left the organization ${quote(row.target?.label)}.`, badge('Left')],
   'team.member_removed': (row, who) => {
     const name = row.meta?.person?.name || 'someone';
-    if (row.meta?.invite) return [`${who} cancelled ${possessive(name)} invite to the team ${quote(row.target?.label)}.`, badge('Invite cancelled')];
-    return [`${who} removed ${name} from the team ${quote(row.target?.label)}.`, badge('Removed')];
+    if (row.meta?.invite) return [`${who} cancelled ${possessive(name)} invite to the organization ${quote(row.target?.label)}.`, badge('Invite cancelled')];
+    return [`${who} removed ${name} from the organization ${quote(row.target?.label)}.`, badge('Removed')];
   },
   'team.role_changed': (row, who) => [
-    `${who} made ${row.meta?.person?.name || 'someone'} ${row.meta?.role === 'admin' ? 'an admin' : 'a member'} of the team ${quote(row.target?.label)}.`,
+    `${who} made ${row.meta?.person?.name || 'someone'} ${row.meta?.role === 'admin' ? 'an admin' : 'a member'} of the organization ${quote(row.target?.label)}.`,
     badge('Role changed', 'info'),
   ],
   'team.transferred': (row, who) => [
-    `${who} handed the team ${quote(row.target?.label)} over to ${row.meta?.person?.name || 'someone'}.`,
+    `${who} handed the organization ${quote(row.target?.label)} over to ${row.meta?.person?.name || 'someone'}.`,
     badge('Handed over', 'info'),
   ],
-  'team.deleted': (row, who) => [`${who} deleted the team ${quote(row.target?.label)}.`, badge('Team deleted', 'bad')],
+  'team.deleted': (row, who) => [`${who} deleted the organization ${quote(row.target?.label)}.`, badge('Organization deleted', 'bad')],
 
   'admin.user_created': (row, who) => [
     `${who} added ${row.target?.label || 'someone'}${row.meta?.login ? ` (${row.meta.login})` : ''} with a temporary password.`,
@@ -252,11 +274,23 @@ const SENTENCES = {
     return [`${who} signed ${row.target?.label || 'someone'} out everywhere${n ? ` (${n === 1 ? '1 device' : `${n} devices`})` : ''}.`, badge('Signed out', 'wait')];
   },
   'admin.session_revoked': (row, who) => [`${who} signed ${row.target?.label || 'someone'} out${onDevice(row)}.`, badge('Signed out', 'wait')],
-  'admin.team_deleted': (row, who) => [`${who} deleted the team ${quote(row.target?.label)}.`, badge('Team deleted', 'bad')],
+  'admin.team_deleted': (row, who) => [`${who} deleted the organization ${quote(row.target?.label)}.`, badge('Organization deleted', 'bad')],
   'admin.settings_changed': (row, who) => {
     const what = settingsWords(row.meta?.changes);
     return [`${who} changed ${possessive(row.target?.label)} notification settings${what ? ` (${what})` : ''}.`, badge('Settings changed', 'info')];
   },
+
+  'admin.site_settings_changed': (row, who) => [`${who} changed the website settings.`, badge('Website settings', 'info')],
+  'admin.site_page_saved': (row, who) => [`${who} saved a draft of ${pageName(row)}.`, badge('Page saved')],
+  'admin.site_page_published': (row, who) => [`${who} published ${pageName(row)}.`, badge('Page published', 'good')],
+  'admin.site_page_unpublished': (row, who) => [`${who} took ${pageName(row)} off the website.`, badge('Page unpublished', 'wait')],
+  'admin.site_page_deleted': (row, who) => [`${who} deleted ${pageName(row)}.`, badge('Page deleted', 'bad')],
+  'admin.site_post_saved': (row, who) => [`${who} saved a draft of ${postName(row)}.`, badge('Post saved')],
+  'admin.site_post_published': (row, who) => [`${who} published ${postName(row)}.`, badge('Post published', 'good')],
+  'admin.site_post_unpublished': (row, who) => [`${who} took ${postName(row)} off the blog.`, badge('Post unpublished', 'wait')],
+  'admin.site_post_deleted': (row, who) => [`${who} deleted ${postName(row)}.`, badge('Post deleted', 'bad')],
+  'admin.site_media_uploaded': (row, who) => [`${who} uploaded ${mediaName(row)} to the website.`, badge('Image uploaded', 'info')],
+  'admin.site_media_deleted': (row, who) => [`${who} deleted ${mediaName(row)} from the website.`, badge('Image deleted', 'bad')],
 };
 
 /**

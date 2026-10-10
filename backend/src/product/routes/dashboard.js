@@ -106,7 +106,7 @@ router.get('/', async (req, res) => {
 
   if (view === 'people' || view === 'employee') {
     if (!who.superAdmin && !who.adminTeams.size) {
-      throw forbidden('The people view is for team owners and admins. Your own figures are on My report.');
+      throw forbidden('The people view is for organization owners and admins. Your own figures are on My report.');
     }
     const filter = await buildQuery(req, who.superAdmin && !req.query.team ? {} : { scope: 'team' }, { strictRange: true });
     let extra = [];

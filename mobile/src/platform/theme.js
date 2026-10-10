@@ -1,8 +1,8 @@
 /**
  * Colours, type, spacing and shadows shared by every screen.
  *
- * `brand` is the only part a sibling product needs to swap (KARO:
- * Salesforce's blues, navy in the dark):
+ * `brand` is the only part a sibling product needs to swap (Karo:
+ * Salesforce's blues; WhatsApp's dark greys in the dark):
  * everything else is the neutral design language from the design brief.
  *
  * LIGHT AND DARK. The person picks System / Light / Dark (More → Appearance).
@@ -20,7 +20,7 @@ export const THEME_MODES = ['system', 'light', 'dark'];
 
 const palettes = {
   light: {
-    // KARO: Salesforce's blues. #0176d3 is its brand blue, #066afe the bright
+    // Karo: Salesforce's blues. #0176d3 is its brand blue, #066afe the bright
     // blue of its hero panels (the check in the logo).
     brand: {
       primary: '#0176d3',
@@ -81,58 +81,61 @@ const palettes = {
     ],
   },
   dark: {
-    // Salesforce's navy, with its lighter "cloud" blue as the accent and the
-    // navy, not white, on it.
+    // WhatsApp's dark greys (blue-black page, lighter as a surface rises),
+    // with Karo's bright blue as the accent and the page's near-black, not
+    // white, on it. Soft fills are their hue at 16% over the card, borders
+    // 45%, all as solid colours (code adds alpha to some).
     brand: {
       primary: '#1b96ff',
       primaryPressed: '#0176d3',
-      primarySoft: '#093970',
+      primarySoft: '#132f45',
       accent: '#1b96ff',
-      onPrimary: '#001639',
+      onPrimary: '#0b141a',
     },
     colors: {
-      bg: '#001639', // navy
-      card: '#04224c',
-      border: '#1c3d6b',
-      borderStrong: '#2b4f80',
-      muted: '#0d2b55',
+      bg: '#0b141a', // WhatsApp's blue-black
+      card: '#111b21',
+      border: '#222d34',
+      borderStrong: '#2a3942',
+      muted: '#202c33', // inputs, sheets, a raised step
 
-      text: '#eef4ff',
-      textSecondary: '#a8b8d0',
-      textFaint: '#6f84a6',
+      text: '#e9edef',
+      textSecondary: '#aebac1',
+      textFaint: '#8696a0',
 
-      danger: '#fe8f7d',
-      dangerPressed: '#fe5c4c',
-      dangerSoft: '#321b43',
-      success: '#91db8b',
-      successSoft: '#0f3b4c',
-      warning: '#fcc003',
-      warningSoft: '#2d333a',
-      info: '#78b0fd',
-      infoSoft: '#033b75',
+      danger: '#ff6b78',
+      dangerPressed: '#ff99a2',
+      dangerSoft: '#37282f',
+      success: '#3dd68c',
+      successSoft: '#183932',
+      warning: '#ffd279',
+      warningSoft: '#37382f',
+      info: '#53bdeb', // sky, so "in progress" is not the accent's blue
+      infoSoft: '#1c3541',
       dangerFill: '#ea001e',
       successFill: '#2e844a',
       warningFill: '#a86403',
 
-      inverse: '#1c3d6b',
+      inverse: '#2a3942',
       track: 'rgba(255, 255, 255, 0.1)',
-      primaryBorder: '#0d5094',
-      dangerBorder: '#60143a',
+      primaryBorder: '#165285',
+      dangerBorder: '#7c3f48',
 
-      overlay: 'rgba(0, 8, 24, 0.6)',
+      overlay: 'rgba(0, 0, 0, 0.55)',
       white: '#ffffff',
     },
+    // The light text hues on their own hue at 18% over the card.
     avatars: [
-      ['#0d3436', '#6ee7b7'],
-      ['#0b2f5e', '#93c5fd'],
-      ['#2c3030', '#fcd34d'],
-      ['#2e2347', '#f9a8d4'],
-      ['#1f2a5e', '#c4b5fd'],
-      ['#08345a', '#7dd3fc'],
-      ['#0b2f5e', '#78b0fd'],
-      ['#0d2b55', '#c9d4e5'],
-      ['#0e3a35', '#86efac'],
-      ['#33302a', '#fdba74'],
+      ['#22403c', '#6ee7b7'],
+      ['#283a49', '#93c5fd'],
+      ['#3b3c29', '#fcd34d'],
+      ['#3b3441', '#f9a8d4'],
+      ['#313749', '#c4b5fd'],
+      ['#243c48', '#7dd3fc'],
+      ['#243649', '#78b0fd'],
+      ['#343d42', '#d1d7db'],
+      ['#26413a', '#86efac'],
+      ['#3b3830', '#fdba74'],
     ],
   },
 };
@@ -201,7 +204,8 @@ export function initTheme(mode = 'system') {
   Object.assign(
     shadow,
     Platform.select({
-      ios: { shadowColor: '#032d60', shadowOpacity: theme.dark ? 0.4 : 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } },
+      // Navy-tinted in light; plain black in dark, as everything there is.
+      ios: { shadowColor: theme.dark ? '#000000' : '#032d60', shadowOpacity: theme.dark ? 0.4 : 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } },
       default: { elevation: 1 },
     })
   );

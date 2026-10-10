@@ -37,10 +37,11 @@ function AuthLayout({ title, subtitle, children, footer }) {
       {/* Navy in both themes, lit like the logo's tile, with the mark as a watermark. */}
       <aside className="auth-hero relative hidden w-[44%] max-w-xl flex-col justify-between overflow-hidden p-10 lg:flex">
         <img src="/mark.svg" alt="" aria-hidden className="pointer-events-none absolute -bottom-24 -right-28 w-[30rem] max-w-none opacity-[0.06]" />
-        <div className="relative flex items-center gap-3">
+        {/* The logo leads to the website ("/", drawn by the server: a whole-page load). */}
+        <a href="/" className="relative flex w-fit items-center gap-3" aria-label={`${product.name} home`}>
           <img src="/logo.svg" width={44} height={44} alt="" className="drop-shadow" />
           <Wordmark className="text-xl text-white" />
-        </div>
+        </a>
         <div className="relative">
           <h2 className="max-w-md text-[2.15rem] font-semibold leading-[1.15] tracking-[-0.02em] text-white">{product.tagline}</h2>
           <ul className="mt-9 space-y-4">
@@ -52,7 +53,7 @@ function AuthLayout({ title, subtitle, children, footer }) {
             ))}
           </ul>
         </div>
-        <p className="relative text-sm text-[#aacbff]">Works on your phone and computer.</p>
+        <p className="relative text-sm text-[#aacbff]">{product.name} works on your phone and computer.</p>
       </aside>
       <main className="relative flex flex-1 flex-col items-center justify-center px-5 py-10">
         {/* Light or dark before signing in, as inside: the top corner, level
@@ -63,7 +64,9 @@ function AuthLayout({ title, subtitle, children, footer }) {
         </div>
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:hidden">
-            <Logo size={40} />
+            <a href="/" className="inline-flex" aria-label={`${product.name} home`}>
+              <Logo size={40} />
+            </a>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-ink">{title}</h1>
           {subtitle && <p className="mt-1.5 text-[15px] text-ink-soft">{subtitle}</p>}
@@ -72,11 +75,11 @@ function AuthLayout({ title, subtitle, children, footer }) {
           <p className="mt-6 flex items-center justify-center gap-4 text-sm text-ink-soft">
             <Link to="/get-app" className="inline-flex items-center gap-1.5 font-medium text-brand hover:underline">
               <Smartphone className="h-4 w-4" aria-hidden />
-              Get the app
+              Get the {product.name} app
             </Link>
-            <Link to="/privacy" className="hover:text-ink hover:underline">
+            <a href="/privacy" className="hover:text-ink hover:underline">
               Privacy policy
-            </Link>
+            </a>
           </p>
         </div>
       </main>
@@ -139,7 +142,7 @@ export function SignInPage() {
       subtitle={`Sign in to ${product.name}`}
       footer={
         <>
-          New here?{' '}
+          New to {product.name}?{' '}
           <Link to="/sign-up" className="font-semibold text-brand hover:underline">
             Create your account
           </Link>
@@ -205,8 +208,8 @@ function NewPinStep({ data, onContinue }) {
           </div>
         </div>
         <p className="text-[15px] text-ink-soft">
-          People add you as a contact, or invite you to a team, with this pin. It never changes, and you can always find it in
-          Contacts and Settings.
+          People add you as a contact, or invite you to an organization, with this pin. It never changes, and you can always
+          find it in Contacts and Settings.
         </p>
         <Button size="lg" className="w-full" onClick={onContinue}>
           Continue <ArrowRight className="h-[18px] w-[18px]" aria-hidden />
@@ -255,7 +258,7 @@ export function SignUpPage() {
   return (
     <AuthLayout
       title="Create your account"
-      subtitle="Free to start. Takes a minute."
+      subtitle={`Join ${product.name}. Free to start, takes a minute.`}
       footer={
         <>
           Already have an account?{' '}
@@ -278,9 +281,9 @@ export function SignUpPage() {
         <PasswordInput autoComplete="new-password" hint="At least 8 characters." value={form.password} onChange={set('password')} />
         <p className="text-sm text-ink-soft">
           By creating an account you agree to our{' '}
-          <Link to="/privacy" target="_blank" className="font-medium text-brand hover:underline">
+          <a href="/privacy" target="_blank" rel="noopener" className="font-medium text-brand hover:underline">
             Privacy policy
-          </Link>
+          </a>
           .
         </p>
         <Button

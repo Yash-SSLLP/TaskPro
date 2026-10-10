@@ -57,7 +57,7 @@ export function Online({ onOpenPerson }) {
   const signOut = async (s) => {
     const ok = await confirm({
       title: `Sign ${s.user.name} out on ${deviceLine(s)}?`,
-      text: 'That device goes back to the sign-in screen the next time it talks to KARO. Their other devices stay signed in.',
+      text: 'That device goes back to the sign-in screen the next time it opens Karo. Their other devices stay signed in.',
       confirmLabel: 'Sign out',
       tone: 'warning',
     });

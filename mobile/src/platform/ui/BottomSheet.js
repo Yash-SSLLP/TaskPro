@@ -3,6 +3,12 @@
  * ("New book", "Add person", filters). Tapping outside or the Android back
  * button closes it; it moves up with the keyboard.
  *
+ * The keyboard (ui/keyboard): React Native's own KeyboardAvoidingView cannot
+ * follow it inside a Modal on Android, so the keyboard library's one lifts
+ * the sheet. While the keyboard is up the sheet gives up its padding for the
+ * phone's bottom edge (the keyboard covers it) and most of its top gap, so a
+ * short phone still shows the field, a few rows and the footer.
+ *
  * Toasts and confirm dialogs cannot draw above an open sheet on every
  * platform, so sheets show their own errors inline.
  *
@@ -11,16 +17,19 @@
  * plain close cross, and the footer's buttons set off by a hairline rule.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from '../icons';
 import { colors, font, radius, space, type } from '../theme';
 import { tr } from '../../i18n';
+import { KeyboardAvoidingView, useKeyboardVisible } from './keyboard';
 
 export function BottomSheet({ visible, onClose, title, subtitle, children, footer, scroll = true, dismissable = true }) {
   const [mounted, setMounted] = useState(visible);
   const anim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
+  // Reset as the sheet opens: see ui/keyboard.
+  const keyboardUp = useKeyboardVisible(visible);
 
   useEffect(() => {
     if (visible) {
@@ -47,7 +56,13 @@ export function BottomSheet({ visible, onClose, title, subtitle, children, foote
           <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel={tr('Close')} accessibilityRole="button" />
         </Animated.View>
         <Animated.View
-          style={[styles.sheet, { marginTop: insets.top + space(10), paddingBottom: insets.bottom + space(4), transform: [{ translateY }] }]}
+          style={[
+            styles.sheet,
+            keyboardUp
+              ? { marginTop: insets.top + space(2), paddingBottom: space(2) }
+              : { marginTop: insets.top + space(10), paddingBottom: insets.bottom + space(4) },
+            { transform: [{ translateY }] },
+          ]}
         >
           <View style={styles.handle} />
           {title ? (

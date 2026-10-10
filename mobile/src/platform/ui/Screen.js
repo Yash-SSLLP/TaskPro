@@ -4,11 +4,18 @@
  *
  * Stack screens pad for the phone's bottom edge; tab screens (`inTabs`) leave
  * that to the tab bar.
+ *
+ * THE KEYBOARD (ui/keyboard): a scrolling screen scrolls the field being
+ * typed in clear of the keyboard and of the footer, which rides up on the
+ * keyboard (dropping the padding for the phone's bottom edge, which the
+ * keyboard covers). `keyboard` is only for a screen that does not scroll: its
+ * body then shrinks above the keyboard.
  */
-import React from 'react';
-import { KeyboardAvoidingView, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { RefreshControl, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, space } from '../theme';
+import { KeyboardAvoidingView, KeyboardAwareScrollView, KeyboardStickyView } from './keyboard';
 
 export function Screen({
   header,
@@ -26,10 +33,14 @@ export function Screen({
 }) {
   const insets = useSafeAreaInsets();
   const bottomInset = inTabs ? 0 : insets.bottom;
+  const [footerHeight, setFooterHeight] = useState(0);
+  const avoiding = keyboard && !scroll;
 
   const body = scroll ? (
-    <ScrollView
+    <KeyboardAwareScrollView
       ref={scrollRef}
+      // The field stops this far above the keyboard: clear of the footer riding on it.
+      bottomOffset={(footer && footerHeight ? footerHeight - bottomInset : 0) + space(4)}
       style={styles.flex}
       contentContainerStyle={[padded && styles.padded, styles.scrollContent, !footer && { paddingBottom: space(6) + bottomInset }, contentStyle]}
       keyboardShouldPersistTaps="handled"
@@ -41,15 +52,23 @@ export function Screen({
       }
     >
       {children}
-    </ScrollView>
+    </KeyboardAwareScrollView>
   ) : (
     <View style={[styles.flex, padded && styles.padded, contentStyle]}>{children}</View>
   );
 
+  const footerView = footer ? <View style={[styles.footer, { paddingBottom: space(3) + bottomInset }]}>{footer}</View> : null;
+
   const inner = (
     <>
       {body}
-      {footer ? <View style={[styles.footer, { paddingBottom: space(3) + bottomInset }]}>{footer}</View> : null}
+      {footerView && !avoiding ? (
+        <KeyboardStickyView offset={{ closed: 0, opened: bottomInset }} onLayout={(e) => setFooterHeight(e.nativeEvent.layout.height)}>
+          {footerView}
+        </KeyboardStickyView>
+      ) : (
+        footerView
+      )}
       {!footer && !scroll && bottomInset ? <View style={{ height: bottomInset }} /> : null}
     </>
   );
@@ -57,7 +76,7 @@ export function Screen({
   return (
     <View style={[styles.root, { paddingTop: insets.top }, style]}>
       {header}
-      {keyboard ? (
+      {avoiding ? (
         <KeyboardAvoidingView style={styles.flex} behavior="padding">
           {inner}
         </KeyboardAvoidingView>

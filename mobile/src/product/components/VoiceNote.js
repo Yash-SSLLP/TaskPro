@@ -28,6 +28,7 @@ import { tr } from '../../i18n';
 import { authHeaders } from '../../platform/api';
 import { colors, font, radius, space, tabular } from '../../platform/theme';
 import { confirm, toast } from '../../platform/ui';
+import productConfig from '../config';
 import { duration } from '../taskStatus';
 import { Mic, Pause, Play, Square, Trash } from '../icons';
 
@@ -139,7 +140,7 @@ async function allowMicrophone() {
   if (perm.canAskAgain === false) {
     const open = await confirm({
       title: tr('Allow the microphone'),
-      message: tr('To record voice notes, allow KARO to use the microphone in your phone settings.'),
+      message: tr('To record voice notes, allow {app} to use the microphone in your phone settings.', { app: productConfig.name }),
       confirmLabel: tr('Open settings'),
       cancelLabel: tr('Not now'),
     });

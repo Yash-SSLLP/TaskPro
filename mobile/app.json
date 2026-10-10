@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "KARO",
+    "name": "Karo",
     "slug": "taskpro",
     "scheme": "taskpro",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -17,7 +17,7 @@
     },
     "android": {
       "package": "in.salestracker.taskpro",
-      "versionCode": 7,
+      "versionCode": 8,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundImage": "./assets/adaptive-icon-bg.png",
@@ -78,7 +78,7 @@
           "backgroundColor": "#F3F3F3",
           "dark": {
             "image": "./assets/splash-dark.png",
-            "backgroundColor": "#001639"
+            "backgroundColor": "#0B141A"
           }
         }
       ],
@@ -93,15 +93,15 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "KARO uses the camera to take photos you attach to a task, and your profile photo.",
-          "photosPermission": "KARO lets you choose photos from your gallery to attach to a task, or as your profile photo.",
-          "microphonePermission": "KARO uses the microphone to record voice notes on tasks."
+          "cameraPermission": "Karo uses the camera to take photos you attach to a task, and your profile photo.",
+          "photosPermission": "Karo lets you choose photos from your gallery to attach to a task, or as your profile photo.",
+          "microphonePermission": "Karo uses the microphone to record voice notes on tasks."
         }
       ],
       [
         "expo-audio",
         {
-          "microphonePermission": "KARO uses the microphone to record voice notes on tasks."
+          "microphonePermission": "Karo uses the microphone to record voice notes on tasks."
         }
       ],
       "expo-secure-store",

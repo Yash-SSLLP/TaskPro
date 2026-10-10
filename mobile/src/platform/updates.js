@@ -35,7 +35,8 @@ const CHECKED_KEY = 'taskpro.updateCheckedAt';
 const DISMISSED_KEY = 'taskpro.updateDismissed';
 const CHECK_EVERY_MS = 6 * 60 * 60 * 1000;
 const TIMEOUT_MS = 15000;
-const APK_RE = /^taskpro-.*\.apk$/i;
+// Downloaded builds to clean up: taskpro-… up to 1.0.6, karo-… after.
+const APK_RE = /^(?:taskpro|karo)-.*\.apk$/i;
 
 /** What the last check found: `available` is a newer build, or null. */
 export const useUpdate = create(() => ({ available: null }));

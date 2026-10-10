@@ -15,8 +15,17 @@ npm run apk  ->  npm run publish -- --publish  ->  commit + push  ->  Vercel dep
 
 | File | What it is |
 |---|---|
-| `taskpro-<versionName>-<versionCode>.apk` | the newest build. Exactly one; the publish script removes the old one |
+| `karo-<versionName>-<versionCode>.apk` | the newest build. Exactly one; the publish script removes the old one |
 | `release.json` | `{ versionName, versionCode, fileName, size, notes, publishedAt }` |
+
+Builds up to 1.0.6 were named `taskpro-…apk`; from 1.0.7 they are `karo-…apk`.
+The name can change because nothing looks for it: the apps and the web pages
+download whatever `fileName` in `release.json` says, and Android doesn't care
+what an APK is called. The publish script counts both names as published, and
+the app clears both from its cache after an update. A 1.0.6 phone that
+downloads a `karo-` build and then doesn't install it keeps the file in its
+cache (a retry replaces it, and Android may clear it) until it installs a
+newer build, whose first start clears it.
 
 ## Who reads it
 
@@ -25,9 +34,10 @@ npm run apk  ->  npm run publish -- --publish  ->  commit + push  ->  Vercel dep
   `/app/release.json` from its server address. When `versionCode` is
   **higher** than the installed build it offers the update, downloads the APK
   and opens Android's installer.
-- **The web app**: **Settings → Android app**, the sidebar's *Get the Android
+- **The web app**: **Settings → Phone app**, the sidebar's *Get the Karo
   app*, and the public page **`/get-app`** (the link to send a new user) show
-  the version, a QR code and the download link.
+  the version, a QR code and the download link. The invite page `/join/…`
+  links the APK too.
 
 ## Releasing a new version
 

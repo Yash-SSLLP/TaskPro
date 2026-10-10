@@ -26,13 +26,21 @@ const onIt = (task, id) => (task.assignees || []).some((a) => same(a.user, id));
 const oid = (v) => new mongoose.Types.ObjectId(idOf(v));
 
 /**
- * The caller as access checks need them: who they are and which teams they
- * own or admin. Built once per request (cached on `req`).
+ * The caller as access checks need them: who they are, the organizations
+ * (teams) they are an active member of (`memberTeams`: id → { name, role },
+ * by name) and the ones they own or admin (`adminTeams`). One read, built
+ * once per request (cached on `req`).
  */
 async function actorFor(user) {
   const superAdmin = isSuperAdmin(user);
-  const adminTeams = superAdmin ? [] : await people.adminTeamIds(user._id);
-  return { user, id: String(user._id), superAdmin, adminTeams: new Set(adminTeams.map(String)) };
+  const teams = superAdmin ? [] : await people.teamsOf(user._id);
+  return {
+    user,
+    id: String(user._id),
+    superAdmin,
+    memberTeams: new Map(teams.map((t) => [t.id, { name: t.name, role: t.role }])),
+    adminTeams: new Set(teams.filter((t) => t.role === 'owner' || t.role === 'admin').map((t) => t.id)),
+  };
 }
 
 async function actor(req) {
@@ -245,6 +253,7 @@ function visibleFilter(who, scope, { team } = {}) {
   } else if (scope === 'loop') {
     base = { loopUsers: me };
   } else if (scope === 'team') {
+    // The Organization pile.
     const mineTeams = [...who.adminTeams].map(oid);
     if (team) {
       if (!mongoose.isValidObjectId(String(team)) || (!who.superAdmin && !who.adminTeams.has(String(team)))) base = { _id: null };

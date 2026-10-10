@@ -9,11 +9,14 @@ const { createApp } = require('./app');
 const product = require('./product');
 const { connectDB } = require('./platform/db');
 const { ensureSuperAdmin } = require('./platform/seed');
+const { ensureSiteDefaults } = require('./site');
 const { cleanupOrphans } = require('./platform/services/files');
 
 async function main() {
   await connectDB();
   await ensureSuperAdmin();
+  // The website's starter content; a fault there never stops the API.
+  await ensureSiteDefaults().catch((err) => console.error('[site] could not write the starter content:', err));
 
   const app = createApp();
   app.listen(config.port, '0.0.0.0', () => {

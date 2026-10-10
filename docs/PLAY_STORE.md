@@ -1,4 +1,4 @@
-# Publishing KARO on Google Play, and shipping updates
+# Publishing Karo on Google Play, and shipping updates
 
 This is the whole path, from "it runs on my phone" to "it's on the Play Store",
 and then how to ship updates. Steps marked **one time** are done once.
@@ -15,17 +15,21 @@ These must be done before an app goes out to the public.
 
 1. **Put the backend and the web app on a real HTTPS server** (see the
    README's "Put it on a server"). Note the address, e.g.
-   `https://taskpro.example.com`.
+   `https://www.karoindia.in` (the planned domain; going live on it is
+   `docs/WEBSITE.md` §5).
 2. **Check that these pages open in a browser, signed out.** Play Console
    asks for both links:
-   - `https://<your-domain>/privacy`: the privacy policy
+   - `https://<your-domain>/privacy`: the privacy policy (the website's
+     Privacy page)
    - `https://<your-domain>/delete-account`: delete your account
 3. **Check the company name and contact email in the privacy policy.** They
-   are at the top of `web/src/platform/privacy.js` (`org`, `email`) and
-   inside the text. The current values are `Sequence Surface LLP` and
-   `support@sequencesurface.com`. That inbox must exist and be read. After
-   any edit, copy the file over `mobile/src/platform/privacy.js` so both
-   apps show the same text.
+   are at the top of `web/src/platform/privacy.js` (`org`, `email`, and the
+   name `app`), and the text is built from them. The current values are
+   `Sequence Surface LLP` and `support@sequencesurface.com`. That inbox must
+   exist and be read. After any edit, copy the file over
+   `mobile/src/platform/privacy.js` so both apps show the same text, and
+   make the same change on the website's Privacy page (console → Website →
+   Pages → `/privacy`), which is what `/privacy` shows.
 4. **Point the app at the live server.** In `mobile/app.json`:
    - `expo.extra.apiUrl` → `https://<your-api-domain>`
    - in the `expo-build-properties` plugin, set `"usesCleartextTraffic": false`
@@ -106,12 +110,12 @@ prebuild. **Back up `upload.jks` and its passwords.** EAS is much less work.
 
 ## 4. Create the app in Play Console (one time)
 
-1. **Create app** → name `KARO`, default language English, App, Free.
+1. **Create app** → name `Karo`, default language English, App, Free.
    Accept the declarations.
 
 2. **Store listing** (Grow → Store presence → Main store listing):
-   - Short description (max 80 characters), e.g. *Give and get tasks with your Task Pin. Teams, reminders, reviews.*
-   - Full description (max 4000 characters). The README's "How it works" is a good start.
+   - Short description (max 80 characters): *In Karo, you give and get tasks by Task Pin. Organizations, reminders, reviews.* (79 characters)
+   - Full description (max 4000 characters), in the same voice ("In Karo, you …"). The README's "How it works" and the website's Features page are a good start. Say only what Karo does: no templates, and WhatsApp is a one-tap nudge the person sends, not automatic messages.
    - App icon 512×512 PNG (`brand/icon.png`, resized), feature graphic
      1024×500, at least 2 phone screenshots (take them from the app).
    - Category: Productivity. Contact email: same as the privacy policy.
@@ -225,7 +229,8 @@ Steps:
   the Expo SDK at least once a year to keep up.
 - Keep the privacy policy true: if you add analytics, crash reporting, ads,
   location, or a new third-party service, update `privacy.js` (both copies),
-  the "Last updated" date, and the Data safety form **before** releasing.
+  the website's Privacy page, the "Last updated" date, and the Data safety
+  form **before** releasing.
 - If a new feature needs a new permission, add it to `app.json` and explain it
   in the policy's "Phone permissions" section.
 

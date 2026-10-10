@@ -278,7 +278,8 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
   await sendMail({
     to: user.email,
     subject: `Reset your ${product.name} password`,
-    text: `Hi ${user.name},\n\nOpen this link to choose a new password (valid for 1 hour):\n${link}\n\nIf you did not ask for this, ignore this email.`,
+    text: `Hi ${user.name},\n\nOpen this link to choose a new ${product.name} password (valid for 1 hour):\n${link}\n\n` +
+      `If you did not ask for this, ignore this email.\n\n— ${product.name}`,
   });
   await activity.record({ req, action: 'auth.password_forgot', actor: null, target: activity.personTarget(user) });
   res.json(generic);

@@ -230,7 +230,6 @@ const taskSchema = new mongoose.Schema(
     occurrenceKey: { type: String, trim: true },
     // A daily occurrence: only ever marked done.
     routine: { type: Boolean, default: false },
-    template: { type: ObjectId, ref: 'TaskTemplate' },
 
     updateCount: { type: Number, default: 0 },
     // Why it was last moved; on the row so a list can say it.

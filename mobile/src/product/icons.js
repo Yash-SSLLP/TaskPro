@@ -1,5 +1,5 @@
 /**
- * KARO's icons: everything the platform exports, plus the Lucide icons
+ * Karo's icons: everything the platform exports, plus the Lucide icons
  * tasks need, imported one by one to keep the bundle small.
  */
 export * from '../platform/icons';

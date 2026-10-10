@@ -1,5 +1,5 @@
 /**
- * KARO, as the platform sees it: its name, settings, file rules, routes,
+ * Karo, as the platform sees it: its name, settings, file rules, routes,
  * and the hooks the platform calls (sign-up, file access, team deletion, the
  * Super Admin console's numbers, background jobs).
  *
@@ -11,17 +11,27 @@ const settings = require('./settings');
 const Task = require('./models/Task');
 const TaskUpdate = require('./models/TaskUpdate');
 const RecurringTask = require('./models/RecurringTask');
-const TaskTemplate = require('./models/TaskTemplate');
 const TaskCategory = require('./models/TaskCategory');
 require('./models/TaskDigest');
 require('./models/Reminder');
 const { STATUS, OPEN_STATUS, DOING_STATUS, ACCEPTANCE } = require('./config');
 
 const oid = (id) => new mongoose.Types.ObjectId(String(id));
+// The product's name wherever server text says it (title case: "Karo").
+const NAME = 'Karo';
+// The task every new person starts with (services/present.js shows older copies in these words too).
+const WELCOME = {
+  title: `Welcome to ${NAME}: share your Task Pin`,
+  description:
+    `In ${NAME}, you give tasks by Task Pin. Share yours with the people you work with and add theirs from Contacts. ` +
+    'Create an organization to give tasks to everyone in it, or join one you are invited to. ' +
+    'Mark this done when you have added your first contact.',
+};
 
 module.exports = {
   key: 'taskpro',
-  name: 'KARO',
+  name: NAME,
+  welcome: WELCOME,
 
   settings,
 
@@ -49,17 +59,14 @@ module.exports = {
   async onUserCreated({ user }) {
     if (!user || user.role === 'superadmin') return;
     const task = await Task.create({
-      title: 'Welcome to KARO: share your Task Pin',
-      description:
-        'Share your Task Pin with the people you work with and add theirs from Contacts. ' +
-        'Create a team to give tasks to everyone in it. Mark this done when you have added your first contact.',
+      ...WELCOME,
       createdBy: user._id,
       createdByName: user.name,
       assignees: [{ user: user._id, name: user.name, status: STATUS.PENDING }],
       requiresApproval: false,
       reminders: [],
     });
-    await TaskUpdate.create({ task: task._id, kind: 'CREATED', byName: 'KARO', to: task.status, note: 'Welcome aboard.', system: true });
+    await TaskUpdate.create({ task: task._id, kind: 'CREATED', byName: NAME, to: task.status, note: 'Welcome aboard.', system: true });
   },
 
   /** May this person open a file attached to `ref`? (Uploader and Super Admin are let in by the platform.) */
@@ -132,14 +139,12 @@ module.exports = {
     return map;
   },
 
-  /** A team was deleted: its tasks, schedules, templates and reminders are no longer filed under it. */
+  /** A team was deleted: its tasks, schedules and reminders are no longer filed under it (they become General). */
   async onTeamDeleted(teamId) {
     const team = oid(teamId);
     await Promise.all([
       Task.updateMany({ team }, { $set: { team: null } }),
       RecurringTask.updateMany({ team }, { $set: { team: null } }),
-      // A shared template goes back to whoever made it.
-      TaskTemplate.updateMany({ team }, { $set: { team: null } }),
       require('./services/calendar').onTeamDeleted(team),
     ]);
     // Team categories become their creator's own (or go, if they already have one by that name).
@@ -158,7 +163,7 @@ module.exports = {
 
   /**
    * A person deleted their account. Tasks and schedules only they were on go
-   * for good, files and all, as do their own templates and categories. Work
+   * for good, files and all, as do their own categories. Work
    * shared with others stays, with their name replaced by `deletedName`.
    */
   async onUserDeleted({ user, deletedName }) {
@@ -221,8 +226,9 @@ module.exports = {
       Task.updateMany({ approver: me }, { $set: { approverName: deletedName } }),
       Task.updateMany({ 'assignees.user': me }, { $set: { 'assignees.$[a].name': deletedName } }, { arrayFilters: [{ 'a.user': me }] }),
       TaskUpdate.updateMany({ by: me }, { $set: { byName: deletedName } }),
-      TaskTemplate.deleteMany({ createdBy: me, team: null }),
-      TaskTemplate.updateMany({ createdBy: me }, { $set: { createdByName: deletedName } }),
+      // Task templates are gone, but older accounts may still have saved ones.
+      mongoose.connection.collection('tasktemplates').deleteMany({ createdBy: me, team: null }),
+      mongoose.connection.collection('tasktemplates').updateMany({ createdBy: me }, { $set: { createdByName: deletedName } }),
       TaskCategory.deleteMany({ scope: TaskCategory.scopeOf(null, me) }),
       TaskCategory.updateMany({ createdBy: me }, { $set: { createdByName: deletedName } }),
     ]);

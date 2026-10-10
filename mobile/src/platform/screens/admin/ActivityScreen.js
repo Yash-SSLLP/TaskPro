@@ -10,6 +10,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, SectionList, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import Logs from 'lucide-react-native/icons/logs';
+import productConfig from '../../../product/config';
 import { tr } from '../../../i18n';
 import { platformApi, platformKeys } from '../../endpoints';
 import { dayKey, dayLabel, formatDateTime } from '../../format';
@@ -83,7 +84,7 @@ function EntrySheet({ id, onClose, onOpenPerson }) {
   const m = e?.meta || {};
   const changes = Array.isArray(m.changes) ? m.changes.filter((c) => c && typeof c === 'object') : [];
   const taskChanges = Array.isArray(m.changes) ? m.changes.filter((c) => typeof c === 'string') : [];
-  const device = [m.deviceName, m.appVersion ? `KARO ${m.appVersion}${m.appBuild ? ` (${m.appBuild})` : ''}` : '', m.osVersion].filter(Boolean).join(' · ');
+  const device = [m.deviceName, m.appVersion ? `${productConfig.name} ${m.appVersion}${m.appBuild ? ` (${m.appBuild})` : ''}` : '', m.osVersion].filter(Boolean).join(' · ');
   const actor = q.data?.actor;
   const subject = q.data?.subject;
   const canOpen = (p) => p && p.role === 'user' && !p.deleted;
@@ -105,7 +106,7 @@ function EntrySheet({ id, onClose, onOpenPerson }) {
           </View>
           <View style={styles.facts}>
             <Fact label={tr('Who')}>{actor ? `${actor.name}${pinOf(actor) ? ` · ${pinOf(actor)}` : ''}` : e.actorLabel}</Fact>
-            <Fact label={e.target?.kind === 'task' ? tr('Task') : e.target?.kind === 'team' ? tr('Team') : e.target?.kind === 'user' ? tr('Person') : tr('About')}>
+            <Fact label={e.target?.kind === 'task' ? tr('Task') : e.target?.kind === 'team' ? tr('Organization') : e.target?.kind === 'user' ? tr('Person') : tr('About')}>
               {e.target?.label || null}
             </Fact>
             <Fact label={tr('From')}>{[e.platform ? platformLabel(e.platform) : '', e.ip].filter(Boolean).join(' · ') || null}</Fact>
@@ -255,7 +256,7 @@ export default function ActivityScreen({ navigation, route }) {
               <TextInput
                 value={term}
                 onChangeText={setTerm}
-                placeholder={tr('Search a person, task, team or login')}
+                placeholder={tr('Search a person, task, organization or login')}
                 placeholderTextColor={colors.textFaint}
                 style={styles.searchInput}
                 autoCorrect={false}

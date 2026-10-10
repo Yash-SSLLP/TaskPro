@@ -81,7 +81,7 @@ export default function TransferSheet({ visible, task, meta, onClose, onDone }) 
           setReason(t);
           if (error) setError('');
         }}
-        placeholder={tr("e.g. this is the accounts team's, not mine")}
+        placeholder={tr('e.g. the accounts people handle this, not me')}
         multiline
         maxLength={1000}
         accessibilityLabel={tr('Why is it moving?')}

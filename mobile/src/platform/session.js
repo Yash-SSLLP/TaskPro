@@ -34,11 +34,14 @@ async function persistToken(t) {
 export const DEFAULT_SETTINGS = {
   timezone: 'Asia/Kolkata',
   workdayStart: '09:00',
-  approvalDefault: true,
+  // Off unless the person turns it on (stored as `reviewDefault` on the server).
+  approvalDefault: false,
   defaultReminders: [],
   dailyDigest: true,
   dailyDigestAt: '18:00',
   lang: 'en',
+  // The Tasks screen's organization tabs in the person's order ([] = the default).
+  orgTabs: [],
 };
 
 /**

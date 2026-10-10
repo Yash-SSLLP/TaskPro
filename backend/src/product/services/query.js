@@ -4,6 +4,7 @@
  * under it.
  *
  *   scope    mine | delegated | loop | team | all
+ *   org      all | general | <teamId>   (the Tasks screen's organization tabs)
  *   range    today | yesterday | week | nextWeek | month | all | custom (from, to)
  *   filters  team, category, assignedTo, assignedBy, frequency, priority, status,
  *            overdue, late, moreTime, includeSubtasks, parentTask, q
@@ -22,6 +23,7 @@ const {
 } = require('../config');
 
 const oid = (v) => (mongoose.isValidObjectId(String(v ?? '')) ? new mongoose.Types.ObjectId(String(v)) : null);
+const HEX_ID = /^[a-f\d]{24}$/i;
 const escapeRx = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** The deadline window a range chip asks for, or null for "all time". */
@@ -64,7 +66,7 @@ async function buildQuery(req, overrides = {}, { strictRange = false } = {}) {
   const who = await access.actor(req);
   const tz = zoneOf(req);
   const {
-    scope, range = 'all', from, to, team, category, assignedTo, assignedBy, frequency, priority, status, q,
+    scope, range = 'all', from, to, org, team, category, assignedTo, assignedBy, frequency, priority, status, q,
     overdue, late, moreTime, includeSubtasks, parentTask,
   } = { ...req.query, ...overrides };
 
@@ -80,6 +82,18 @@ async function buildQuery(req, overrides = {}, { strictRange = false } = {}) {
   if (team && scope !== 'team') {
     const t = oid(team);
     and.push(t ? { team: t } : { _id: null });
+  }
+
+  // The organization tabs. General is everything not under one of my
+  // organizations (a task can be filed under one I'm not in), so All is
+  // General plus each organization. On the Organization pile an id narrows
+  // it like `team` (nothing if I don't own/admin it) and General is empty.
+  const tab = String(org ?? '').trim();
+  if (tab === 'general') {
+    if (scope === 'team') and.push({ _id: null });
+    else and.push(who.superAdmin ? { team: null } : { team: { $nin: [...who.memberTeams.keys()].map(oid) } });
+  } else if (tab && tab !== 'all') {
+    and.push(HEX_ID.test(tab) ? { team: oid(tab) } : { _id: null });
   }
 
   const cats = listParam(category);
@@ -132,47 +146,68 @@ async function buildQuery(req, overrides = {}, { strictRange = false } = {}) {
 /** The bar's figures ignore the figure clicked and the search box. */
 const FIGURES_IGNORE = { status: '', overdue: '', late: '', moreTime: '', q: '' };
 
+const COUNTER_KEYS = ['total', 'overdue', 'pending', 'notAccepted', 'inProgress', 'inReview', 'completed', 'inTime', 'delayed', 'cancelled', 'moreTime'];
+const countersOf = (c = {}) => Object.fromEntries(COUNTER_KEYS.map((k) => [k, c[k] || 0]));
+
 /**
- * The counter row. The boxes don't overlap: overdue wins over pending and in
- * progress, so they sum to the total.
+ * The counter row's `$group` fields. The boxes don't overlap: overdue wins
+ * over pending and in progress, so they sum to the total.
  */
-async function countersFor(filter) {
-  const now = new Date();
+function counterFields(now = new Date()) {
   const late = { $and: [{ $in: ['$status', DOING_STATUS] }, { $ne: [{ $ifNull: ['$dueDate', null] }, null] }, { $lt: ['$dueDate', now] }] };
   const countIf = (cond) => ({ $sum: { $cond: [cond, 1, 0] } });
-  const [c = {}] = await Task.aggregate([
-    { $match: filter },
-    {
-      $group: {
-        _id: null,
-        total: { $sum: 1 },
-        overdue: countIf(late),
-        pending: countIf({ $and: [{ $eq: ['$status', STATUS.PENDING] }, { $not: [late] }] }),
-        inProgress: countIf({ $and: [{ $eq: ['$status', STATUS.IN_PROGRESS] }, { $not: [late] }] }),
-        // Pending, not late, and somebody hasn't answered the handover yet.
-        notAccepted: countIf({
-          $and: [
-            { $eq: ['$status', STATUS.PENDING] },
-            { $not: [late] },
-            { $anyElementTrue: [{ $map: { input: { $ifNull: ['$assignees', []] }, as: 'a', in: { $eq: ['$$a.acceptance', 'AWAITING'] } } }] },
-          ],
-        }),
-        inReview: countIf({ $eq: ['$status', STATUS.SUBMITTED] }),
-        completed: countIf({ $eq: ['$status', STATUS.COMPLETED] }),
-        cancelled: countIf({ $eq: ['$status', STATUS.CANCELLED] }),
-        inTime: countIf({ $and: [{ $eq: ['$status', STATUS.COMPLETED] }, { $ne: ['$completedLate', true] }] }),
-        delayed: countIf({ $and: [{ $eq: ['$status', STATUS.COMPLETED] }, { $eq: ['$completedLate', true] }] }),
-        moreTime: countIf({
-          $and: [
-            { $in: ['$status', OPEN_STATUS] },
-            { $gt: [{ $size: { $filter: { input: { $ifNull: ['$extensions', []] }, as: 'x', cond: { $eq: ['$$x.status', EXTENSION_STATUS.PENDING] } } } }, 0] },
-          ],
-        }),
-      },
-    },
-  ]);
-  const keys = ['total', 'overdue', 'pending', 'notAccepted', 'inProgress', 'inReview', 'completed', 'inTime', 'delayed', 'cancelled', 'moreTime'];
-  return Object.fromEntries(keys.map((k) => [k, c[k] || 0]));
+  return {
+    total: { $sum: 1 },
+    overdue: countIf(late),
+    pending: countIf({ $and: [{ $eq: ['$status', STATUS.PENDING] }, { $not: [late] }] }),
+    inProgress: countIf({ $and: [{ $eq: ['$status', STATUS.IN_PROGRESS] }, { $not: [late] }] }),
+    // Pending, not late, and somebody hasn't answered the handover yet.
+    notAccepted: countIf({
+      $and: [
+        { $eq: ['$status', STATUS.PENDING] },
+        { $not: [late] },
+        { $anyElementTrue: [{ $map: { input: { $ifNull: ['$assignees', []] }, as: 'a', in: { $eq: ['$$a.acceptance', 'AWAITING'] } } }] },
+      ],
+    }),
+    inReview: countIf({ $eq: ['$status', STATUS.SUBMITTED] }),
+    completed: countIf({ $eq: ['$status', STATUS.COMPLETED] }),
+    cancelled: countIf({ $eq: ['$status', STATUS.CANCELLED] }),
+    inTime: countIf({ $and: [{ $eq: ['$status', STATUS.COMPLETED] }, { $ne: ['$completedLate', true] }] }),
+    delayed: countIf({ $and: [{ $eq: ['$status', STATUS.COMPLETED] }, { $eq: ['$completedLate', true] }] }),
+    moreTime: countIf({
+      $and: [
+        { $in: ['$status', OPEN_STATUS] },
+        { $gt: [{ $size: { $filter: { input: { $ifNull: ['$extensions', []] }, as: 'x', cond: { $eq: ['$$x.status', EXTENSION_STATUS.PENDING] } } } }, 0] },
+      ],
+    }),
+  };
+}
+
+/** The counter row for a filter. */
+async function countersFor(filter) {
+  const [c] = await Task.aggregate([{ $match: filter }, { $group: { _id: null, ...counterFields() } }]);
+  return countersOf(c);
+}
+
+/**
+ * The counter row for each organization tab, from one pass grouped by team:
+ * `{ all, general, <teamId>: … }` with a key for every organization the
+ * caller is in. Tasks under any other team count as General (as the `org`
+ * filter has it; for the Super Admin General is unfiled work only), and
+ * `all` is the sum.
+ */
+async function orgCounters(who, filter) {
+  const groups = await Task.aggregate([{ $match: filter }, { $group: { _id: '$team', ...counterFields() } }]);
+  const out = { all: countersOf(), general: countersOf() };
+  for (const id of who.memberTeams.keys()) out[id] = countersOf();
+  for (const g of groups) {
+    const id = g._id ? String(g._id) : null;
+    let tab = out.general;
+    if (id && who.memberTeams.has(id)) tab = out[id];
+    else if (id && who.superAdmin) tab = null;
+    for (const c of [out.all, tab]) if (c) for (const k of COUNTER_KEYS) c[k] += g[k] || 0;
+  }
+  return out;
 }
 
 /** The order asked for; `_id` breaks ties so paging never repeats a row. */
@@ -212,4 +247,4 @@ async function sortedRows(filter, sort, key, skip, limit) {
   return rows.sort((a, b) => order.get(String(a._id)) - order.get(String(b._id)));
 }
 
-module.exports = { oid, rangeWindow, buildQuery, FIGURES_IGNORE, countersFor, resolveSort, sortedRows, populateRows };
+module.exports = { oid, rangeWindow, buildQuery, FIGURES_IGNORE, countersFor, orgCounters, resolveSort, sortedRows, populateRows };

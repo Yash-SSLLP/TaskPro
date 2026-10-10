@@ -1,5 +1,5 @@
 /**
- * Every team: search, open one to see its members, or delete it.
+ * Every organization (team): search, open one to see its members, or delete it.
  */
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -25,7 +25,7 @@ function TeamDrawer({ id, onClose }) {
       qc.invalidateQueries({ queryKey: ['platform'] });
       qc.invalidateQueries({ queryKey: ['teams'] });
       qc.removeQueries({ queryKey: ['team', id] });
-      toast.success('Team deleted');
+      toast.success('Organization deleted');
       onClose();
     },
     onError: (e) => toast.error(e.message),
@@ -34,8 +34,8 @@ function TeamDrawer({ id, onClose }) {
   const del = async () => {
     const ok = await confirm({
       title: `Delete ${team.name}?`,
-      text: 'Its tasks stay, just no longer filed under a team. Everyone is removed from it. This cannot be undone.',
-      confirmLabel: 'Delete team',
+      text: 'Its tasks stay, just no longer filed under an organization. Everyone is removed from it. This cannot be undone.',
+      confirmLabel: 'Delete organization',
       tone: 'danger',
     });
     if (ok) remove.mutate();
@@ -46,7 +46,7 @@ function TeamDrawer({ id, onClose }) {
     <Drawer
       open
       onClose={onClose}
-      title={team?.name || 'Team'}
+      title={team?.name || 'Organization'}
       subtitle={team && `Created ${team.createdAt ? formatDate(team.createdAt, tz) : ''}${team.owner ? ` · Owner ${team.owner.name}` : ''}`}
     >
       {error ? (
@@ -61,10 +61,10 @@ function TeamDrawer({ id, onClose }) {
           {team.description && <p className="whitespace-pre-line text-[15px] text-ink-soft">{team.description}</p>}
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="soft" icon={ExternalLink} to={`/teams/${team.id}`}>
-              Open team page
+              Open organization page
             </Button>
             <Button size="sm" variant="secondary" icon={ListChecks} to={`/tasks?scope=all&team=${team.id}`}>
-              Team's tasks
+              Organization's tasks
             </Button>
           </div>
           <div>
@@ -87,9 +87,9 @@ function TeamDrawer({ id, onClose }) {
             </div>
           </div>
           <div className="rounded-xl border border-red-200 p-4">
-            <p className="text-sm text-ink-soft">Deleting a team keeps its tasks; they are just no longer filed under it.</p>
+            <p className="text-sm text-ink-soft">Deleting an organization keeps its tasks; they are just no longer filed under it.</p>
             <Button className="mt-3" size="sm" variant="danger-soft" icon={Trash2} loading={remove.isPending} onClick={del}>
-              Delete team
+              Delete organization
             </Button>
           </div>
         </div>
@@ -114,23 +114,23 @@ export function Teams() {
     <div className="space-y-4">
       <Input
         className="w-full sm:max-w-md"
-        placeholder="Search teams"
+        placeholder="Search organizations"
         prefix={<Search className="h-4 w-4" />}
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        aria-label="Search teams"
+        aria-label="Search organizations"
       />
       <Card className="overflow-hidden">
         {list.error && <ErrorState error={list.error} onRetry={list.refetch} />}
         {list.data && teams.length === 0 && (
-          <EmptyState icon={Users} title={q ? 'No team matches' : 'No teams yet'} text={q ? 'Try another search.' : 'Teams appear here when people create them.'} />
+          <EmptyState icon={Users} title={q ? 'No organization matches' : 'No organizations yet'} text={q ? 'Try another search.' : 'Organizations appear here when people create them.'} />
         )}
         {(list.isLoading || teams.length > 0) && (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="border-b border-line bg-well text-xs uppercase tracking-wide text-ink-soft">
                 <tr>
-                  <th className={th}>Team</th>
+                  <th className={th}>Organization</th>
                   <th className={th}>Owner</th>
                   <th className={clsx(th, 'text-right')}>Members</th>
                   <th className={th}>Created</th>

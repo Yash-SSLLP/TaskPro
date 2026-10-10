@@ -26,7 +26,7 @@ const { badRequest, forbidden, notFound } = require('../../platform/errors');
 const { STATUS, OPEN_STATUS, ACCEPTANCE, statusLabel, isOverdue, idOf } = require('../config');
 const { settingsOf, atZone, inZone, dayKey } = require('./time');
 
-const SCOPE_LABELS = { self: 'Just me', users: 'Specific people', team: 'A team', everyone: 'Everyone' };
+const SCOPE_LABELS = { self: 'Just me', users: 'Specific people', team: 'An organization', everyone: 'Everyone' };
 /** A ring this late (the server was off) is settled without a word. */
 const RING_WINDOW_MS = 6 * 60 * 60 * 1000;
 /** Rows of one kind in a month, at most. */
@@ -172,12 +172,12 @@ async function aimFor(user, body, current = null) {
 
   if (scope === 'team') {
     const teamId = String(body.team !== undefined ? body.team : idOf(current?.team) || '');
-    if (!mongoose.isValidObjectId(teamId)) throw badRequest('Pick the team this reminder is for.');
+    if (!mongoose.isValidObjectId(teamId)) throw badRequest('Pick the organization this reminder is for.');
     const team = await Team.findById(teamId).select('name members').lean();
-    if (!team) throw badRequest('That team no longer exists.');
+    if (!team) throw badRequest('That organization no longer exists.');
     if (!sa) {
       const m = team.members.find((x) => String(x.user) === String(user._id) && x.status === 'active');
-      if (!m || !['owner', 'admin'].includes(m.role)) throw forbidden('Only the team’s owner or an admin can remind the whole team.');
+      if (!m || !['owner', 'admin'].includes(m.role)) throw forbidden('Only the organization’s owner or an admin can remind the whole organization.');
     }
     return { scope, recipients: [], team: team._id };
   }

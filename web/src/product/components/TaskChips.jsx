@@ -152,7 +152,7 @@ export function EmptyTasks({ scope, onAssign, filtered = false, completedHint = 
     mine: [completedHint ? 'Nothing open on your plate' : 'Nothing assigned to you', done],
     delegated: ['Nothing you assigned is open', done],
     loop: ['Nothing to follow', done],
-    team: ['No open team tasks', done],
+    team: ['No open organization tasks', done],
     all: ['No open tasks', done],
   };
   const [title, body] = filtered ? ['Nothing matches', 'Try clearing the filters.'] : lines[scope] || lines.all;

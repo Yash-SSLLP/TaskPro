@@ -81,7 +81,7 @@ export default function ContactsScreen({ navigation }) {
     await new Promise((r) => setTimeout(r, 300));
     const ok = await confirm({
       title: tr('Remove {name}?', { name: c.person?.name }),
-      message: tr('You can no longer give each other tasks, unless you share a team. Tasks you already have stay.'),
+      message: tr('You can no longer give each other tasks, unless you share an organization. Tasks you already have stay.'),
       confirmLabel: tr('Remove'),
       destructive: true,
     });

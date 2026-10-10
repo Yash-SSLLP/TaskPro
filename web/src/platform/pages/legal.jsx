@@ -6,26 +6,32 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { api, apiUrl } from '../api';
-import { useSession } from '../session';
+import { product } from '../../product/config';
+import { isSuperAdmin, useSession } from '../session';
 import { signOutEverywhere } from '../signOut';
 import { Logo } from '../Logo';
 import { ThemeToggle } from '../ThemeToggle';
 import { PRIVACY } from '../privacy';
 import { Button, Card, Input, PasswordInput } from '../ui';
 
+/**
+ * The frame of the public pages the app still draws. "/" and "/privacy" are
+ * the website's (the server draws them), so links there load the whole page.
+ */
 export function LegalShell({ children }) {
   const signedIn = useSession((s) => !!s.token);
+  const home = useSession((s) => (isSuperAdmin(s.user) ? product.adminHomePath : product.homePath));
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-line bg-card">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3.5 sm:px-6">
-          <Link to="/" aria-label="Home">
+          <a href="/" aria-label={`${product.name} home`}>
             <Logo size={32} />
-          </Link>
+          </a>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <Link to={signedIn ? '/' : '/sign-in'} className="text-sm font-semibold text-brand hover:underline">
-              {signedIn ? 'Open the app' : 'Sign in'}
+            <Link to={signedIn ? home : '/sign-in'} className="text-sm font-semibold text-brand hover:underline">
+              {signedIn ? `Open ${product.name}` : 'Sign in'}
             </Link>
           </div>
         </div>
@@ -35,9 +41,9 @@ export function LegalShell({ children }) {
         <span>
           © {new Date().getFullYear()} {PRIVACY.org}
         </span>
-        <Link to="/privacy" className="hover:text-ink hover:underline">
+        <a href="/privacy" className="hover:text-ink hover:underline">
           Privacy policy
-        </Link>
+        </a>
         <Link to="/delete-account" className="hover:text-ink hover:underline">
           Delete your account
         </Link>
@@ -153,17 +159,17 @@ export function DeleteAccountPage() {
       <div className="space-y-6 text-[15px] leading-relaxed text-ink">
         <header>
           <h1 className="text-3xl font-bold tracking-tight">Delete your {PRIVACY.app} account</h1>
-          <p className="mt-2 text-ink-soft">You can also do this in the app: More → Delete account.</p>
+          <p className="mt-2 text-ink-soft">You can also do this in the {PRIVACY.app} app: More → Delete account.</p>
         </header>
 
         <Card className="space-y-3 p-5 sm:p-6">
           <h2 className="font-semibold">What happens</h2>
           <ul className="list-disc space-y-1.5 pl-5 marker:text-ink-soft">
             <li>Your name, email, mobile number, password, Task Pin and settings are deleted straight away.</li>
-            <li>Your contacts, team memberships, devices and alerts are deleted.</li>
-            <li>Tasks, repeating schedules, templates and categories that only you were on are deleted, with their files and voice notes.</li>
+            <li>Your contacts, organization memberships, devices and alerts are deleted.</li>
+            <li>Tasks, repeating schedules and categories that only you were on are deleted, with their files and voice notes.</li>
             <li>Tasks you shared with other people stay with them, with your name shown as “Deleted user”.</li>
-            <li>Teams you own pass to an admin or member, or are deleted if nobody else is in them.</li>
+            <li>Organizations you own pass to an admin or member, or are deleted if nobody else is in them.</li>
             <li>Backup copies are overwritten within 30 days.</li>
           </ul>
           <p className="text-ink-soft">
@@ -172,9 +178,9 @@ export function DeleteAccountPage() {
               {PRIVACY.email}
             </a>{' '}
             from the email address on your account and we will delete it for you. See the{' '}
-            <Link to="/privacy" className="font-medium text-brand hover:underline">
+            <a href="/privacy" className="font-medium text-brand hover:underline">
               privacy policy
-            </Link>{' '}
+            </a>{' '}
             for more.
           </p>
         </Card>

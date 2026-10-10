@@ -1,5 +1,5 @@
 /**
- * Sub-schemas shared by tasks, schedules and templates.
+ * Sub-schemas shared by tasks and schedules.
  */
 const mongoose = require('mongoose');
 const {

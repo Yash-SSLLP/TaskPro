@@ -639,7 +639,7 @@ async function comment({ taskId, who, note = '', voiceNote = null, files = [], m
 /** Something the system did (a reminder, an occurrence). Never notified on. */
 async function systemUpdate(taskId, note, kind = 'REMINDER') {
   try {
-    return await TaskUpdate.create({ task: taskId, kind, byName: 'System', note: String(note || '').slice(0, 5000), system: true });
+    return await TaskUpdate.create({ task: taskId, kind, byName: require('..').name, note: String(note || '').slice(0, 5000), system: true });
   } catch (err) {
     console.warn('[tasks] system update failed:', err.message);
     return null;

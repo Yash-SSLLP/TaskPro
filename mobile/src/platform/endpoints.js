@@ -14,6 +14,7 @@ export const platformKeys = {
   contacts: ['contacts'],
   teams: ['teams'],
   team: (id) => ['teams', 'one', id],
+  teamCandidates: (id, q) => ['teams', 'candidates', id, q || ''],
   lookup: (pin) => ['people', 'lookup', pin],
   console: ['platform'],
   overview: ['platform', 'overview'],
@@ -105,6 +106,10 @@ export const teamsApi = {
   update: (id, body) => api.patch(`/api/teams/${id}`, body).then((r) => r.team),
   remove: (id) => api.del(`/api/teams/${id}`),
   invite: (id, pin, role) => api.post(`/api/teams/${id}/members`, { pin, ...(role ? { role } : {}) }).then((r) => r.team),
+  /** From my connections. @returns {Promise<{ team, invited: [{ id, name }], skipped: [{ id, name, reason }] }>} */
+  inviteMany: (id, userIds, role) => api.post(`/api/teams/${id}/members`, { userIds, ...(role ? { role } : {}) }),
+  /** Whom I could invite (owner/admin). @returns {Promise<Array<Person & { contact, membership: null | 'invited' | 'active' }>>} */
+  candidates: (id, q) => api.get(`/api/teams/${id}/candidates`, { query: { q } }).then((r) => r.people || []),
   accept: (id) => api.post(`/api/teams/${id}/accept`).then((r) => r.team),
   decline: (id) => api.post(`/api/teams/${id}/decline`),
   setRole: (id, userId, role) => api.patch(`/api/teams/${id}/members/${userId}`, { role }).then((r) => r.team),

@@ -49,7 +49,9 @@ function AppButtons({ inviteUrl, pathAndQuery }) {
         <Smartphone className="h-4 w-4 text-brand" aria-hidden /> {product.name} on your phone
       </p>
       <p className="mt-1 text-sm text-ink-soft">
-        {android ? 'Already have the app? Open this invite in it. New? Download it; the invite comes along.' : 'Get the Android app, or carry on in the browser.'}
+        {android
+          ? `Already have ${product.name}? Open this invite in it. New? Download ${product.name}; the invite comes along.`
+          : `Get ${product.name} for Android, or carry on in the browser.`}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {android && (
@@ -57,7 +59,7 @@ function AppButtons({ inviteUrl, pathAndQuery }) {
             href={appIntent(pathAndQuery)}
             className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-brand px-3.5 text-sm font-semibold text-on-brand shadow-sm transition-colors hover:bg-brand-dark"
           >
-            <Smartphone className="h-4 w-4" aria-hidden /> Open in the app
+            <Smartphone className="h-4 w-4" aria-hidden /> Open in {product.name}
           </a>
         )}
         <a
@@ -66,7 +68,7 @@ function AppButtons({ inviteUrl, pathAndQuery }) {
           onClick={copyInvite}
           className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line bg-card px-3.5 text-sm font-semibold text-ink shadow-sm transition-colors hover:bg-well"
         >
-          <Download className="h-4 w-4" aria-hidden /> {release ? `Download the app (v${release.versionName})` : 'Get the Android app'}
+          <Download className="h-4 w-4" aria-hidden /> {release ? `Download ${product.name} (v${release.versionName})` : `Get ${product.name} for Android`}
         </a>
       </div>
     </div>
@@ -138,7 +140,7 @@ export function JoinPage() {
           </h1>
           {inviter.title && <p className="mt-0.5 text-sm text-ink-soft">{inviter.title}</p>}
           <p className="mx-auto mt-2 max-w-md text-[15px] text-ink-soft">
-            {own ? 'Send it to someone so they can join you.' : `Give each other tasks, follow them up and get reminders. Task Pin ${inviter.pinDisplay}.`}
+            {own ? 'Send it to someone so they can join you.' : `In ${product.name}, you give each other tasks, follow them up and get reminders. Task Pin ${inviter.pinDisplay}.`}
           </p>
 
           {whatsapp && !own && (

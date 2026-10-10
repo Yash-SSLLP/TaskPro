@@ -51,7 +51,7 @@ export function ActivityDetail({ id, onClose, onOpenPerson }) {
   const m = e?.meta || {};
   const changes = Array.isArray(m.changes) ? m.changes.filter((c) => c && typeof c === 'object') : [];
   const taskChanges = Array.isArray(m.changes) ? m.changes.filter((c) => typeof c === 'string') : [];
-  const device = [m.deviceName, m.appVersion && `KARO ${m.appVersion}${m.appBuild ? ` (${m.appBuild})` : ''}`, m.osVersion].filter(Boolean).join(' · ');
+  const device = [m.deviceName, m.appVersion && `Karo ${m.appVersion}${m.appBuild ? ` (${m.appBuild})` : ''}`, m.osVersion].filter(Boolean).join(' · ');
   const canOpen = (p) => p && p.role === 'user' && !p.deleted && onOpenPerson;
 
   return (
@@ -101,7 +101,7 @@ export function ActivityDetail({ id, onClose, onOpenPerson }) {
             </div>
             {e.target?.label && (
               <div className="min-w-0">
-                <dt className="text-ink-soft">{{ task: 'Task', user: 'Person', team: 'Team' }[e.target.kind] || 'About'}</dt>
+                <dt className="text-ink-soft">{{ task: 'Task', user: 'Person', team: 'Organization' }[e.target.kind] || 'About'}</dt>
                 <dd className="break-words font-medium text-ink">
                   {e.target.kind === 'task' ? (
                     <Link to={`/tasks/${e.target.id}`} className="text-brand hover:underline">
@@ -250,7 +250,7 @@ export function Activity({ user, onUser, onOpenPerson }) {
         <div className="flex flex-wrap items-center gap-3">
           <Input
             className="min-w-0 flex-1 basis-60"
-            placeholder="Search a person, task, team or login"
+            placeholder="Search a person, task, organization or login"
             prefix={<Search className="h-4 w-4" />}
             value={q}
             onChange={(e) => setQ(e.target.value)}

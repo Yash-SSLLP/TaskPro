@@ -8,6 +8,7 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import productConfig from '../../product/config';
 import { tr } from '../../i18n';
 import { Copy, Share } from '../icons';
 import { inviteMessage, openWhatsapp, shareText, useInviteLink } from '../invite';
@@ -83,7 +84,7 @@ function InviteLink({ user }) {
   return (
     <View style={styles.invite}>
       <Text style={styles.inviteTitle}>{tr('Invite link')}</Text>
-      <Text style={styles.inviteHint}>{tr('One link: they get the app, sign up and become your contact. No pin to type.')}</Text>
+      <Text style={styles.inviteHint}>{tr('One link: they get {app}, sign up and become your contact. No pin to type.', { app: productConfig.name })}</Text>
       <SwitchRow
         boxed={false}
         label={tr('Let us WhatsApp each other about tasks')}

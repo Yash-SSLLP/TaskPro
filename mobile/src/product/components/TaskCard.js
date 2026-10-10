@@ -15,9 +15,10 @@
 import React, { memo, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { tr, trParts } from '../../i18n';
-import { colors, radius, space } from '../../platform/theme';
-import { CircleCheck, CircleX, Clock, Mic, Paperclip, Repeat, SquarePen, Tag, Users } from '../icons';
+import { colors, radius, space, theme } from '../../platform/theme';
+import { Building, CircleCheck, CircleX, Clock, Mic, Paperclip, Repeat, SquarePen, Tag } from '../icons';
 import {
+  DARK_HUES,
   accentFor,
   assigneeNames,
   dayLabel,
@@ -38,6 +39,8 @@ import { StatusPill } from './TaskStatusSheets';
 import TaskSwipe, { swipeAccessibility } from './TaskSwipe';
 
 const EXT_ICONS = { clock: Clock, check: CircleCheck, x: CircleX };
+/** "More time: Pending" is orange in dark, apart from the amber of "not accepted yet"; light keeps the warning colours. */
+const MORE_TIME = theme.dark ? { ink: DARK_HUES.orange.ink, bg: DARK_HUES.orange.bg } : { ink: colors.warning, bg: colors.warningSoft };
 
 function TaskCard({ task, meId, nudgedAt, onNudged, onOpen, onStatus, onSwipe, peek = false }) {
   const accent = accentFor(task);
@@ -61,8 +64,8 @@ function TaskCard({ task, meId, nudgedAt, onNudged, onOpen, onStatus, onSwipe, p
   // server only says one is pending).
   const extStatus = task.lastExtension?.status || (task.pendingExtension ? 'PENDING' : '');
   const ext = extensionLook(extStatus);
-  const extInk = ext ? (ext.tone === 'success' ? colors.success : ext.tone === 'danger' ? colors.danger : colors.warning) : null;
-  const extBg = ext ? (ext.tone === 'success' ? colors.successSoft : ext.tone === 'danger' ? colors.dangerSoft : colors.warningSoft) : null;
+  const extInk = ext ? (ext.tone === 'success' ? colors.success : ext.tone === 'danger' ? colors.danger : MORE_TIME.ink) : null;
+  const extBg = ext ? (ext.tone === 'success' ? colors.successSoft : ext.tone === 'danger' ? colors.dangerSoft : MORE_TIME.bg) : null;
   const ExtIcon = ext ? EXT_ICONS[ext.icon] || Clock : null;
 
   const progress = Math.max(0, Math.min(100, Number(task.progress) || 0));
@@ -168,7 +171,7 @@ function TaskCard({ task, meId, nudgedAt, onNudged, onOpen, onStatus, onSwipe, p
             ) : null}
             {teamName ? (
               <View style={styles.tag}>
-                <Users size={11} color={colors.textSecondary} />
+                <Building size={11} color={colors.textSecondary} />
                 <Text style={styles.tagLabel} numberOfLines={1}>
                   {teamName}
                 </Text>

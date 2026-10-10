@@ -10,6 +10,7 @@ export { default as ArrowUp } from 'lucide-react-native/icons/arrow-up';
 export { default as Ban } from 'lucide-react-native/icons/ban';
 export { default as Bell } from 'lucide-react-native/icons/bell';
 export { default as BookUser } from 'lucide-react-native/icons/book-user';
+export { default as Building } from 'lucide-react-native/icons/building';
 export { default as Calendar } from 'lucide-react-native/icons/calendar';
 export { default as Camera } from 'lucide-react-native/icons/camera';
 export { default as Check } from 'lucide-react-native/icons/check';

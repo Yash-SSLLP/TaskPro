@@ -1,6 +1,6 @@
 /**
  * My profile (/profile): the photo, name and job title up top on a navy
- * band, what I have in KARO (contacts, teams, how long I've been here), my
+ * band, what I have in Karo (contacts, organizations, how long I've been here), my
  * Task Pin, my contact details (how people see me and how I sign in), and
  * the way to Settings and the password.
  *
@@ -288,7 +288,7 @@ function Hero({ onAddTitle }) {
           ) : (
             <>
               <Fact label="Contacts" value={contacts.data ? contacts.data.contacts?.length || 0 : '—'} to="/contacts" />
-              <Fact label="Teams" value={teams.data ? teams.data.teams?.length || 0 : '—'} to="/teams" />
+              <Fact label="Organizations" value={teams.data ? teams.data.teams?.length || 0 : '—'} to="/teams" />
             </>
           )}
           <Fact label="Member since" value={memberSince(user.createdAt, tz)} />
@@ -347,7 +347,7 @@ function DetailsBlock({ titleRef }) {
   const icon = (Icon) => <Icon className="h-4 w-4" aria-hidden />;
 
   return (
-    <Block overline="Details" title="How people see you, and how you sign in" description="Your name and job title show next to your photo on tasks, contacts and teams.">
+    <Block overline="Details" title="How people see you, and how you sign in" description="Your name and job title show next to your photo on tasks, contacts and organizations.">
       <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
         <Input label="Name" autoComplete="name" prefix={icon(UserRound)} value={form.name} onChange={set('name')} />
         <Input ref={titleRef} label="Job title" optional placeholder="e.g. Accounts" prefix={icon(BriefcaseBusiness)} value={form.title} onChange={set('title')} />

@@ -23,7 +23,7 @@ import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'r
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { tr } from '../../i18n';
-import { colors, font, space } from '../../platform/theme';
+import { colors, font, space, theme } from '../../platform/theme';
 import {
   Avatar,
   BottomSheet,
@@ -68,6 +68,7 @@ import {
   ArrowLeftRight,
   ArrowRight,
   Bell,
+  Building,
   Calendar,
   Check,
   ChevronRight,
@@ -98,6 +99,7 @@ import {
 } from '../icons';
 import {
   ACCEPTANCE,
+  DARK_HUES,
   acceptanceLabel,
   accentFor,
   clockOf,
@@ -116,6 +118,9 @@ import {
   statusLabel,
   timeAgo,
 } from '../taskStatus';
+
+/** "More time asked for": orange in dark, apart from the amber of "not accepted yet"; light keeps the warning colour. */
+const MORE_TIME = theme.dark ? DARK_HUES.orange.ink : colors.warning;
 
 /** Rows whose note the ENGINE writes, not a person. */
 const MACHINE_SAID = new Set(['PROGRESS', 'SPLIT', 'CLAIMED', 'REMINDER']);
@@ -552,7 +557,7 @@ export default function TaskDetailScreen() {
           </Fact>
         ) : null}
         {teamName ? (
-          <Fact icon={Users} label={tr('Team')}>
+          <Fact icon={Building} label={tr('Organization')}>
             {teamName}
           </Fact>
         ) : null}
@@ -743,7 +748,7 @@ export default function TaskDetailScreen() {
       {/* More time */}
       {pending ? (
         <Card style={[styles.card, styles.warnCard]}>
-          <BannerHead icon={Clock} tint={colors.warning} title={tr('More time asked for')} titleColor={colors.warning} />
+          <BannerHead icon={Clock} tint={MORE_TIME} title={tr('More time asked for')} titleColor={MORE_TIME} />
           <Text style={styles.factValue}>{tr('{name} wants until {when}.', { name: pending.requestedByName || tr('Somebody'), when: fullWhen(pending.toDate) })}</Text>
           {pending.reason ? <Text style={styles.quote}>“{pending.reason}”</Text> : null}
           {can.canDecideExtension ? (
@@ -1115,7 +1120,7 @@ const styles = StyleSheet.create({
   card: { gap: space(2.5), borderRadius: 18 },
   cardTitle: { color: colors.text, fontSize: 15, fontWeight: '800' },
   cardHint: { color: colors.textSecondary, fontSize: 12, lineHeight: 17 },
-  warnCard: { borderColor: colors.warning },
+  warnCard: { borderColor: MORE_TIME },
 
   // The one button shape: HRMS's, 42 tall instead of 50.
   btn: {

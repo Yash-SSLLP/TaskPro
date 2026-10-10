@@ -1,11 +1,13 @@
 /**
- * KARO data hooks shared by its pages.
+ * Karo data hooks shared by its pages.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSession } from '../platform/session';
+import { toast } from 'sonner';
+import { api } from '../platform/api';
+import { isSuperAdmin, useSession, useSettings } from '../platform/session';
 import * as T from './api';
-import { idOf, setServedPalette } from './lifecycle';
+import { idOf, orderOrgTabs, setServedPalette } from './lifecycle';
 
 /**
  * GET /api/tasks/meta — people (the assignable list), teams, categories,
@@ -31,9 +33,49 @@ export function useMeId() {
   return String(meta?.me || (meta?.people || []).find((p) => p.relation === 'self')?._id || user?.id || '');
 }
 
-/** Teams I own or administer — the ones I see tasks of (scope=team). */
+/** Organizations (teams) I own or run — the ones I see tasks of (scope=team). */
 export function useAdminTeams(meta) {
   return useMemo(() => (meta?.teams || []).filter((t) => t.myRole === 'owner' || t.myRole === 'admin'), [meta]);
+}
+
+// The latest order save: an older answer landing late must not undo a newer move.
+let orderSaves = 0;
+// Saves still waiting for an answer, and the order the server last confirmed:
+// what a failed save puts back (never another save's unconfirmed order).
+let orderPending = 0;
+let orderConfirmed = [];
+
+/**
+ * The Tasks screen's organization tabs, in my order (`tabs`), whether the strip
+ * shows at all (`shown`: not for the Super Admin, nor somebody in no
+ * organization), the saved order (`saved`) and `saveOrder(keys)`: PATCH
+ * /api/me/settings { orgTabs }, shown at once through the session's settings
+ * and put back if the save fails. `[]` is the default order.
+ */
+export function useOrgTabs(meta) {
+  const user = useSession((s) => s.user);
+  const saved = useSettings().orgTabs;
+  const tabs = useMemo(() => orderOrgTabs(meta?.orgTabs || [], saved), [meta, saved]);
+  const shown = !isSuperAdmin(user) && tabs.some((t) => t.name);
+  const saveOrder = useCallback(async (keys) => {
+    const { settings, updateSettings } = useSession.getState();
+    // With nothing in flight, the order on screen is the server's.
+    if (!orderPending) orderConfirmed = settings?.orgTabs || [];
+    const mine = ++orderSaves;
+    orderPending += 1;
+    updateSettings({ ...settings, orgTabs: keys });
+    try {
+      const data = await api.patch('/api/me/settings', { orgTabs: keys });
+      orderConfirmed = data.settings?.orgTabs || [];
+      if (mine === orderSaves) updateSettings(data.settings);
+    } catch (err) {
+      if (mine === orderSaves) updateSettings({ ...useSession.getState().settings, orgTabs: orderConfirmed });
+      toast.error(err.message || 'Could not save the order of the tabs.');
+    } finally {
+      orderPending -= 1;
+    }
+  }, []);
+  return { tabs, shown, saved: saved || [], saveOrder };
 }
 
 /** Categories: `/meta` carries them; `/categories` is the fallback. */

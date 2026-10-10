@@ -13,18 +13,24 @@
  * build a sentence call tr() themselves, and are only called while drawing.
  */
 import { tr } from '../i18n';
+import { theme } from '../platform/theme';
 import { AlarmClock, BellRing, CircleAlert, CircleCheckBig, CirclePlay, Clock, Eye } from './icons';
-import { monthName, priorityLabel, statusLabel, weekdayName } from './taskStatus';
+import { DARK_HUES, monthName, priorityLabel, statusLabel, weekdayName } from './taskStatus';
 
-/** The order is the filter chips', and what survives when a day holds more dots than fit. */
+const dark = theme.dark;
+
+/**
+ * The order is the filter chips', and what survives when a day holds more dots than fit.
+ * Dark mode takes the status hues (and a light indigo for my own reminders), as the web does.
+ */
 export const KINDS = {
-  overdue: { label: 'Overdue', chip: 'Overdue', color: '#ef4444', icon: CircleAlert },
-  reminder: { label: 'My reminder', chip: 'My reminders', color: '#6366f1', icon: AlarmClock },
-  sharedReminder: { label: 'Reminder for me', chip: 'Reminders for me', color: '#f97316', icon: BellRing },
-  pending: { label: 'Due · to do', chip: 'To do', color: '#f59e0b', icon: Clock },
-  inProgress: { label: 'Due · in progress', chip: 'In progress', color: '#0ea5e9', icon: CirclePlay },
-  inReview: { label: 'Due · in review', chip: 'In review', color: '#8b5cf6', icon: Eye },
-  done: { label: 'Completed', chip: 'Completed', color: '#10b981', icon: CircleCheckBig },
+  overdue: { label: 'Overdue', chip: 'Overdue', color: dark ? DARK_HUES.red.ink : '#ef4444', icon: CircleAlert },
+  reminder: { label: 'My reminder', chip: 'My reminders', color: dark ? '#818CF8' : '#6366f1', icon: AlarmClock },
+  sharedReminder: { label: 'Reminder for me', chip: 'Reminders for me', color: dark ? DARK_HUES.orange.ink : '#f97316', icon: BellRing },
+  pending: { label: 'Due · to do', chip: 'To do', color: dark ? DARK_HUES.amber.ink : '#f59e0b', icon: Clock },
+  inProgress: { label: 'Due · in progress', chip: 'In progress', color: dark ? DARK_HUES.sky.ink : '#0ea5e9', icon: CirclePlay },
+  inReview: { label: 'Due · in review', chip: 'In review', color: dark ? DARK_HUES.violet.ink : '#8b5cf6', icon: Eye },
+  done: { label: 'Completed', chip: 'Completed', color: dark ? DARK_HUES.green.ink : '#10b981', icon: CircleCheckBig },
 };
 export const KIND_ORDER = Object.keys(KINDS);
 export const kindMeta = (kind) => KINDS[kind] || KINDS.pending;
@@ -41,7 +47,7 @@ export function kindOf(e) {
 export const isReminder = (kind) => kind === 'reminder' || kind === 'sharedReminder';
 
 /** Who a reminder goes to, in the form's words. */
-export const SCOPE_LABELS = { self: 'Just me', users: 'Specific people', team: 'A team', everyone: 'Everyone' };
+export const SCOPE_LABELS = { self: 'Just me', users: 'Specific people', team: 'An organization', everyone: 'Everyone' };
 
 // ---------------------------------------------------------------- days
 
@@ -112,9 +118,9 @@ export function whoText(value) {
   return plus ? tr('You + {n}', { n: plus[1] }) : s;
 }
 
-/** "Just me", "A team · Sales"… */
+/** "Just me", "An organization · Sales"… */
 export function audienceText(m = {}) {
-  if (m.scope === 'team') return m.team?.name ? `${tr('A team')} · ${m.team.name}` : tr('A team');
+  if (m.scope === 'team') return m.team?.name ? `${tr('An organization')} · ${m.team.name}` : tr('An organization');
   return SCOPE_LABELS[m.scope] ? tr(SCOPE_LABELS[m.scope]) : m.audience || '';
 }
 

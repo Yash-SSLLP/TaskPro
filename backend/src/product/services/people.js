@@ -37,13 +37,4 @@ async function buildAssignees(ids) {
 /** 400 unless the actor may give work to every one of them (the Super Admin may give to anyone active). */
 const assertAssignable = (user, ids) => platformPeople.assertAssignable(user, validIds(ids));
 
-/** The ids among `ids` the user may give work to. */
-async function keepAssignable(user, ids) {
-  const list = validIds(ids);
-  if (!list.length) return [];
-  const allowed = await platformPeople.assignableIdSet(user);
-  const off = await disabledSet(list);
-  return list.filter((id) => !off.has(id) && (!allowed || allowed.has(id)));
-}
-
-module.exports = { validIds, namesOf, disabledSet, buildAssignees, assertAssignable, keepAssignable, platform: platformPeople };
+module.exports = { validIds, namesOf, disabledSet, buildAssignees, assertAssignable, platform: platformPeople };

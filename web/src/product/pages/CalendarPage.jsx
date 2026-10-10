@@ -5,7 +5,7 @@
  * (overdue in red), tasks finished on the day they were finished, and the
  * reminders I can see: mine, and ones set for me. Reminders are added, edited
  * and deleted right here (/api/reminders): for myself, for people I can give
- * work to, for a team I run, or (the Super Admin) for everyone.
+ * work to, for an organization I run, or (the Super Admin) for everyone.
  *
  * A lone entry fills its day as a solid tile; more stack as chips, then
  * "+N more". On a phone the chips become dots and a tap on the day lists it.
@@ -22,7 +22,7 @@ import clsx from 'clsx';
 import { ChevronLeft, ChevronRight, ExternalLink, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../platform/api';
-import { Button, ErrorState, Input, Modal, PageHeader, Select, Textarea, useConfirm } from '../../platform/ui';
+import { Button, ErrorState, Input, Modal, PageHeader, Select, Textarea, finePointer, useConfirm } from '../../platform/ui';
 import { useTaskMeta } from '../hooks';
 import { TaskModal } from '../components/TaskModal';
 import {
@@ -338,7 +338,7 @@ export function CalendarPage() {
                 }}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-well"
               >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl" style={{ backgroundColor: `${k.color}1f`, color: k.color }}>
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl" style={{ backgroundColor: `color-mix(in srgb, ${k.color} 12.16%, transparent)`, color: k.color }}>
                   <k.icon className="h-[18px] w-[18px]" />
                 </span>
                 <span className="min-w-0">
@@ -456,7 +456,7 @@ function ReminderForm({ form, setForm, aim, onSaved }) {
     ...(aim.everyone || form.scope === 'everyone' ? ['everyone'] : []),
   ];
   const teams = [...(aim.teams || [])];
-  if (form.team && !teams.some((t) => t.id === form.team)) teams.push({ id: form.team, name: form.teamName || 'This team' });
+  if (form.team && !teams.some((t) => t.id === form.team)) teams.push({ id: form.team, name: form.teamName || 'This organization' });
 
   const save = async () => {
     if (!form.title.trim() || !form.date) {
@@ -468,7 +468,7 @@ function ReminderForm({ form, setForm, aim, onSaved }) {
       return;
     }
     if (form.scope === 'team' && !form.team) {
-      setError('Pick a team, or change who sees this reminder.');
+      setError('Pick an organization, or change who sees this reminder.');
       return;
     }
     setSaving(true);
@@ -516,7 +516,7 @@ function ReminderForm({ form, setForm, aim, onSaved }) {
     >
       <div className="space-y-3.5">
         {error && <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-        <Input label="Title" value={form.title} onChange={(e) => set({ title: e.target.value })} placeholder="What is this about?" maxLength={200} autoFocus />
+        <Input label="Title" value={form.title} onChange={(e) => set({ title: e.target.value })} placeholder="What is this about?" maxLength={200} autoFocus={finePointer()} />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Input label="Date" type="date" value={form.date} onChange={(e) => set({ date: e.target.value })} />
           <div>
@@ -581,8 +581,8 @@ function ReminderForm({ form, setForm, aim, onSaved }) {
         )}
 
         {form.scope === 'team' && (
-          <Select label="Team" value={form.team} onChange={(e) => set({ team: e.target.value })}>
-            <option value="">Choose a team…</option>
+          <Select label="Organization" value={form.team} onChange={(e) => set({ team: e.target.value })}>
+            <option value="">Pick an organization…</option>
             {teams.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}

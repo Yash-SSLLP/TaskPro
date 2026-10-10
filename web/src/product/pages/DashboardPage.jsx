@@ -1,7 +1,7 @@
 /**
  * Dashboard — count-based: what was given, what is open, overdue, in review,
  * done, and whether it was done on time. Views: Mine · Assigned by me · People
- * (team owners/admins and the Super Admin) · Category · Over time · Overdue
+ * (organization owners/admins and the Super Admin) · Category · Over time · Overdue
  * report. `completion %` = completed / total; `on-time %` = in time / completed.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -40,7 +40,7 @@ function scoreTone(score) {
   return 'bg-slate-100 text-ink-soft';
 }
 
-/** One row, whichever shape the server sends (KARO or HRMS words). */
+/** One row, whichever shape the server sends (Karo or HRMS words). */
 function normalise(r) {
   const open = r.open ?? num(r.pending) + num(r.inProgress) + num(r.overdue) + num(r.inReview);
   const completed = num(r.completed);
@@ -157,8 +157,8 @@ export function DashboardPage() {
             </div>
           )}
           {teamChoices.length > 0 && (
-            <select value={team} onChange={(e) => setTeam(e.target.value)} className={clsx(FIELD, 'ml-auto')} aria-label="Team">
-              <option value="">{view === 'people' && !admin ? 'All my teams' : 'Any team'}</option>
+            <select value={team} onChange={(e) => setTeam(e.target.value)} className={clsx(FIELD, 'ml-auto')} aria-label="Organization">
+              <option value="">{view === 'people' && !admin ? 'All my organizations' : 'Any organization'}</option>
               {teamChoices.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
