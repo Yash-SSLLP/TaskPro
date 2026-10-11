@@ -808,3 +808,5 @@ html.dark .footer-bottom { border-top-color: rgb(var(--line)); }
 .fallback-points { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); list-style: none; padding: 0; margin: 40px 0 0; }
 .fallback-points li { padding: 16px; border: 1px solid rgb(var(--line)); border-radius: 14px; background: rgb(var(--card)); color: rgb(var(--ink-soft)); }
 .fallback-points strong { color: rgb(var(--ink)); }
+.is-fallback .site-footer { padding-block: 24px; color: rgb(255 255 255 / 0.8); }
+.is-fallback .site-footer a { color: inherit; }
