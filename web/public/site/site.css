@@ -801,3 +801,10 @@ html.dark .footer-bottom { border-top-color: rgb(var(--line)); }
   .site-header, .announce, .site-footer, .band, .hero-visual, .post-cta { display: none; }
   body { background: #fff; }
 }
+
+/* The fallback landing page (backend/src/site/fallback.js): shown while the
+   site cannot be built from the database. */
+.fallback-note { display: flex; gap: 12px; align-items: flex-start; max-width: 60ch; margin: 0 0 24px; padding: 14px 16px; border: 1px solid rgb(var(--line)); border-left: 4px solid rgb(var(--brand)); border-radius: 12px; background: rgb(var(--card)); color: rgb(var(--ink)); }
+.fallback-points { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); list-style: none; padding: 0; margin: 40px 0 0; }
+.fallback-points li { padding: 16px; border: 1px solid rgb(var(--line)); border-radius: 14px; background: rgb(var(--card)); color: rgb(var(--ink-soft)); }
+.fallback-points strong { color: rgb(var(--ink)); }

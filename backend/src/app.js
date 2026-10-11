@@ -19,9 +19,35 @@ const compression = require('compression');
 const config = require('./config');
 const product = require('./product');
 const site = require('./site');
+const { sendFallback } = require('./site/fallback');
 const { notFoundHandler, errorHandler } = require('./platform/errors');
 
+// The paths vercel.json sends to this server for the website.
+const SITE_PATH = /^\/(?:$|(?:features|for|about|contact|privacy|terms|blog|media)(?:\/|$)|(?:rss\.xml|sitemap\.xml|robots\.txt|llms\.txt)$)/i;
+
+/**
+ * The website's routers. If its code cannot load (a library that will not run
+ * on this Node, say), its pages get the fallback landing page and its editor a
+ * 503, and the API carries on: the site never takes the apps down with it.
+ */
+function siteRouters() {
+  try {
+    return { publicRouter: site.publicRouter, adminRouter: site.adminRouter };
+  } catch (err) {
+    console.error('[site] could not load the website; serving the fallback page:', err);
+    const publicRouter = express.Router();
+    publicRouter.use((req, res, next) => {
+      if ((req.method !== 'GET' && req.method !== 'HEAD') || !SITE_PATH.test(req.path)) return next();
+      sendFallback(res, { inlineStyle: true, signupEnabled: config.signupEnabled });
+    });
+    const adminRouter = express.Router();
+    adminRouter.use((req, res) => res.status(503).json({ error: 'The website editor is not available right now. Try again in a few minutes.' }));
+    return { publicRouter, adminRouter };
+  }
+}
+
 function createApp() {
+  const { publicRouter, adminRouter } = siteRouters();
   const app = express();
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
@@ -36,7 +62,7 @@ function createApp() {
   app.use(compression());
   // The public website (site/): its own paths only, before cors() so its
   // pages carry no `Vary: Origin` and the CDN keeps one copy of each.
-  app.use(site.publicRouter);
+  app.use(publicRouter);
   app.use(
     cors({
       origin: config.corsOrigins.length ? config.corsOrigins : true,
@@ -62,7 +88,7 @@ function createApp() {
   app.use('/api/files', require('./platform/routes/files'));
   app.use('/api/platform', require('./platform/routes/platform'));
   app.use('/api/live', require('./platform/routes/live'));
-  app.use('/api/site', site.adminRouter);
+  app.use('/api/site', adminRouter);
   product.mountRoutes(app);
 
   app.use('/api', notFoundHandler);
@@ -87,19 +113,16 @@ function createApp() {
 let ready = null;
 let serverlessApp = null;
 
-// What a website page shows while the database cannot be reached.
-const STARTING_PAGE = `<!doctype html>
-<html lang="en-IN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex"><title>Karo</title>
-<style>body{margin:0;min-height:100vh;display:grid;place-items:center;font:16px/1.5 system-ui,sans-serif;background:#f4f6f9;color:#16325c;text-align:center;padding:16px}@media (prefers-color-scheme:dark){body{background:#0b141a;color:#e9edef}}</style>
-</head><body><main><h1>Karo is starting</h1><p>Please try again in a few seconds.</p></main></body></html>`;
-
 async function handler(req, res) {
   if (!ready) {
     const { connectDB } = require('./platform/db');
     const { ensureSuperAdmin } = require('./platform/seed');
-    // The website's starter content; a fault there never stops the API.
-    const siteDefaults = () => site.ensureSiteDefaults().catch((err) => console.error('[site] could not write the starter content:', err));
+    // The website's starter content; a fault there never stops the API, not
+    // even one thrown while its code loads (hence the Promise.resolve()).
+    const siteDefaults = () =>
+      Promise.resolve()
+        .then(() => site.ensureSiteDefaults())
+        .catch((err) => console.error('[site] could not write the starter content:', err));
     ready = connectDB()
       .then(() => ensureSuperAdmin())
       .then(siteDefaults);
@@ -109,16 +132,15 @@ async function handler(req, res) {
   } catch (err) {
     ready = null; // try again on the next request
     console.error('Failed to start:', err);
-    res.statusCode = 503;
-    res.setHeader('Cache-Control', 'no-store');
-    res.setHeader('Retry-After', '30');
     if (String(req.url || '').startsWith('/api')) {
+      res.statusCode = 503;
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Retry-After', '30');
       res.setHeader('Content-Type', 'application/json');
       return res.end(JSON.stringify({ error: 'Service is starting, please try again.' }));
     }
-    // A website page (the home page, /privacy): a page, not JSON.
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.end(STARTING_PAGE);
+    // A website page (the home page, /privacy): the fallback landing page.
+    return sendFallback(res, { inlineStyle: true, signupEnabled: config.signupEnabled });
   }
   serverlessApp ??= createApp();
   return serverlessApp(req, res);

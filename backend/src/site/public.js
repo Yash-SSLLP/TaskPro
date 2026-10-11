@@ -12,6 +12,8 @@
  */
 const express = require('express');
 const helmet = require('helmet');
+const config = require('../config');
+const { sendFallback } = require('./fallback');
 const SitePage = require('./models/SitePage');
 const BlogPost = require('./models/BlogPost');
 const files = require('../platform/services/files');
@@ -245,10 +247,15 @@ router.get(PAGE_PATHS, async (req, res) => {
 // Any other site address.
 router.use(notFound);
 
+// The database could not be reached (rather than a fault in a page).
+const DB_DOWN = new Set(['MongoNetworkError', 'MongoServerSelectionError', 'MongoNotConnectedError', 'MongoTopologyClosedError', 'MongooseServerSelectionError']);
+
 // eslint-disable-next-line no-unused-vars
 router.use((err, req, res, next) => {
   console.error(`[site] ${req.method} ${req.originalUrl}`, err);
   if (res.headersSent) return res.end();
+  // Visitors get the landing page while the database is away, not an error.
+  if (DB_DOWN.has(err?.name)) return sendFallback(res, { signupEnabled: config.signupEnabled });
   res.status(500).type('html').set('Cache-Control', 'no-store').send(String(renderError()));
 });
 
